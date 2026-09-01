@@ -1,0 +1,474 @@
+{% extends "includes/base.html" %}
+{% load static %}
+{% load humanize %}
+{% block title %} Menu {% endblock title %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'aos/aos.css' %}">    
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+<link rel="stylesheet" href="{% static 'css/responsive.css' %}">
+
+<style>
+.menu-card-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: var(--primary);
+    color: #fff;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 50px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.menu-card-discount {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #dc3545;
+    color: #fff;
+    font-size: 0.68rem;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 50px;
+}
+
+.menu-price {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.fav-btn {
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 14px;
+    transition: var(--transition);
+    flex-shrink: 0;
+}
+.fav-btn:hover { color: var(--danger); border-color: var(--danger); background: rgba(239,68,68,0.1); }
+.fav-btn.active { color: var(--danger); border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.15); }
+
+.footer-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.menu-rating, .star-rating {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    padding: 2px 8px 2px 4px;
+    border-radius: 6px;
+    user-select: none;
+}
+.star-rating strong {
+    color: var(--text);
+    min-width: 22px;
+    text-align: center;
+}
+.star-rating span {
+    color: var(--text-muted);
+    font-size: 12px;
+}
+
+/* ── Modal styling from redesign ── */
+.modal-content {
+  background: #111 !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-lg) !important;
+  color: var(--text) !important;
+}
+.modal-header {
+  border-bottom: 1px solid var(--border) !important;
+  padding: 20px 24px !important;
+}
+.modal-header .btn-close { filter: invert(1); }
+.modal-footer {
+  border-top: 1px solid var(--border) !important;
+  padding: 16px 24px !important;
+}
+
+.qv-img-wrap { position: relative; margin-bottom: 20px; }
+.qv-img {
+  width: 100%; height: 200px;
+  object-fit: cover;
+  border-radius: var(--radius);
+}
+.qv-placeholder {
+  height: 160px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 80px; color: var(--text-dim);
+  background: var(--bg3);
+  border-radius: var(--radius);
+}
+
+.qv-info-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 18px 0;
+}
+.qv-info-item {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  text-align: center;
+}
+.qv-label { font-size: 11px; color: var(--text-muted); font-weight: 600; letter-spacing: 1px; text-transform: uppercase; display: block; margin-bottom: 4px; }
+.qv-price { font-size: 20px; font-weight: 700; color: var(--primary);}
+.qv-old-price { font-size: 12px; color: var(--text-muted); text-decoration: line-through; font-weight: 400; display: block; }
+
+.qv-desc {
+  font-size: 14px; color: var(--text-muted);
+  line-height: 1.7; margin: 0 0 12px;
+}
+.qv-ingredients { margin-bottom: 14px; }
+.qv-ingredients small { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); }
+.qv-ingredients p { font-size: 13px; color: var(--text); margin: 6px 0 0; line-height: 1.6; }
+
+.qv-stats {
+  display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 16px;
+}
+.qv-stat {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; color: var(--text-muted);
+}
+.qv-stat i { font-size: 16px; }
+.qv-stat strong { color: var(--text); }
+
+.btn-add-cart {
+  background: var(--primary); color: #fff; border: none;
+  border-radius: var(--radius); padding: 12px 28px;
+  font-size: 15px; font-weight: 600; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 8px;
+  transition: var(--t);
+}
+.btn-add-cart:hover { background: var(--primary-light); transform: translateY(-2px); box-shadow: var(--shadow-o); }
+
+@media (max-width: 768px)  {
+  .qv-info-row { grid-template-columns: repeat(2,1fr); }
+}
+</style>
+
+{% if messages %}
+<div style="margin-bottom:16px;">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<div class="page-hero">
+    <div class="container">
+        {% csrf_token %}
+        <h1>OUR <span>MENU</span></h1>
+        <p>From Nigerian classics to street food favourites – explore every dish we offer</p>
+        <div class="breadcrumb">
+            <a href="/">Home</a><i class="bi bi-chevron-right"></i><span>Menu</span>
+        </div>
+    </div>
+</div>
+
+<section class="section" style="background:var(--bg);">
+    <div class="container">
+        <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:32px;">
+            <div class="input-group" style="flex:1;min-width:240px;">
+                <i class="bi bi-search input-icon"></i>
+                <input type="text" class="form-control" id="menu-search" placeholder="Search meals..." />
+            </div>
+            <select class="form-control" style="width:180px;" onchange="location.href='?{% if current_category %}category={{ current_category }}&{% endif %}sort='+this.value">
+                <option value="">Sort By</option>
+                <option value="price-asc" {% if current_sort == 'price-asc' %}selected{% endif %}>Price: Low to High</option>
+                <option value="price-desc" {% if current_sort == 'price-desc' %}selected{% endif %}>Price: High to Low</option>
+                <option value="popular" {% if current_sort == 'popular' %}selected{% endif %}>Most Popular</option>
+                <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>Newest</option>
+            </select>
+            <select class="form-control" style="width:160px;" onchange="location.href='?category='+this.value+'{% if current_sort %}&sort={{ current_sort }}{% endif %}'">
+                <option value="" {% if not current_category %}selected{% endif %}>All Categories</option>
+                <option value="rice" {% if current_category == 'rice' %}selected{% endif %}>Rice</option>
+                <option value="swallow" {% if current_category == 'swallow' %}selected{% endif %}>Swallow</option>
+                <option value="soups" {% if current_category == 'soups' %}selected{% endif %}>Soups</option>
+                <option value="small_chops" {% if current_category == 'small_chops' %}selected{% endif %}>Small Chops</option>
+                <option value="grills" {% if current_category == 'grills' %}selected{% endif %}>Grills</option>
+                <option value="drinks" {% if current_category == 'drinks' %}selected{% endif %}>Drinks</option>
+                <option value="dessert" {% if current_category == 'dessert' %}selected{% endif %}>Dessert</option>
+                <option value="others" {% if current_category == 'others' %}selected{% endif %}>Others</option>
+            </select>
+        </div>
+
+        <div class="menu-filter" style="justify-content:flex-start;margin-bottom:36px;overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px;">
+            <a href="?{% if current_sort %}sort={{ current_sort }}{% endif %}" class="filter-btn {% if not current_category %}active{% endif %}"><i class="bi bi-grid-fill"></i> All</a>
+            <a href="?category=rice{% if current_sort %}&sort={{ current_sort }}{% endif %}" class="filter-btn {% if current_category == 'rice' %}active{% endif %}"><i class="fas fa-bowl-rice"></i> Rice</a>
+            <a href="?category=swallow{% if current_sort %}&sort={{ current_sort }}{% endif %}" class="filter-btn {% if current_category == 'swallow' %}active{% endif %}"><i class="bi bi-egg-fried"></i> Swallow</a>
+            <a href="?category=soups{% if current_sort %}&sort={{ current_sort }}{% endif %}" class="filter-btn {% if current_category == 'soups' %}active{% endif %}"><i class="bi bi-cup-hot-fill"></i> Soups</a>
+            <a href="?category=small_chops{% if current_sort %}&sort={{ current_sort }}{% endif %}" class="filter-btn {% if current_category == 'small_chops' %}active{% endif %}"><i class="bi bi-egg-fried"></i> Small Chops</a>
+            <a href="?category=grills{% if current_sort %}&sort={{ current_sort }}{% endif %}" class="filter-btn {% if current_category == 'grills' %}active{% endif %}"><i class="bi bi-fire"></i> Grills</a>
+            <a href="?category=drinks{% if current_sort %}&sort={{ current_sort }}{% endif %}" class="filter-btn {% if current_category == 'drinks' %}active{% endif %}"><i class="bi bi-cup-straw"></i> Drinks</a>
+            <a href="?category=dessert{% if current_sort %}&sort={{ current_sort }}{% endif %}" class="filter-btn {% if current_category == 'dessert' %}active{% endif %}"><i class="bi bi-cake2"></i> Dessert</a>
+            <a href="?category=others{% if current_sort %}&sort={{ current_sort }}{% endif %}" class="filter-btn {% if current_category == 'others' %}active{% endif %}"><i class="bi bi-grid-fill"></i> Others</a>
+        </div>
+
+            <p style="font-size:14px;color:var(--text-muted);">Showing <strong style="color:var(--text)" id="result-count">{{ menu_items|length }}</strong> results</p>
+
+        <div class="menu-grid mt-5" id="menu-grid">
+            {% for item in menu_items %}
+                <div class="menu-card" data-category="{{ item.category }}" data-id="{{ item.id }}">
+                    <div class="menu-card-img" data-id="{{ item.id }}" data-bs-toggle="modal" data-bs-target="#qvModal-{{ item.id }}" style="cursor:pointer;">
+                        {% if item.image_url %}
+                            <img src="{{ item.image_url }}" alt="{{ item.name }}">
+                        {% else %}
+                        <div class="food-placeholder" st>
+                            {% if item.category == 'rice' %}
+                                <i class="bi bi-bowl-rice"></i>
+                            {% elif item.category == 'swallow' %}
+                                <i class="bi bi-egg-fried"></i>
+                            {% elif item.category == 'soups' %}
+                                <i class="bi bi-cup-hot-fill"></i>
+                            {% elif item.category == 'small_chops' %}
+                                <i class="bi bi-egg-fried"></i>
+                            {% elif item.category == 'grills' %}
+                                <i class="bi bi-fire"></i>
+                            {% elif item.category == 'drinks' %}
+                                <i class="bi bi-cup-straw"></i>
+                            {% elif item.category == 'dessert' %}
+                                <i class="bi bi-cake2"></i>
+                            {% elif item.category == 'others' %}
+                                <i class="bi bi-grid-fill"></i>
+                            {% else %}
+                                <i class="bi bi-grid-fill"></i>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        {% if item.is_featured %}
+                            <span class="menu-card-badge"><i class="bi bi-star-fill" style="font-size:0.6rem;margin-right:3px;"></i> Featured</span>
+                        {% endif %}
+                        {% if item.discount %}
+                            <span class="menu-card-discount bg-danger text-light">-{{ item.discount }}%</span>
+                        {% endif %}
+                        {% if not item.is_available %}
+                            <div class="unavailable-overlay">Currently Unavailable</div>
+                        {% endif %}
+                    </div>
+                    <div class="menu-card-body">
+                        <div class="name-row">
+                            <h4>{{ item.name }}</h4>
+                        </div>
+                    
+                        <div class="menu-card-meta">
+                            <div class="star-rating" data-item-id="{{ item.id }}" data-rating="{{ item.rating|floatformat:1 }}">
+                                <i class="bi bi-star-fill" style="color:var(--warning);"></i>
+                                <strong class="rating-value">{{ item.rating|floatformat:1 }}</strong>
+                                <span class="rating-count">({{ item.orders_count }})</span>
+                            </div>
+                            {% if item.prep_time %}
+                                <div class="menu-time">
+                                    <i class="bi bi-clock"></i> {{ item.prep_time }} min
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="menu-card-footer">
+                            <span class="menu-price">
+                                {% if item.discount %}
+                                    ₦{{ item.discounted_price|default:item.price|intcomma }}
+                                    <small class="qv-old-price">₦{{ item.price|intcomma }}</small>
+                                {% else %}
+                                ₦{{ item.price|intcomma }}
+                                {% endif %}                              
+                            </span>
+
+                            
+                            <div class="footer-actions">
+                                <button class="fav-btn" onclick="event.stopPropagation();"><i class="bi bi-heart"></i></button>
+                                <button class="add-btn" onclick="event.stopPropagation(); quickView('{{ item.id }}')"><i class="bi bi-plus-lg"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                    <div class="modal fade" id="qvModal-{{ item.id }}" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title fw-bold">{{ item.name }}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body" style="padding:20px 24px;">
+                                    <div class="qv-img-wrap">
+                                        {% if item.image_url %}
+                                            <img src="{{ item.image_url }}" alt="{{ item.name }}" class="qv-img">
+                                        {% else %}
+                                            <div class="qv-placeholder">
+                                                <i class="bi bi-{% if item.category == 'rice' %}bowl-rice{% elif item.category == 'swallow' %}egg-fried{% elif item.category == 'soups' %}cup-hot-fill{% elif item.category == 'small_chops' %}egg-fried{% elif item.category == 'grills' %}fire{% elif item.category == 'drinks' %}cup-straw{% elif item.category == 'dessert' %}cake2{% elif item.category == 'others' %}grid-fill{% else %}grid-fill{% endif %}"></i>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="qv-stats">
+                                        <div class="qv-stat">
+                                            <i class="bi bi-star-fill" style="color:var(--warning);"></i>
+                                            <strong id="qv-rating-{{ item.id }}">{{ item.rating|floatformat:1 }}</strong>
+                                            <span style="color:var(--text-muted);">({{ item.orders_count }} orders)</span>
+                                        </div>
+                                        {% if item.prep_time %}
+                                        <div class="qv-stat">
+                                            <i class="bi bi-clock" style="color:var(--info);"></i>
+                                            <strong>{{ item.prep_time }} min</strong>
+                                        </div>
+                                        {% endif %}
+                                        {% if item.is_featured %}
+                                        <div class="qv-stat">
+                                            <i class="bi bi-patch-check-fill" style="color:var(--primary);"></i>
+                                            <strong>Featured</strong>
+                                        </div>
+                                        {% endif %}
+                                        <span class="badge"
+                                            style="background:var(--primary);font-size:.65rem;padding:3px 10px;border-radius:20px;white-space:nowrap;">
+                                            {{ item.get_category_display }}
+                                        </span>
+                                    </div>
+
+
+                                    {% if item.description %}
+                                        <p class="qv-desc">{{ item.description }}</p>
+                                    {% endif %}
+                                    {% if item.ingredients %}
+                                        <div class="qv-ingredients">
+                                            <small class="qv-label">Ingredients</small>
+                                            <p>{{ item.ingredients }}</p>
+                                        </div>
+                                    {% endif %}
+                                    <div class="qv-info-row">
+                                        <div class="qv-info-item">
+                                            <span class="qv-label">Price</span>
+                                            {% if item.discount %}
+                                                <div class="qv-price">₦{{ item.discounted_price|default:item.price|intcomma }}</div>
+                                                <span class="qv-old-price">₦{{ item.price|intcomma }}</span>
+                                            {% else %}
+                                                <div class="qv-price">₦{{ item.price|intcomma }}</div>
+                                            {% endif %}
+                                        </div>
+                                        {% if item.prep_time %}
+                                        <div class="qv-info-item">
+                                            <span class="qv-label">Prep Time</span>
+                                            <strong><i class="bi bi-clock" style="color:var(--info);"></i> {{ item.prep_time }} min</strong>
+                                        </div>
+                                        {% endif %}
+                                        <div class="qv-info-item">
+                                            <span class="qv-label">Rating</span>
+                                            <div class="star-rating" data-item-id="{{ item.id }}" data-rating="{{ item.rating|floatformat:1 }}" style="justify-content:center;">
+                                                <i class="bi bi-star-fill" style="color:var(--warning);"></i>
+                                                <strong class="rating-value">{{ item.rating|floatformat:1 }}</strong>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    {% if not item.is_available %}
+                                        <div style="background: #ef444414;border:1px solid #ef444433; border-radius:var(--radius-sm);padding:10px 14px;display:flex;align-items:center;gap:8px;font-size:14px;color:var(--danger);">
+                                            <i class="bi bi-exclamation-circle-fill"></i> This item is currently unavailable
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="modal-footer">
+                                    {% if item.is_available %}
+                                        <button class="btn-add-cart" onclick="event.stopPropagation(); quickView('{{ item.id }}')" data-bs-dismiss="modal">
+                                            <i class="bi bi-bag-plus-fill"></i> Add to Cart
+                                        </button> 
+                                    {% else %}
+                                        <button class="btn-add-cart" disabled style="opacity:.5;cursor:not-allowed;">
+                                            <i class="bi bi-slash-circle"></i> Unavailable
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+            {% empty %}
+                <div style="grid-column: 1/-1; text-align: center; padding: 60px 20px; color: var(--text-muted);">
+                    <div style="font-size: 3rem; margin-bottom: 16px;"><i class="bi bi-egg-fried"></i></div>
+                    <h4 style="color: var(--text);">No items found</h4>
+                    <p>No menu items available in this category right now.</p>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 48px;">
+            <button class="btn btn-outline btn-sm" disabled><i class="bi bi-chevron-left"></i></button>
+            <button class="btn btn-primary btn-sm">1</button>
+            <button class="btn btn-outline btn-sm">2</button>
+            <button class="btn btn-outline btn-sm">3</button>
+            <button class="btn btn-outline btn-sm"><i class="bi bi-chevron-right"></i></button>
+        </div>
+    </div>
+</section>
+
+<button id="back-to-top" title="Back to top"><i class="bi bi-arrow-up-short"></i></button>
+
+
+
+
+<!-- Bootstrap JS is loaded by includes/base.html -->
+
+<script src="{% static 'js/main.js' %}"></script>
+<script src="{% static 'js/cart.js' %}"></script>
+
+<script>
+    // Initialize AOS
+    AOS.init({
+        duration: 1000,
+        once: true,
+        offset: 100
+    });
+</script>
+<script src="{% static 'aos/aos.js' %}"></script>
+
+<script>
+window.quickView = function(itemId) {
+    var csrf = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+    fetch('/add_to_cart/' + itemId, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': csrf,
+            'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'item_id=' + itemId
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.status === 'success') {
+            document.querySelectorAll('.cart-count').forEach(function(el) {
+                el.textContent = data.cart_count;
+                el.style.display = data.cart_count > 0 ? 'flex' : 'none';
+            });
+            var t = document.createElement('div');
+            t.className = 'alert alert-success alert-dismissible fade show';
+            t.style.cssText = 'position:fixed;top:20px;right:20px;z-index:99999;min-width:300px;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,0.15);';
+            t.innerHTML = 'Item added to cart!<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+            document.body.appendChild(t);
+            setTimeout(function(){ t.remove(); }, 4000);
+        }
+    })
+    .catch(function() {
+        var t = document.createElement('div');
+        t.className = 'alert alert-danger alert-dismissible fade show';
+        t.style.cssText = 'position:fixed;top:20px;right:20px;z-index:99999;min-width:300px;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,0.15);';
+        t.innerHTML = 'Error adding to cart<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+        document.body.appendChild(t);
+        setTimeout(function(){ t.remove(); }, 4000);
+    });
+};
+</script>
+
+{% endblock content %}

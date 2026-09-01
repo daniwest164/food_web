@@ -1,0 +1,474 @@
+{% extends "includes/admin_base.html" %}
+{% load static %}
+{% load humanize %}
+{% block title %} Admin Notifications{% endblock title %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+<link rel="stylesheet" href="{% static 'css/responsive.css' %}">
+<link rel="stylesheet" href="{% static 'css/admin.css' %}">
+
+<style>
+.card-box {
+    background: var(--card-bg);
+    border-radius: 16px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .3)
+}
+
+.notif-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 18px 24px;
+    border-bottom: 1px solid var(--border);
+    transition: background .15s;
+    position: relative;
+    cursor: pointer
+}
+
+.notif-item:last-child { border-bottom: none }
+.notif-item:hover { background: var(--bg-2) }
+.notif-item.unread { background: var(--card-bg-2) }
+
+.notif-item.unread::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: var(--primary);
+    border-radius: 0 3px 3px 0
+}
+
+.notif-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .95rem;
+    flex-shrink: 0
+}
+
+.notif-title { font-weight: 500; font-size: .88rem; margin-bottom: 3px; color: var(--text) }
+.notif-body { font-size: .8rem; color: var(--text-muted); line-height: 1.45 }
+.notif-time { font-size: .72rem; color: var(--text-muted); margin-top: 5px; display: flex; align-items: center; gap: 4px }
+.notif-actions { margin-left: auto; display: flex; gap: 6px; align-items: center; flex-shrink: 0 }
+
+.notif-btn {
+    width: 28px; height: 28px; border-radius: 6px;
+    border: 1px solid var(--border); background: var(--bg-2); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .72rem; color: var(--text-muted); transition: all .2s
+}
+
+.notif-btn:hover { border-color: var(--primary); color: var(--primary) }
+
+.filter-bar {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 10px
+}
+
+.filter-tabs { display: flex; gap: 4px }
+
+.ftab {
+    padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border);
+    background: transparent; font-size: .78rem; cursor: pointer; color: var(--text-muted);
+    transition: all .2s; font-family: 'DM Sans', sans-serif
+}
+
+.ftab.active, .ftab:hover { background: var(--primary); color: #fff; border-color: var(--primary) }
+
+.mark-all {
+    padding: 7px 14px; border: 1px solid var(--border); border-radius: 8px;
+    background: var(--bg-2); font-size: .78rem; cursor: pointer; color: var(--text-muted);
+    display: flex; align-items: center; gap: 6px; transition: all .2s; font-family: 'DM Sans', sans-serif
+}
+
+.mark-all:hover { border-color: #28a745; color: #28a745 }
+
+.card-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border)
+}
+
+.card-header h5 { font-family: 'Syne', sans-serif; font-weight: 700; font-size: .95rem; margin: 0; color: var(--text) }
+.card-header p { font-size: .78rem; color: var(--text-muted); margin: 4px 0 0 }
+.card-body { padding: 24px }
+
+.form-label {
+    font-size: .78rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .6px; color: var(--text-muted); display: block; margin-bottom: 7px
+}
+
+.form-input {
+    width: 100%; padding: 10px 14px; border: 1px solid var(--border);
+    border-radius: 9px; font-size: .88rem; font-family: 'DM Sans', sans-serif;
+    color: var(--text); outline: none; transition: border .2s;
+    background: var(--bg-2)
+}
+
+.form-input:focus { border-color: var(--primary) }
+.form-input.textarea { min-height: 80px; resize: vertical }
+
+.form-control {
+    width: 100%; padding: 10px 14px; border: 1px solid var(--border);
+    border-radius: 9px; font-size: .88rem; font-family: 'DM Sans', sans-serif;
+    color: var(--text); outline: none; background: var(--bg-2); cursor: pointer
+}
+
+.btn-send {
+    padding: 10px 24px; background: var(--primary); color: #fff;
+    border: none; border-radius: 9px; font-size: .88rem; font-weight: 500;
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+    display: inline-flex; align-items: center; gap: 8px; transition: background .2s
+}
+
+.btn-send:hover { background: var(--primary-dark) }
+
+.unread-count {
+    background: var(--primary); color: #fff; font-size: .68rem;
+    font-weight: 700; padding: 2px 7px; border-radius: 20px; margin-left: 6px
+}
+
+.topbar-actions { position: relative }
+
+/* ---- Notification Dropdown ---- */
+.notif-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 360px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.5);
+    display: none;
+    z-index: 1000;
+    overflow: hidden
+}
+.notif-dropdown.open { display: block }
+.notif-dropdown-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between
+}
+.notif-dropdown-header .fw-bold { font-size: .9rem; color: var(--text) }
+.notif-dropdown-body { max-height: 320px; overflow-y: auto }
+.notif-dd-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+    transition: background .15s;
+    text-decoration: none;
+    cursor: pointer
+}
+.notif-dd-item:last-child { border-bottom: none }
+.notif-dd-item:hover { background: var(--bg-2) }
+.notif-dd-item.unread { background: var(--card-bg-2) }
+.notif-dd-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .85rem; flex-shrink: 0
+}
+.notif-dd-text { flex: 1; min-width: 0 }
+.notif-dd-title { font-size: .82rem; font-weight: 500; color: var(--text); margin-bottom: 2px }
+.notif-dd-time { font-size: .7rem; color: var(--text-muted) }
+.notif-dropdown-footer {
+    display: block;
+    padding: 12px 20px;
+    text-align: center;
+    font-size: .8rem;
+    color: var(--primary);
+    text-decoration: none;
+    border-top: 1px solid var(--border);
+    font-weight: 500;
+    transition: background .15s
+}
+.notif-dropdown-footer:hover { background: var(--bg-2) }
+</style>
+
+<div class="admin-main">
+    <div class="admin-topbar">
+        <div>
+            <h1>Notifications Settings</h1>
+            <p class="text-muted small mb-0"><a href="/dashboard">Dashboard</a> / Notifications</p>
+        </div>
+        <div class="topbar-search">
+            <i class="bi bi-search"></i>
+            <form action="" method="post">
+                {% csrf_token %}
+                <input type="text" name="search_name" id="search_name" placeholder="Search customers by name or email...">
+            </form>
+        </div>
+
+        <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+        <script src="https://code.jquery.com/ui/1.13.3/jquery-ui.min.js"></script>
+        <link href="https://code.jquery.com/ui/1.13.3/themes/base/jquery-ui.css" rel="stylesheet">
+
+        <script>
+            $(function () {
+                var get_name = [
+                    {% for each_name in get_all_users %}
+                     "{{ each_name.name }}",
+                {% endfor %}
+                ];
+            $("#search_name").autocomplete({ source: get_name });
+              });
+        </script>
+
+        <div class="topbar-actions">
+            <a href="{% url 'export_customers_csv' %}" class="btn btn-ghost btn-sm" id="export-btn"><i class="bi bi-download"></i> Export</a>
+            <div class="topbar-icon-btn bell" id="notifBell"><i class="bi bi-bell-fill"></i><div class="notif-dot"></div></div>
+            <!-- Notification Dropdown -->
+            <div class="notif-dropdown" id="notifDropdown">
+                <div class="notif-dropdown-header">
+                    <span class="fw-bold">Notifications</span>
+                    <span class="unread-count">6</span>
+                </div>
+                <div class="notif-dropdown-body">
+                    <a href="/notifications" class="notif-dd-item unread">
+                        <div class="notif-dd-icon" style="background:rgba(255,75,43,.1);color:var(--primary)"><i class="fa-solid fa-user-plus"></i></div>
+                        <div class="notif-dd-text">
+                            <div class="notif-dd-title">New User Registration</div>
+                            <div class="notif-dd-time">2 min ago</div>
+                        </div>
+                    </a>
+                    <a href="/notifications" class="notif-dd-item unread">
+                        <div class="notif-dd-icon" style="background:rgba(255,179,71,.2);color:#c87800"><i class="fa-solid fa-store"></i></div>
+                        <div class="notif-dd-text">
+                            <div class="notif-dd-title">New Restaurant Application</div>
+                            <div class="notif-dd-time">18 min ago</div>
+                        </div>
+                    </a>
+                    <a href="/notifications" class="notif-dd-item">
+                        <div class="notif-dd-icon" style="background:rgba(40,167,69,.1);color:#28a745"><i class="fa-solid fa-circle-check"></i></div>
+                        <div class="notif-dd-text">
+                            <div class="notif-dd-title">Order Delivered</div>
+                            <div class="notif-dd-time">2 hours ago</div>
+                        </div>
+                    </a>
+                    <a href="/notifications" class="notif-dd-item">
+                        <div class="notif-dd-icon" style="background:rgba(111,66,193,.1);color:#6f42c1"><i class="fa-solid fa-motorcycle"></i></div>
+                        <div class="notif-dd-text">
+                            <div class="notif-dd-title">Rider Flagged</div>
+                            <div class="notif-dd-time">3 hours ago</div>
+                        </div>
+                    </a>
+                </div>
+                <a href="/notifications" class="notif-dropdown-footer">View all notifications</a>
+            </div>
+            <div class="topbar-icon-btn fw-bold px-3" style="width:auto;" id="admin-clock">--:--</div>
+        </div>
+    </div>
+
+    <div class="admin-content">
+        <div class="row g-3">
+            <!-- Notification Feed -->
+            <div class="col-lg-7">
+                <div class="card-box">
+                    <div class="filter-bar">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="fw-bold" style="font-family:'Syne',sans-serif;font-size:.95rem">All Notifications</span>
+                            <span class="unread-count" id="notifCount">{{ notifications|length }}</span>
+                        </div>
+                        <div class="d-flex gap-2 align-items-center flex-wrap">
+                            <div class="filter-tabs">
+                                <button class="ftab active" onclick="filterNotif(this,'all')">All</button>
+                                <button class="ftab" onclick="filterNotif(this,'unread')">Unread</button>
+                                <button class="ftab" onclick="filterNotif(this,'system')">System</button>
+                            </div>
+                            <button class="mark-all" onclick="markAllRead()"><i class="fa-solid fa-check-double"></i> Mark all read</button>
+                        </div>
+                    </div>
+
+                    <!-- Notifications -->
+                    {% for notif in notifications %}
+                    <div class="notif-item {% if not notif.is_read %}unread{% endif %}" data-type="{{ notif.notification_type }}" data-id="{{ notif.id }}">
+                        <div class="notif-icon" style="background:{% if notif.notification_type == 'system' %}rgba(255,75,43,.1);color:var(--primary){% else %}rgba(255, 102, 0,0.12);color:var(--primary){% endif %}">
+                            {% if notif.notification_type == 'system' %}<i class="fa-solid fa-gear"></i>{% else %}<i class="fa-solid fa-bullhorn"></i>{% endif %}
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="notif-title">{{ notif.title }}</div>
+                            <div class="notif-body">{{ notif.body }}</div>
+                            <div class="notif-time"><i class="fa-regular fa-clock"></i> {{ notif.created_at|timesince }} ago {% if notif.notification_type == 'system' %}&middot; <span style="color:var(--primary)">System</span>{% else %}&middot; {{ notif.get_target_audience_display }}{% endif %}</div>
+                        </div>
+                        <div class="notif-actions">
+                            {% if not notif.is_read %}<button class="notif-btn" onclick="markReadDb({{ notif.id }}, this)" title="Mark read"><i class="fa-solid fa-check"></i></button>{% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+
+                </div>
+            </div>
+
+            <!-- Send Push Notification + Preferences -->
+            <div class="col-lg-5 d-flex flex-column gap-3">
+
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="card-box">
+                        <div class="card-header">
+                            <h5>Send Push Notification</h5>
+                            <p>Broadcast to users, vendors, or riders</p>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label">Target Audience</label>
+                                <select name="notif_audience" class="form-control">
+                                    <option value="all">All Users</option>
+                                    <option value="customers">Customers Only</option>
+                                    <option value="vendors">Vendors Only</option>
+                                    <option value="riders">Riders Only</option>
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Notification Title</label>
+                                <input name="notif_title" class="form-input" type="text" placeholder="e.g. Weekend Flash Sale!" required />
+                            </div>
+                            <div class="mb-4">
+                                <label class="form-label">Message Body</label>
+                                <textarea name="notif_body" class="form-input textarea" placeholder="Write your message here..." required></textarea>
+                            </div>
+                            <button type="submit" class="btn-send w-100 justify-content-center"><i class="fa-solid fa-paper-plane"></i> Send Notification</button>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="card-box">
+                    <div class="card-header">
+                        <h5>Admin Preferences</h5>
+                        <p>Choose what alerts you receive</p>
+                    </div>
+                    <div class="card-body py-3 px-4">
+                        <div class="d-flex flex-column">
+                            <div class="d-flex justify-content-between align-items-center py-3 border-bottom">
+                                <div style="font-size:.85rem;font-weight:500">New User Sign-ups</div>
+                                <div class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center py-3 border-bottom">
+                                <div style="font-size:.85rem;font-weight:500">Failed Payments</div>
+                                <div class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center py-3 border-bottom">
+                                <div style="font-size:.85rem;font-weight:500">Restaurant Applications</div>
+                                <div class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center py-3 border-bottom">
+                                <div style="font-size:.85rem;font-weight:500">Low Rider Ratings</div>
+                                <div class="toggle-switch"><input type="checkbox"><span class="toggle-slider"></span></div>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center py-3">
+                                <div style="font-size:.85rem;font-weight:500">System Alerts</div>
+                                <div class="toggle-switch"><input type="checkbox" checked><span class="toggle-slider"></span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.toggle-switch { position: relative; width: 44px; height: 24px; flex-shrink: 0 }
+.toggle-switch input { opacity: 0; width: 0; height: 0 }
+.toggle-slider { position: absolute; inset: 0; background: var(--text-dim); border-radius: 24px; cursor: pointer; transition: .3s }
+.toggle-slider::before { content: ''; position: absolute; width: 18px; height: 18px; left: 3px; bottom: 3px; background: var(--text); border-radius: 50%; transition: .3s }
+.toggle-switch input:checked+.toggle-slider { background: var(--primary) }
+.toggle-switch input:checked+.toggle-slider::before { transform: translateX(20px) }
+</style>
+
+<script>
+    function filterNotif(btn, filter) {
+        document.querySelectorAll('.ftab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.notif-item').forEach(function(item) {
+            if (filter === 'all') {
+                item.style.display = '';
+            } else if (filter === 'unread') {
+                item.style.display = (item.getAttribute('data-type') === 'system' && item.classList.contains('unread')) ? '' : 'none';
+            } else if (filter === 'system') {
+                item.style.display = item.getAttribute('data-type') === 'manual' ? '' : 'none';
+            }
+        });
+    }
+
+    function markAllRead() {
+        fetch('/mark_notification_read/', { method: 'POST', headers: {'X-CSRFToken': '{{ csrf_token }}'} })
+            .then(function() {
+                document.querySelectorAll('.notif-item.unread').forEach(function(item) {
+                    item.classList.remove('unread');
+                    var btn = item.querySelector('.notif-btn');
+                    if (btn) btn.remove();
+                });
+            });
+        document.getElementById('notifCount').textContent = '0';
+    }
+
+    function markRead(btn) {
+        var item = btn.closest('.notif-item');
+        item.classList.remove('unread');
+        btn.remove();
+    }
+
+    function dismissNotif(btn) {
+        var item = btn.closest('.notif-item');
+        item.style.display = 'none';
+    }
+
+    function markReadDb(id, btn) {
+        var item = btn.closest('.notif-item');
+        fetch('/mark_notification_read/', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRFToken': '{{ csrf_token }}'},
+            body: 'id=' + id
+        }).then(function() {
+            item.classList.remove('unread');
+            btn.remove();
+        });
+    }
+
+    // Notification dropdown toggle
+    document.addEventListener('DOMContentLoaded', function() {
+        var bell = document.getElementById('notifBell');
+        var dd = document.getElementById('notifDropdown');
+        if (bell && dd) {
+            bell.addEventListener('click', function(e) {
+                e.stopPropagation();
+                dd.classList.toggle('open');
+            });
+            document.addEventListener('click', function(e) {
+                if (!dd.contains(e.target) && !bell.contains(e.target)) {
+                    dd.classList.remove('open');
+                }
+            });
+        }
+    });
+</script>
+
+
+<script src="{% static 'js/main.js' %}"></script>
+<script src="{% static 'js/admin.js' %}"></script>
+
+<script src="{% static 'aos/aos.js' %}"></script>
+<script>
+    // Initialize AOS
+    AOS.init({
+        duration: 1000,
+        once: true,
+        offset: 100
+    });
+</script>
+{% endblock content %}

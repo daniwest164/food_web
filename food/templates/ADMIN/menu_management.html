@@ -1,0 +1,1000 @@
+{% extends "includes/admin_base.html" %}
+{% load static %}
+{% load humanize %}
+{% block title %} Menu Management {% endblock title %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+<link rel="stylesheet" href="{% static 'css/responsive.css' %}">
+<link rel="stylesheet" href="{% static 'css/admin.css' %}">
+
+<style>
+.menu-item-cell {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.menu-thumb {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    object-fit: cover;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: var(--bg);
+}
+
+.menu-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.menu-item-info .title {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--secondary-color);
+    line-height: 1.3;
+}
+
+.menu-item-info .subtitle {
+    font-size: 0.72rem;
+    color: var(--gray-color);
+    margin-top: 2px;
+    max-width: 220px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.badge-cat {
+    background: rgba(220, 53, 45, 0.08);
+    color: var(--primary);
+    border-radius: 50px;
+    padding: 4px 14px;
+    font-size: 0.73rem;
+    font-weight: 600;
+    white-space: nowrap;
+    display: inline-block;
+}
+
+.price-cell {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--secondary-color);
+}
+
+.price-cell .original {
+    font-weight: 400;
+    font-size: 0.75rem;
+    color: var(--gray-color);
+    text-decoration: line-through;
+    margin-left: 4px;
+}
+
+.badge-discount {
+    background: rgba(220, 53, 45, 0.1);
+    color: #dc3545;
+    border-radius: 50px;
+    padding: 3px 10px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    display: inline-block;
+}
+
+.badge-featured {
+    background: #fff8e1;
+    color: #f59e0b;
+    border-radius: 50px;
+    padding: 3px 10px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.badge-available {
+    background: #e8f5e9;
+    color: #2e7d32;
+    border-radius: 50px;
+    padding: 3px 10px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.badge-unavailable {
+    background: #fbe9e7;
+    color: #c62828;
+    border-radius: 50px;
+    padding: 3px 10px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.prep-cell {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.orders-cell {
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--secondary-color);
+}
+
+.date-cell {
+    font-size: 0.78rem;
+    color: var(--gray-color);
+}
+
+.action-btns {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.action-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 7px;
+    border: 1px solid var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .78rem;
+    transition: all .2s;
+    text-decoration: none;
+}
+
+.action-btn.view {
+    color: #0d6efd;
+}
+
+.action-btn.view:hover {
+    background: #0d6efd14;
+    border-color: #0d6efd;
+}
+
+.action-btn.edit {
+    color: var(--warning);
+}
+
+.action-btn.edit:hover {
+    background: #0d6efd14;
+    border-color: var(--warning);
+}
+
+.action-btn.del {
+    color: var(--danger);
+}
+
+.action-btn.del:hover {
+    background: #0d6efd14;
+    border-color: var(--danger);
+}
+
+.action-btn.print {
+    color: #28a745;
+}
+
+.action-btn.print:hover {
+    background: #28a74514;
+    border-color: #28a745;
+}
+
+.action-divider {
+    width: 1px;
+    height: 22px;
+    background: var(--border);
+    flex-shrink: 0;
+}
+
+.filter-btn {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 50px;
+    padding: 6px 16px;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-muted);
+}
+
+.filter-btn:hover {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+}
+
+.filter-btn.active {
+    background: var(--primary);
+    color: #fff;
+    border-color: var(--primary);
+    box-shadow: 0 2px 8px rgba(var(--primary-rgb), 0.3);
+}
+</style>
+
+<div class="admin-main">
+    <div class="admin-topbar">
+        <div>
+            <h1>Menu Management</h1>
+            <p style="font-size: 12px; color: var(--text-muted);">Add, edit and manage all your food items</p>
+        </div>
+        <div class="topbar-search"><i class="bi bi-search"></i>
+            <form method="get">
+                <input type="text" name="q" placeholder="Search menu items..." value="{{ request.GET.q }}" />
+            </form>
+        </div>
+
+        <div class="topbar-actions">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addMenuModal">
+                <i class="bi bi-plus-circle-fill"></i> Add New Item
+            </button>
+            <div class="topbar-icon-btn bell"><i class="bi bi-bell-fill"></i>
+                <div class="notif-dot"></div>
+            </div>
+            <div class="topbar-icon-btn" style="font-size:13px;font-weight:700;width:auto;padding:0 12px;"
+                id="admin-clock">
+                --:--</div>
+        </div>
+    </div>
+
+    <div class="admin-content">
+        {% if messages %}
+            <div style="margin-bottom:16px;">
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="stats-grid" style="margin-bottom:24px;">
+            <div class="stat-card">
+                <div class="stat-card-top">
+                    <div class="stat-icon orange"><i class="bi bi-grid-fill"></i></div>
+                </div>
+                <div class="stat-num">{{ total_items }}</div>
+                <div class="stat-label">Total Items</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-top">
+                    <div class="stat-icon green"><i class="bi bi-check-circle-fill"></i></div>
+                </div>
+                <div class="stat-num">{{ in_stock }}</div>
+                <div class="stat-label">In Stock</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-top">
+                    <div class="stat-icon red"><i class="bi bi-x-circle-fill"></i></div>
+                </div>
+                <div class="stat-num">{{ out_of_stock }}</div>
+                <div class="stat-label">Out of Stock</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-top">
+                    <div class="stat-icon yellow"><i class="bi bi-star-fill"></i></div>
+                </div>
+                <div class="stat-num">{{ avg_rating|floatformat:1 }}</div>
+                <div class="stat-label">Avg Item Rating</div>
+            </div>
+        </div>
+
+        <div class="menu-filter-bar" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:20px;">
+            <button class="filter-btn {% if not current_category %}active{% endif %}" onclick="location.href='?{% if current_sort %}sort={{ current_sort }}{% endif %}'">
+                <i class="bi bi-grid-fill"></i> All Items
+            </button>
+            <button class="filter-btn {% if current_category == 'rice' %}active{% endif %}" onclick="location.href='?category=rice{% if current_sort %}&sort={{ current_sort }}{% endif %}'">
+                <i class="fas fa-bowl-rice"></i> Rice
+            </button>
+            <button class="filter-btn {% if current_category == 'swallow' %}active{% endif %}" onclick="location.href='?category=swallow{% if current_sort %}&sort={{ current_sort }}{% endif %}'">
+                <i class="bi bi-egg-fried"></i> Swallow
+            </button>
+            <button class="filter-btn {% if current_category == 'soups' %}active{% endif %}" onclick="location.href='?category=soups{% if current_sort %}&sort={{ current_sort }}{% endif %}'">
+                <i class="bi bi-cup-hot-fill"></i> Soups
+            </button>
+            <button class="filter-btn {% if current_category == 'small_chops' %}active{% endif %}" onclick="location.href='?category=small_chops{% if current_sort %}&sort={{ current_sort }}{% endif %}'">
+                <i class="bi bi-egg-fried"></i> Small Chops
+            </button>
+            <button class="filter-btn {% if current_category == 'grills' %}active{% endif %}" onclick="location.href='?category=grills{% if current_sort %}&sort={{ current_sort }}{% endif %}'">
+                <i class="bi bi-fire"></i> Grills
+            </button>
+            <button class="filter-btn {% if current_category == 'drinks' %}active{% endif %}" onclick="location.href='?category=drinks{% if current_sort %}&sort={{ current_sort }}{% endif %}'">
+                <i class="bi bi-cup-straw"></i> Drinks
+            </button>
+            <button class="filter-btn {% if current_category == 'dessert' %}active{% endif %}" onclick="location.href='?category=dessert{% if current_sort %}&sort={{ current_sort }}{% endif %}'">
+                <i class="bi bi-cake2"></i> Dessert
+            </button>
+            <button class="filter-btn {% if current_category == 'others' %}active{% endif %}" onclick="location.href='?category=others{% if current_sort %}&sort={{ current_sort }}{% endif %}'">
+                <i class="bi bi-grid-fill"></i> Others
+            </button>
+
+            <div style="margin-left:auto;display:flex;gap:8px;">
+                <select class="form-control" style="width:160px;font-size:0.82rem;" onchange="location.href='?{% if current_category %}category={{ current_category }}&{% endif %}sort='+this.value">
+                    <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>Sort: Newest First</option>
+                    <option value="oldest" {% if current_sort == 'oldest' %}selected{% endif %}>Sort: Oldest First</option>
+                    <option value="price_low" {% if current_sort == 'price_low' %}selected{% endif %}>Price: Low → High</option>
+                    <option value="price_high" {% if current_sort == 'price_high' %}selected{% endif %}>Price: High → Low</option>
+                    <option value="name_asc" {% if current_sort == 'name_asc' %}selected{% endif %}>Name: A → Z</option>
+                    <option value="name_desc" {% if current_sort == 'name_desc' %}selected{% endif %}>Name: Z → A</option>
+                    <option value="orders" {% if current_sort == 'orders' %}selected{% endif %}>Most Orders</option>
+                </select>
+                <a href="{% url 'export_menu_csv' %}?{% if current_category %}category={{ current_category }}&{% endif %}{% if current_sort %}sort={{ current_sort }}{% endif %}" class="btn btn-success btn-sm" id="exportCsvBtn" style="border-radius:7px;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;padding:6px 14px;font-size:0.82rem;">
+                    <i class="bi bi-download"></i> Export CSV
+                </a>
+            </div>
+        </div>
+
+        <div class="chart-card" style="padding: 0;">
+            <div class="table-wrap" style="border: none; border-radius: var(--radius-lg);">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Image</th>
+                            <th>Menu Item</th>
+                            <th>Description</th>
+                            <th>Category</th>
+                            <th>Price</th>
+                            <th>Discount</th>
+                            <th>Prep Time</th>
+                            <th>Status</th>
+                            <th>Rating</th>
+                            <th>Orders</th>
+                            <th>Added</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody style="text-align: center !important;" id="menuBody">
+                        {% for item in menu_items %}
+                        <tr>
+                            <td style="font-weight:600;color:var(--text-muted);">{{ forloop.counter }}</td>
+                            <td>
+                                {% if item.image_url %}
+                                <img src="{{ item.image_url }}" alt="{{ item.name }}" class="menu-thumb placeholder">
+                                {% else %}
+                                <img src="{% static 'image/default.jpg' %}" alt="No Image" class="menu-thumb placeholder">
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="menu-item-cell">
+                                    <div class="menu-item-info">
+                                        <div class="title">{{ item.name }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                {% if item.description %}
+                                    <div class="subtitle">{{ item.description|truncatechars:50 }}</div>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge-cat">{{ item.get_category_display }}</span>
+                            </td>
+                            <td class="price-cell">₦{{ item.price|intcomma }}</td>
+                            <td>
+                                {% if item.discount %}
+                                    <span class="badge-discount">-{{ item.discount }}%</span>
+                                {% else %}
+                                    <span style="color:var(--text-muted);font-size:0.78rem;">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if item.prep_time %}
+                                <span class="prep-cell">
+                                    <i class="far fa-clock"></i> {{ item.prep_time }}m
+                                </span>
+                                {% else %}
+                                <span style="color:var(--text-muted);font-size:0.78rem;">—</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div style="display:flex;gap:4px;align-items:center;justify-content:center;flex-wrap:wrap;">
+                                    {% if item.is_available %}
+                                        <span class="badge-available">&#10003; Available</span>
+                                    {% else %}
+                                        <span class="badge-unavailable">&#10007; Unavailable</span>
+                                    {% endif %}
+                                    {% if item.is_featured %}
+                                        <span class="badge-featured">&#9733; Featured</span>
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                <span style="display:inline-flex;align-items:center;gap:4px;font-weight:600;font-size:0.85rem;">
+                                    <i class="bi bi-star-fill" style="color:#f59e0b;font-size:0.8rem;"></i>
+                                    {{ item.rating|floatformat:1 }}
+                                </span>
+                            </td>
+                            <td class="orders-cell">{{ item.orders_count }}</td>
+                            <td class="date-cell">{{ item.date_added|date:"M j, Y" }}</td>
+                            <td>
+                                <div class="action-btns">
+                                    <div class="form-check form-switch" style="margin:0;padding-left:20px;min-height:auto;">
+                                        <input class="form-check-input toggle-available" type="checkbox"
+                                            style="width:28px;height:16px;margin-left:-20px;"
+                                            data-item-id="{{ item.id }}"
+                                            {% if item.is_available %}checked{% endif %}
+                                            title="Toggle availability">
+                                    </div>
+                                    <span class="action-divider"></span>
+                                    <button class="action-btn view" title="View" data-bs-toggle="modal"
+                                        data-bs-target="#viewMenuModal{{ item.id }}"><i class="fas fa-eye"></i></button>
+                                    <button class="action-btn edit" title="Edit" data-bs-toggle="modal"
+                                        data-bs-target="#editMenuModal{{ item.id }}"><i class="fas fa-pen"></i></button>
+                                    <button class="action-btn del" title="Delete"
+                                        onclick="confirmDelete('{{ item.id }}', '{{ item.name|escapejs }}')"><i class="fas fa-trash"></i></button>
+                                    <button class="action-btn print" title="Print Receipt" onclick="printReceipt('{{ item.id }}')"><i class="fas fa-print"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="10" style="padding: 40px; color: var(--text-muted);">
+                                No menu items found. Click "Add New Item" to get started.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+
+                    <style>
+                        table th {
+                            text-align: center !important;
+                        }
+
+                        table td,
+                        table th {
+                            min-width: max-content;
+                            text-wrap: nowrap;
+                        }
+                    </style>
+                </table>
+            </div>
+
+            <div
+                style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-top:1px solid var(--border);flex-wrap:wrap;gap:12px;">
+                <span style="font-size:13px;color:var(--text-muted);">Showing {{ menu_items|length }} of {{ total_items }} items</span>
+                <div style="display: flex;gap:6px;">
+                    <button class="btn btn-outline btn-sm" disabled><i class="bi bi-chevron-left"></i></button>
+                    <button class="btn btn-primary btn-sm">1</button>
+                    <button class="btn btn-outline btn-sm">2</button>
+                    <button class="btn btn-outline btn-sm">3</button>
+                    <button class="btn btn-outline btn-sm"><i class="bi bi-chevron-right"></i></button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+<!--  MODAL: ADD NEW MENU ITEM (redesigned - edit styling) -->
+<div class="modal fade" id="addMenuModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content" style="border:none;border-radius:20px;overflow:hidden;background:#fff;">
+            <!-- Image header -->
+            <div
+                style="padding:20px 24px;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between;">
+                <h5 style="font-weight:700;font-size:18px;margin:0;color:#111;">
+                    <i class="fas fa-edit" style="color:var(--primary);margin-right:10px;"></i>Add Menu Item
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" enctype="multipart/form-data" action="{% url 'add_menu_item' %}" id="addMenuForm">
+                {% csrf_token %}
+                <div class="modal-body" style="padding:20px 24px 0;max-height:60vh;overflow-y:auto;">
+                    <!-- Image upload -->
+                    <div style="margin-bottom:20px;">
+                        <label style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:6px;display:block;">Item Image</label>
+                        <div class="upload-zone" onclick="document.getElementById('imgUpload').click()" style="border-radius:12px;padding:28px 20px;cursor:pointer;border:2px dashed #ddd;background:#fafafa;text-align:center;transition:border-color .2s;" onmouseover="this.style.borderColor='#ff6600'" onmouseout="this.style.borderColor='#ddd'">
+                            <i class="fas fa-cloud-upload-alt" style="font-size:32px;color:#bbb;"></i>
+                            <h5 style="font-size:14px;font-weight:600;color:#555;margin:8px 0 4px;">Click to upload or drag & drop</h5>
+                            <small style="color:#999;">PNG, JPG up to 5MB</small>
+                            <input type="file" id="imgUpload" name="image" accept="image/*" hidden onchange="previewImg(this)">
+                            <img id="imgPreview" src="" alt=""
+                                style="display:none;width:100%;max-height:140px;object-fit:cover;border-radius:10px;margin-top:12px;">
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:4px;display:block;">Item Name <span style="color:#dc3545;">*</span></label>
+                            <input type="text" name="name" class="form-control" placeholder="e.g. Jollof Rice" required
+                                style="border-radius:10px;border:1px solid #e0e0e0;padding:10px 14px;font-size:14px;">
+                        </div>
+                        <div class="col-md-6">
+                            <label style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:4px;display:block;">Category <span style="color:#dc3545;">*</span></label>
+                            <select name="category" class="form-control " required
+                                style="border-radius:10px;border:1px solid #e0e0e0;padding:10px 14px;font-size:14px;">
+                                <option value="">Select</option>
+                                <option value="rice">Rice</option>
+                                <option value="swallow">Swallow</option>
+                                <option value="soups">Soups</option>
+                                <option value="small_chops">Small Chops</option>
+                                <option value="grills">Grills</option>
+                                <option value="drinks">Drinks</option>
+                                <option value="dessert">Dessert</option>
+                                <option value="others">Others</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:4px;display:block;">Price (₦) <span style="color:#dc3545;">*</span></label>
+                            <input type="number" name="price" class="form-control" placeholder="0.00" min="0" step="0.01" required
+                                style="border-radius:10px;border:1px solid #e0e0e0;padding:10px 14px;font-size:14px;">
+                        </div>
+                        <div class="col-md-4">
+                            <label style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:4px;display:block;">Discount (%)</label>
+                            <input type="number" name="discount" class="form-control" placeholder="0" min="0" max="100"
+                                style="border-radius:10px;border:1px solid #e0e0e0;padding:10px 14px;font-size:14px;">
+                        </div>
+                        <div class="col-md-4">
+                            <label style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:4px;display:block;">Prep Time (mins)</label>
+                            <input type="number" name="prep_time" class="form-control" placeholder="e.g. 20" min="1"
+                                style="border-radius:10px;border:1px solid #e0e0e0;padding:10px 14px;font-size:14px;">
+                        </div>
+                        <div class="col-12">
+                            <label style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:4px;display:block;">Description</label>
+                            <textarea name="description" class="form-control" rows="3" placeholder="Describe this dish..."
+                                style="border-radius:10px;border:1px solid #e0e0e0;padding:10px 14px;font-size:14px;resize:vertical;"></textarea>
+                        </div>
+                        <div class="col-12">
+                            <label style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:4px;display:block;">Ingredients (comma-separated)</label>
+                            <input type="text" name="ingredients" class="form-control" placeholder="e.g. rice, tomatoes, chicken, spices"
+                                style="border-radius:10px;border:1px solid #e0e0e0;padding:10px 14px;font-size:14px;">
+                        </div>
+                        <div class="col-6" style="padding-bottom:8px;">
+                            <div style="display:flex;align-items:center;gap:10px;background:#f9f9f9;border-radius:10px;padding:10px 16px;border:1px solid #eee;">
+                                <div style="width:36px;height:36px;border-radius:8px;background:#e8f5e9;display:flex;align-items:center;justify-content:center;color:#2e7d32;font-size:16px;"><i class="fas fa-check-circle"></i></div>
+                                <div style="flex:1;">
+                                    <div style="font-size:13px;font-weight:600;color:#333;">Available</div>
+                                    <div style="font-size:11px;color:#888;">Show on menu</div>
+                                </div>
+                                <div class="form-check form-switch" style="margin:0;padding:0;min-height:auto;">
+                                    <input class="form-check-input" type="checkbox" name="is_available" id="isAvailable" checked
+                                        style="width:36px;height:20px;cursor:pointer;">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6" style="padding-bottom:8px;">
+                            <div style="display:flex;align-items:center;gap:10px;background:#f9f9f9;border-radius:10px;padding:10px 16px;border:1px solid #eee;">
+                                <div style="width:36px;height:36px;border-radius:8px;background:#fff8e1;display:flex;align-items:center;justify-content:center;color:#f59e0b;font-size:16px;"><i class="fas fa-star"></i></div>
+                                <div style="flex:1;">
+                                    <div style="font-size:13px;font-weight:600;color:#333;">Featured</div>
+                                    <div style="font-size:11px;color:#888;">Highlight on menu</div>
+                                </div>
+                                <div class="form-check form-switch" style="margin:0;padding:0;min-height:auto;">
+                                    <input class="form-check-input" type="checkbox" name="is_featured" id="isFeatured"
+                                        style="width:36px;height:20px;cursor:pointer;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div style="padding:16px 24px 20px;border-top:1px solid #eee;display:flex;gap:10px;justify-content:flex-end;">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal"
+                        style="border-radius:50px;font-size:.87rem;padding:8px 24px;border:1px solid #ddd;font-weight:600;">Cancel</button>
+                    <button type="submit"
+                        style="background:#ff6600;color:#fff;border:none;border-radius:50px;font-size:.87rem;padding:8px 24px;font-weight:600;display:inline-flex;align-items:center;gap:6px;cursor:pointer;transition:background .2s;"
+                        onmouseover="this.style.background='#e65c00'" onmouseout="this.style.background='#ff6600'">
+                        <i class="fas fa-save"></i> Save Menu Item
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!--  MODALS: VIEW MENU ITEM (one per item) -->
+{% for item in menu_items %}
+<div class="modal fade" id="viewMenuModal{{ item.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:480px;">
+        <div class="modal-content" style="border:none;border-radius:20px;overflow:hidden;background:#fff;">
+            <!-- Image header -->
+            <div style="position:relative;height:200px;background:#f5f5f5;">
+                {% if item.image_url %}
+                <img src="{{ item.image_url }}" alt="{{ item.name }}"
+                    style="width:100%;height:100%;object-fit:cover;">
+                {% else %}
+                <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:60px;color:#ccc;">
+                    <i class="fas fa-utensils"></i>
+                </div>
+                {% endif %}
+                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                    style="position:absolute;top:14px;right:14px;background:rgba(0,0,0,.5);border-radius:50%;padding:8px;filter:invert(1);opacity:.8;"></button>
+                {% if item.is_featured %}
+                <span style="position:absolute;top:14px;left:14px;background:#f59e0b;color:#fff;font-size:11px;font-weight:700;padding:4px 12px;border-radius:50px;">
+                    <i class="fas fa-star" style="font-size:10px;"></i> Featured
+                </span>
+                {% endif %}
+            </div>
+
+            <!-- Body -->
+            <div style="padding:20px 24px 0;">
+                <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+                    <div>
+                        <h4 style="font-weight:700;font-size:20px;margin:0;color:#111;">{{ item.name }}</h4>
+                        <span style="font-size:12px;color:#888;">{{ item.get_category_display }}</span>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-size:24px;font-weight:700;color:var(--primary);">₦{{ item.price|intcomma }}</div>
+                        {% if item.discount %}
+                        <span style="font-size:12px;color:#dc3545;font-weight:600;">-{{ item.discount }}% off</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Stats chips -->
+                <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">
+                    {% if item.prep_time %}
+                    <span style="background:#f0f0f0;border-radius:50px;padding:4px 14px;font-size:12px;color:#555;display:inline-flex;align-items:center;gap:4px;">
+                        <i class="far fa-clock" style="color:var(--info);"></i> {{ item.prep_time }} min
+                    </span>
+                    {% endif %}
+                    <span style="background:#f0f0f0;border-radius:50px;padding:4px 14px;font-size:12px;color:#555;display:inline-flex;align-items:center;gap:4px;">
+                        <i class="fas fa-shopping-bag" style="color:var(--primary);"></i> {{ item.orders_count }} orders
+                    </span>
+                    <span style="background:#f0f0f0;border-radius:50px;padding:4px 14px;font-size:12px;color:#555;display:inline-flex;align-items:center;gap:4px;">
+                        <i class="fas fa-star" style="color:#f59e0b;"></i> {{ item.rating|floatformat:1 }}
+                    </span>
+                    {% if item.is_available %}
+                    <span style="background:#e8f5e9;border-radius:50px;padding:4px 14px;font-size:12px;color:#2e7d32;font-weight:600;display:inline-flex;align-items:center;gap:4px;">
+                        <i class="fas fa-check-circle"></i> Available
+                    </span>
+                    {% else %}
+                    <span style="background:#fbe9e7;border-radius:50px;padding:4px 14px;font-size:12px;color:#c62828;font-weight:600;display:inline-flex;align-items:center;gap:4px;">
+                        <i class="fas fa-times-circle"></i> Unavailable
+                    </span>
+                    {% endif %}
+                </div>
+
+                <!-- Description -->
+                {% if item.description %}
+                <div style="margin-bottom:14px;">
+                    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:4px;">Description</div>
+                    <p style="font-size:14px;color:#444;line-height:1.7;margin:0;">{{ item.description }}</p>
+                </div>
+                {% endif %}
+
+                <!-- Ingredients -->
+                {% if item.ingredients %}
+                <div style="margin-bottom:16px;">
+                    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:4px;">Ingredients</div>
+                    <p style="font-size:13px;color:#666;line-height:1.6;margin:0;">{{ item.ingredients }}</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Footer -->
+            <div style="padding: 16px 24px 20px; border-top: 1px solid #eee; display: flex; gap: 10px;">
+                <button class="btn btn-dark" data-bs-dismiss="modal"
+                    style="border-radius:50px;font-size:.87rem;padding:8px 20px;margin-left:auto;">Close</button>
+            </div>
+        </div>  
+    </div>
+</div>
+
+<!--  PRINT RECEIPT MODAL -->
+<div class="modal fade" id="printModal{{ item.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:380px;">
+        <div class="modal-content" style="border:none;border-radius:16px;overflow:hidden;background:#faf8f5;">
+            <div class="receipt-content" style="padding:0;">
+                <!-- Receipt body -->
+                <div style="padding:20px 24px 16px;text-align:center;position:relative;overflow:hidden;">
+                    <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:52px;font-weight:900;color:#ddd;white-space:nowrap;letter-spacing:8px;pointer-events:none;opacity:.2;">PRIME DISH</div>
+                    <h4 style="font-weight:700;margin:0 0 2px;color:#222;font-size:18px;position:relative;z-index:1;">{{ item.name }}</h4>
+                    <div style="font-size:12px;color:#888;margin-bottom:14px;">{{ item.get_category_display }}</div>
+
+                    {% if item.image_url %}
+                    <img src="{{ item.image_url }}" alt="{{ item.name }}"
+                        style="width:100%;max-height:140px;object-fit:cover;border-radius:8px;margin-bottom:14px;border:1px solid #eee;">
+                    {% endif %}
+
+                    <!-- Dotted line separator -->
+                    <div style="border-top:1px dashed #ccc;margin-bottom:12px;"></div>
+
+                    <!-- Price line (big) -->
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                        <span style="font-size:13px;color:#666;font-weight:500;">PRICE</span>
+                        <span style="font-size:22px;font-weight:800;color:#ff6600;">₦{{ item.price|intcomma }}</span>
+                    </div>
+
+                    <div style="border-top:1px dashed #ccc;margin-bottom:10px;"></div>
+
+                    <!-- Detail rows -->
+                    {% if item.discount %}
+                    <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;">
+                        <span style="color:#888;">Discount</span>
+                        <span style="color:#dc3545;font-weight:600;">-{{ item.discount }}%</span>
+                    </div>
+                    {% endif %}
+
+                    {% if item.prep_time %}
+                    <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;">
+                        <span style="color:#888;">Prep Time</span>
+                        <span style="color:#444;">{{ item.prep_time }} mins</span>
+                    </div>
+                    {% endif %}
+
+                    <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;">
+                        <span style="color:#888;">Rating</span>
+                        <span style="color:#f59e0b;font-weight:600;">{{ item.rating|floatformat:1 }} <i class="fas fa-star" style="font-size:9px;"></i></span>
+                    </div>
+
+                    <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;">
+                        <span style="color:#888;">Orders</span>
+                        <span style="color:#444;font-weight:600;">{{ item.orders_count }}</span>
+                    </div>
+
+                    {% if item.description %}
+                    <div style="border-top:1px dashed #ccc;margin:12px 0 10px;"></div>
+                    <div style="text-align:left;">
+                        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#999;margin-bottom:4px;">Description</div>
+                        <p style="font-size:12px;color:#555;line-height:1.6;margin:0;">{{ item.description }}</p>
+                    </div>
+                    {% endif %}
+
+                    {% if item.ingredients %}
+                    <div style="border-top:1px dashed #ccc;margin:12px 0 10px;"></div>
+                    <div style="text-align:left;">
+                        <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#999;margin-bottom:4px;">Ingredients</div>
+                        <p style="font-size:12px;color:#555;line-height:1.6;margin:0;">{{ item.ingredients }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <div style="padding:8px 24px 4px;text-align:center;border-top:1px dashed #ccc;margin:0 24px;">
+                    <div style="font-size:10px;color:#aaa;letter-spacing:2px;font-weight:700;">{% now "M j, Y" %}</div>
+                </div>
+            </div>
+            <div style="padding:0 24px 20px;display:flex;gap:10px;justify-content:center;">
+                <button class="btn btn-success" onclick="window.print()"
+                    style="border-radius:50px;font-size:.87rem;padding:8px 24px;display:inline-flex;align-items:center;gap:6px;"><i class="fas fa-print"></i> Print</button>
+                <button class="btn btn-light" data-bs-dismiss="modal"
+                    style="border-radius:50px;font-size:.87rem;padding:8px 24px;border:1px solid #ddd;">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+
+<!--  MODALS: EDIT MENU ITEM (redesigned, one per item) -->
+{% for item in menu_items %}
+<div class="modal fade" id="editMenuModal{{ item.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content" style="border:none;border-radius:20px;overflow:hidden;background:#fff;">
+            <!-- Header -->
+            <div style="padding:20px 24px;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between;">
+                <h5 style="font-weight:700;font-size:18px;margin:0;color:#111;">
+                    <i class="fas fa-edit" style="color:var(--primary);margin-right:10px;"></i>Edit Menu Item
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" enctype="multipart/form-data" action="{% url 'edit_menu_item' item.id %}">
+                {% csrf_token %}
+                <div class="modal-body" style="padding:20px 24px 0;max-height:60vh;overflow-y:auto;">
+                    <!-- Image upload -->
+                    <div style="margin-bottom:20px;">
+                        <label style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:6px;display:block;">Item Image</label>
+                        <div class="upload-zone" onclick="document.getElementById('editImgUpload{{ item.id }}').click()" style="border-radius:12px;padding:28px 20px;cursor:pointer;border:2px dashed #ddd;background:#fafafa;text-align:center;transition:border-color .2s;" onmouseover="this.style.borderColor='#ff6600'" onmouseout="this.style.borderColor='#ddd'">
+                            <i class="fas fa-cloud-upload-alt" style="font-size:32px;color:#bbb;"></i>
+                            <h5 style="font-size:14px;font-weight:600;color:#555;margin:8px 0 4px;">Click to upload or drag & drop</h5>
+                            <small style="color:#999;">PNG, JPG up to 5MB</small>
+                            <input type="file" id="editImgUpload{{ item.id }}" name="image" accept="image/*" hidden
+                                onchange="previewImg(this, 'editImgPreview{{ item.id }}')">
+                            <img id="editImgPreview{{ item.id }}" src="{{ item.image_url }}" alt=""
+                                style="{% if not item.image_url %}display:none;{% endif %}width:100%;max-height:140px;object-fit:cover;border-radius:10px;margin-top:12px;">
+                        </div>
+                    </div>
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:4px;display:block;">Item Name <span style="color:#dc3545;">*</span></label>
+                            <input type="text" name="name" class="form-control" value="{{ item.name }}" required
+                                style="border-radius:10px;border:1px solid #e0e0e0;padding:10px 14px;font-size:14px;">
+                        </div>
+                        <div class="col-md-6">
+                            <label style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:4px;display:block;">Category <span style="color:#dc3545;">*</span></label>
+                            <select name="category" class="form-control " required
+                                style="border-radius:10px;border:1px solid #e0e0e0;padding:10px 14px;font-size:14px;">
+                                <option value="rice" {% if item.category == 'rice' %}selected{% endif %}>Rice</option>
+                                <option value="swallow" {% if item.category == 'swallow' %}selected{% endif %}>Swallow</option>
+                                <option value="soups" {% if item.category == 'soups' %}selected{% endif %}>Soups</option>
+                                <option value="small_chops" {% if item.category == 'small_chops' %}selected{% endif %}>Small Chops</option>
+                                <option value="grills" {% if item.category == 'grills' %}selected{% endif %}>Grills</option>
+                                <option value="drinks" {% if item.category == 'drinks' %}selected{% endif %}>Drinks</option>
+                                <option value="dessert" {% if item.category == 'dessert' %}selected{% endif %}>Dessert</option>
+                                <option value="others" {% if item.category == 'others' %}selected{% endif %}>Others</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:4px;display:block;">Price (₦) <span style="color:#dc3545;">*</span></label>
+                            <input type="number" name="price" class="form-control" value="{{ item.price }}" step="0.01" required
+                                style="border-radius:10px;border:1px solid #e0e0e0;padding:10px 14px;font-size:14px;">
+                        </div>
+                        <div class="col-md-4">
+                            <label style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:4px;display:block;">Discount (%)</label>
+                            <input type="number" name="discount" class="form-control" value="{{ item.discount|default:'' }}" min="0" max="100"
+                                style="border-radius:10px;border:1px solid #e0e0e0;padding:10px 14px;font-size:14px;">
+                        </div>
+                        <div class="col-md-4">
+                            <label style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:4px;display:block;">Prep Time (mins)</label>
+                            <input type="number" name="prep_time" class="form-control" value="{{ item.prep_time|default:'' }}" min="1"
+                                style="border-radius:10px;border:1px solid #e0e0e0;padding:10px 14px;font-size:14px;">
+                        </div>
+                        <div class="col-12">
+                            <label style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:4px;display:block;">Description</label>
+                            <textarea name="description" class="form-control" rows="3"
+                                style="border-radius:10px;border:1px solid #e0e0e0;padding:10px 14px;font-size:14px;resize:vertical;">{{ item.description|default:'' }}</textarea>
+                        </div>
+                        <div class="col-12">
+                            <label style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:4px;display:block;">Ingredients (comma-separated)</label>
+                            <input type="text" name="ingredients" class="form-control"
+                                placeholder="e.g. rice, tomatoes, chicken, spices"
+                                value="{{ item.ingredients|default:'' }}"
+                                style="border-radius:10px;border:1px solid #e0e0e0;padding:10px 14px;font-size:14px;">
+                        </div>
+                        <div class="col-6" style="padding-bottom:8px;">
+                            <div style="display:flex;align-items:center;gap:10px;background:#f9f9f9;border-radius:10px;padding:10px 16px;border:1px solid #eee;">
+                                <div style="width:36px;height:36px;border-radius:8px;background:#e8f5e9;display:flex;align-items:center;justify-content:center;color:#2e7d32;font-size:16px;"><i class="fas fa-check-circle"></i></div>
+                                <div style="flex:1;">
+                                    <div style="font-size:13px;font-weight:600;color:#333;">Available</div>
+                                    <div style="font-size:11px;color:#888;">Show on menu</div>
+                                </div>
+                                <div class="form-check form-switch" style="margin:0;padding:0;min-height:auto;">
+                                    <input class="form-check-input" type="checkbox" name="is_available"
+                                        style="width:36px;height:20px;cursor:pointer;" {% if item.is_available %}checked{% endif %}>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6" style="padding-bottom:8px;">
+                            <div style="display:flex;align-items:center;gap:10px;background:#f9f9f9;border-radius:10px;padding:10px 16px;border:1px solid #eee;">
+                                <div style="width:36px;height:36px;border-radius:8px;background:#fff8e1;display:flex;align-items:center;justify-content:center;color:#f59e0b;font-size:16px;"><i class="fas fa-star"></i></div>
+                                <div style="flex:1;">
+                                    <div style="font-size:13px;font-weight:600;color:#333;">Featured</div>
+                                    <div style="font-size:11px;color:#888;">Highlight on menu</div>
+                                </div>
+                                <div class="form-check form-switch" style="margin:0;padding:0;min-height:auto;">
+                                    <input class="form-check-input" type="checkbox" name="is_featured"
+                                        style="width:36px;height:20px;cursor:pointer;" {% if item.is_featured %}checked{% endif %}>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div style="padding:16px 24px 20px;border-top:1px solid #eee;display:flex;gap:10px;justify-content:flex-end;">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal"
+                        style="border-radius:50px;font-size:.87rem;padding:8px 24px;border:1px solid #ddd;font-weight:600;">Cancel</button>
+                    <button type="submit"
+                        style="background:#ff6600;color:#fff;border:none;border-radius:50px;font-size:.87rem;padding:8px 24px;font-weight:600;display:inline-flex;align-items:center;gap:6px;cursor:pointer;transition:background .2s;"
+                        onmouseover="this.style.background='#e65c00'" onmouseout="this.style.background='#ff6600'">
+                        <i class="fas fa-save"></i> Update Item
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+
+<!--  MODAL: DELETE CONFIRM -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content text-center p-4"
+            style="border-radius:16px;border:none;box-shadow:0 10px 40px #00000033;">
+            <div style="font-size:3rem;margin-bottom:10px;">🗑️</div>
+            <h5 class="modal-title" id="deleteModalLabel" style="color:var(--secondary-color);font-weight:600;">Delete Menu Item?</h5>
+            <p style="font-size:.85rem;color:var(--gray-color);" id="deleteMessage">This action cannot be undone. The menu item will be permanently removed.</p>
+            <div class="d-flex gap-2 justify-content-center mt-3">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal"
+                    style="border-radius:50px;min-width:90px;font-size:.87rem;border:1px solid #dee2e6;">Cancel</button>
+                <a href="#" class="btn btn-danger confirm-delete-btn" id="confirmDeleteBtn"
+                    style="border-radius: 50px;min-width:90px;font-size:.87rem;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 2px 8px #dc35454d;">Delete</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<style media="print">
+    @page { margin: 0; size: auto; }
+    body * { visibility: hidden; }
+    .modal-backdrop { display: none !important; }
+    .modal.fade { display: block !important; opacity: 1 !important; position: fixed !important; top: 0; left: 0; right: 0; bottom: 0; background: transparent !important; }
+    .modal.fade .modal-dialog { transform: none !important; margin: auto; display: flex; align-items: center; min-height: 100vh; }
+    .receipt-content, .receipt-content * { visibility: visible; }
+    .receipt-content { width: 340px; margin: 0 auto; background: #faf8f5; border-radius: 0; box-shadow: none; }
+    .btn { display: none !important; }
+    .modal-content { box-shadow: none !important; border: none !important; background: transparent !important; }
+</style>
+
+<script>
+function printReceipt(itemId) {
+    var modal = new bootstrap.Modal(document.getElementById('printModal' + itemId));
+    modal.show();
+}
+
+function previewImg(input, imgId) {
+    imgId = imgId || 'imgPreview';
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = e => {
+            const img = document.getElementById(imgId);
+            img.src = e.target.result;
+            img.style.display = 'block';
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+function confirmDelete(itemId, itemName) {
+    document.getElementById('deleteMessage').textContent =
+        'Are you sure you want to delete "' + itemName + '"? This action cannot be undone.';
+    document.getElementById('confirmDeleteBtn').href = "{% url 'delete_menu_item' 0 %}".replace('0', itemId);
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    var exportBtn = document.getElementById('exportCsvBtn');
+    if (exportBtn) {
+        exportBtn.addEventListener('click', function () {
+            showToast('CSV file exported successfully!', 'success');
+        });
+    }
+
+    function showToast(message, type) {
+        type = type || 'success';
+        var toast = document.createElement('div');
+        toast.className = 'alert alert-' + type + ' alert-dismissible fade show';
+        toast.style.cssText = 'position:fixed;top:20px;right:20px;z-index:9999;min-width:300px;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,0.15);';
+        toast.innerHTML = message + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+        document.body.appendChild(toast);
+        setTimeout(function() { toast.remove(); }, 4000);
+    }
+
+    document.querySelectorAll('.toggle-available').forEach(function (checkbox) {
+        checkbox.addEventListener('change', function () {
+            var itemId = this.dataset.itemId;
+            fetch("{% url 'toggle_menu_item' 0 %}".replace('0', itemId), {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                }
+            }).then(function () {
+                location.reload();
+            });
+        });
+    });
+});
+</script>
+
+<script>
+    AOS.init({
+        duration: 1000,
+        once: true,
+        offset: 100
+    });
+</script>
+
+<script src="{% static 'aos/aos.js' %}"></script>
+
+{% endblock content %}

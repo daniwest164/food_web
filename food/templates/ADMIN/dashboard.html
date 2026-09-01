@@ -1,0 +1,262 @@
+{% extends "includes/admin_base.html" %}
+{% load static %}
+{% load humanize %}
+{% block title %} Admin Dashboard{% endblock title %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+<link rel="stylesheet" href="{% static 'css/responsive.css' %}">
+<link rel="stylesheet" href="{% static 'css/admin.css' %}">
+
+
+<!-- MAIN -->
+<div class="admin-main">
+  <!-- Top Bar -->
+  <div class="admin-topbar">
+    <div>
+      <h1>Dashboard</h1>
+      <p style="font-size:12px;color:var(--text-muted);margin-top:2px;">Welcome back, Admin! Here's what's happening
+        today.</p>
+    </div>
+    <div class="topbar-search">
+      <i class="bi bi-search"></i>
+      <input type="text" placeholder="Search orders, customers..." />
+    </div>
+    <div class="topbar-actions">
+      <div class="topbar-icon-btn bell" title="Notifications">
+        <i class="bi bi-bell-fill"></i>
+        <div class="notif-dot"></div>
+      </div>
+      <div class="topbar-icon-btn" title="Time" style="font-size:13px;font-weight:700;width:auto;padding:0 12px;"
+        id="admin-clock">--:--</div>
+      <a href="/logout" class="btn btn-outline btn-sm"><i class="bi bi-box-arrow-right"></i> Exit</a>
+    </div>
+  </div>
+
+  <!-- Content -->
+  <div class="admin-content">
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-card-top">
+          <div class="stat-icon orange"><i class="bi bi-bag-check-fill"></i></div>
+          <span class="stat-trend up"><i class="bi bi-arrow-up-right"></i> +12%</span>
+        </div>
+        <div class="stat-num" data-target="1248" data-prefix="">1,248</div>
+        <div class="stat-label">Total Orders</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-top">
+          <div class="stat-icon green"><i class="bi bi-currency-dollar"></i></div>
+          <span class="stat-trend up"><i class="bi bi-arrow-up-right"></i> +8%</span>
+        </div>
+        <div class="stat-num">₦2.4M</div>
+        <div class="stat-label">Total Revenue</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-top">
+          <div class="stat-icon blue"><i class="bi bi-people-fill"></i></div>
+          <span class="stat-trend up"><i class="bi bi-arrow-up-right"></i> +5%</span>
+        </div>
+        <div class="stat-num" data-target="156">156</div>
+        <div class="stat-label">New Customers</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-top">
+          <div class="stat-icon yellow"><i class="bi bi-star-fill"></i></div>
+          <span class="stat-trend up"><i class="bi bi-arrow-up-right"></i> +2%</span>
+        </div>
+        <div class="stat-num">4.8</div>
+        <div class="stat-label">Avg Rating</div>
+      </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="admin-charts">
+      <!-- Revenue Bar Chart -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <h3>Revenue Overview</h3>
+            <p>Monthly revenue breakdown</p>
+          </div>
+          <select class="chart-select">
+            <option>Last 6 Months</option>
+            <option>Last Year</option>
+            <option>This Year</option>
+          </select>
+        </div>
+        <div class="bar-chart" id="bar-chart" style="height:180px;align-items:flex-end;gap:12px;"></div>
+      </div>
+
+      <!-- Orders Donut Chart -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <h3>Orders Overview</h3>
+            <p>By category</p>
+          </div>
+        </div>
+        <div class="donut-chart-wrap" id="donut-chart-wrap">
+          <div class="donut-svg"></div>
+          <div class="donut-legend"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Grid -->
+    <div class="admin-bottom-grid">
+      <!-- Recent Orders -->
+      <div class="chart-card">
+        <div class="chart-header">
+          <div>
+            <h3>Recent Orders</h3>
+            <p>Latest 5 orders</p>
+          </div>
+          <a href="/order_management" class="btn btn-ghost btn-sm">View All <i class="bi bi-arrow-right"></i></a>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>Amount</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>#CHO-003421</strong></td>
+                <td>John Doe</td>
+                <td><strong style="color:var(--primary);">₦10,200</strong></td>
+                <td><span class="badge badge-info">Delivering</span></td>
+              </tr>
+              <tr>
+                <td><strong>#CHO-003420</strong></td>
+                <td>Amaka Obi</td>
+                <td><strong style="color:var(--primary);">₦5,500</strong></td>
+                <td><span class="badge badge-warning">Preparing</span></td>
+              </tr>
+              <tr>
+                <td><strong>#CHO-003419</strong></td>
+                <td>Jane Smith</td>
+                <td><strong style="color:var(--primary);">₦8,200</strong></td>
+                <td><span class="badge badge-success">Delivered</span></td>
+              </tr>
+              <tr>
+                <td><strong>#CHO-003418</strong></td>
+                <td>Mike Brown</td>
+                <td><strong style="color:var(--primary);">₦2,500</strong></td>
+                <td><span class="badge badge-success">Delivered</span></td>
+              </tr>
+              <tr>
+                <td><strong>#CHO-003417</strong></td>
+                <td>Grace Olotu</td>
+                <td><strong style="color:var(--primary);">₦14,000</strong></td>
+                <td><span class="badge badge-danger">Cancelled</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Top Selling + Quick Actions -->
+      <div style="display:flex;flex-direction:column;gap:20px;">
+        <!-- Top Selling Meals -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <h3>Top Selling Meals</h3>
+              <p>This month</p>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <span style="font-size:28px;">🍛</span>
+              <div style="flex:1;">
+                <div
+                  style="display:flex;justify-content:space-between;font-size:13px;font-weight:600;margin-bottom:4px;">
+                  <span>Jollof Rice &amp; Chicken</span><span style="color:var(--primary);">₦13</span></div>
+                <div style="height:6px;background:var(--bg-3);border-radius:3px;overflow:hidden;">
+                  <div style="height:100%;background:var(--primary);border-radius:3px;width:82%;"></div>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;">
+              <span style="font-size:28px;">🥩</span>
+              <div style="flex:1;">
+                <div
+                  style="display:flex;justify-content:space-between;font-size:13px;font-weight:600;margin-bottom:4px;">
+                  <span>Suya Platter</span><span style="color:var(--primary);">₦10</span></div>
+                <div style="height:6px;background:var(--bg-3);border-radius:3px;overflow:hidden;">
+                  <div style="height:100%;background:var(--primary);border-radius:3px;width:65%;"></div>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;">
+              <span style="font-size:28px;">🍗</span>
+              <div style="flex:1;">
+                <div
+                  style="display:flex;justify-content:space-between;font-size:13px;font-weight:600;margin-bottom:4px;">
+                  <span>Peppered Chicken</span><span style="color:var(--primary);">₦9</span></div>
+                <div style="height:6px;background:var(--bg-3);border-radius:3px;overflow:hidden;">
+                  <div style="height:100%;background:var(--primary);border-radius:3px;width:55%;"></div>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;">
+              <span style="font-size:28px;">🍱</span>
+              <div style="flex:1;">
+                <div
+                  style="display:flex;justify-content:space-between;font-size:13px;font-weight:600;margin-bottom:4px;">
+                  <span>Family Feast Combo</span><span style="color:var(--primary);">₦7</span></div>
+                <div style="height:6px;background:var(--bg-3);border-radius:3px;overflow:hidden;">
+                  <div style="height:100%;background:var(--primary);border-radius:3px;width:44%;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="chart-card">
+          <div class="chart-header">
+            <div>
+              <h3>Quick Actions</h3>
+            </div>
+          </div>
+          <div class="quick-actions-grid">
+            <a href="/menu_management" class="quick-action-btn"><i class="bi bi-plus-circle-fill"></i><span>Add Menu
+                Item</span></a>
+            <a href="/order_management" class="quick-action-btn"><i class="bi bi-bag-check-fill"></i><span>View
+                Orders</span></a>
+            <a href="#" class="quick-action-btn"><i class="bi bi-megaphone-fill"></i><span>Notification</span></a>
+            <a href="/customers" class="quick-action-btn"><i
+                class="bi bi-people-fill"></i><span>Customers</span></a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<script src="{% static 'js/main.js' %}"></script>
+<script src="{% static 'js/admin.js' %}"></script>
+
+ <script>
+        // Initialize AOS
+        AOS.init({
+            duration: 1000,
+            once: true,
+            offset: 100
+        });
+    </script>
+
+<script src="{% static 'aos/aos.js' %}"></script>
+  
+{% endblock content %}

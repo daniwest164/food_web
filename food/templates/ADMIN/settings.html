@@ -1,0 +1,583 @@
+{% extends "includes/admin_base.html" %}
+{% load static %}
+{% load humanize %}
+{% block title %} Admin Settings{% endblock title %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+<link rel="stylesheet" href="{% static 'css/responsive.css' %}">
+<link rel="stylesheet" href="{% static 'css/admin.css' %}">
+
+<style>
+.card-box {
+    background: var(--card-bg);
+    border-radius: 16px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .3);
+    overflow: hidden;
+    margin-bottom: 20px
+}
+
+.card-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between
+}
+
+.card-header h5 { font-family: 'Syne', sans-serif; font-weight: 700; font-size: .95rem; margin: 0; color: var(--text) }
+.card-header p { font-size: .78rem; color: var(--text-muted); margin: 4px 0 0 }
+.card-body { padding: 24px }
+
+.form-group { margin-bottom: 20px }
+.form-label {
+    font-size: .78rem; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .6px; color: var(--text-muted); display: block; margin-bottom: 7px
+}
+
+.form-input {
+    width: 100%; padding: 10px 14px; border: 1px solid var(--border);
+    border-radius: 9px; font-size: .88rem; font-family: 'DM Sans', sans-serif;
+    color: var(--text); outline: none; transition: border .2s, box-shadow .2s;
+    background: var(--bg-2)
+}
+
+.form-input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(255, 75, 43, .08) }
+.form-input.textarea { min-height: 90px; resize: vertical }
+
+.form-control {
+    width: 100%; padding: 10px 14px; border: 1px solid var(--border);
+    border-radius: 9px; font-size: .88rem; font-family: 'DM Sans', sans-serif;
+    color: var(--text); outline: none; background: var(--bg-2); cursor: pointer;
+    transition: border .2s
+}
+
+.form-control:focus { border-color: var(--primary) }
+.form-hint { font-size: .72rem; color: var(--text-muted); margin-top: 5px }
+
+.toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border)
+}
+
+.toggle-row:last-child { border-bottom: none }
+.toggle-label { font-size: .88rem; font-weight: 500; color: var(--text) }
+.toggle-desc { font-size: .75rem; color: var(--text-muted); margin-top: 2px }
+
+.toggle-switch { position: relative; width: 44px; height: 24px; flex-shrink: 0 }
+.toggle-switch input { opacity: 0; width: 0; height: 0 }
+.toggle-slider { position: absolute; inset: 0; background: var(--text-dim); border-radius: 24px; cursor: pointer; transition: .3s }
+.toggle-slider::before { content: ''; position: absolute; width: 18px; height: 18px; left: 3px; bottom: 3px; background: var(--text); border-radius: 50%; transition: .3s }
+.toggle-switch input:checked+.toggle-slider { background: var(--primary) }
+.toggle-switch input:checked+.toggle-slider::before { transform: translateX(20px) }
+
+.btn-save {
+    padding: 10px 24px; background: var(--primary); color: #fff;
+    border: none; border-radius: 9px; font-size: .88rem; font-weight: 500;
+    cursor: pointer; font-family: 'DM Sans', sans-serif;
+    display: inline-flex; align-items: center; gap: 8px; transition: background .2s
+}
+
+.btn-save:hover { background: var(--primary-dark) }
+
+.btn-cancel {
+    padding: 10px 20px; background: var(--bg-2); color: var(--text-muted);
+    border: 1px solid var(--border); border-radius: 9px;
+    font-size: .88rem; cursor: pointer; font-family: 'DM Sans', sans-serif;
+    transition: all .2s; margin-right: 8px
+}
+
+.btn-cancel:hover { border-color: var(--text-muted) }
+
+.settings-tabs {
+    display: flex; gap: 2px; background: var(--bg-2);
+    border-radius: 12px; padding: 4px; margin-bottom: 24px; flex-wrap: wrap
+}
+
+.stab {
+    padding: 8px 16px; border-radius: 9px; border: none;
+    background: transparent; font-size: .82rem; cursor: pointer;
+    color: var(--text-muted); font-family: 'DM Sans', sans-serif;
+    transition: all .2s; display: flex; align-items: center; gap: 7px
+}
+
+.stab.active { background: var(--card-bg); color: var(--text); font-weight: 500; box-shadow: 0 1px 4px rgba(0, 0, 0, .3) }
+.stab i { font-size: .8rem }
+
+.zone-tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 12px; background: var(--bg-2);
+    border-radius: 20px; font-size: .78rem; margin: 4px; color: var(--text-muted)
+}
+
+.zone-tag button { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: .7rem; padding: 0 }
+.zone-tag button:hover { color: var(--primary) }
+
+.topbar-actions { position: relative }
+
+/* ---- Notification Dropdown ---- */
+.notif-dropdown {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    width: 360px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,.5);
+    display: none;
+    z-index: 1000;
+    overflow: hidden
+}
+.notif-dropdown.open { display: block }
+.notif-dropdown-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between
+}
+.notif-dropdown-header .fw-bold { font-size: .9rem; color: var(--text) }
+.notif-dropdown-body { max-height: 320px; overflow-y: auto }
+.notif-dd-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+    transition: background .15s;
+    text-decoration: none;
+    cursor: pointer
+}
+.notif-dd-item:last-child { border-bottom: none }
+.notif-dd-item:hover { background: var(--bg-2) }
+.notif-dd-item.unread { background: var(--card-bg-2) }
+.notif-dd-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .85rem; flex-shrink: 0
+}
+.notif-dd-text { flex: 1; min-width: 0 }
+.notif-dd-title { font-size: .82rem; font-weight: 500; color: var(--text); margin-bottom: 2px }
+.notif-dd-time { font-size: .7rem; color: var(--text-muted) }
+.notif-dropdown-footer {
+    display: block;
+    padding: 12px 20px;
+    text-align: center;
+    font-size: .8rem;
+    color: var(--primary);
+    text-decoration: none;
+    border-top: 1px solid var(--border);
+    font-weight: 500;
+    transition: background .15s
+}
+.notif-dropdown-footer:hover { background: var(--bg-2) }
+</style>
+
+<div class="admin-main">
+    <div class="admin-topbar">
+        <div>
+            <h1>Site Settings</h1>
+            <p class="text-muted small mb-0"><a href="/dashboard">Dashboard</a> / Settings</p>
+        </div>
+        <div class="topbar-search">
+            <i class="bi bi-search"></i>
+            <form action="" method="post">
+                {% csrf_token %}
+                <input type="text" name="search_name" id="search_name" placeholder="Search customers by name or email...">
+            </form>
+        </div>
+
+        <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+        <script src="https://code.jquery.com/ui/1.13.3/jquery-ui.min.js"></script>
+        <link href="https://code.jquery.com/ui/1.13.3/themes/base/jquery-ui.css" rel="stylesheet">
+
+        <script>
+            $(function () {
+                var get_name = [
+                    {% for each_name in get_all_users %}
+                     "{{ each_name.name }}",
+                {% endfor %}
+                ];
+            $("#search_name").autocomplete({ source: get_name });
+              });
+        </script>
+
+        <div class="topbar-actions">
+            <a href="{% url 'export_customers_csv' %}" class="btn btn-ghost btn-sm" id="export-btn"><i class="bi bi-download"></i> Export</a>
+            <div class="topbar-icon-btn bell" id="notifBell"><i class="bi bi-bell-fill"></i><div class="notif-dot"></div></div>
+            <!-- Notification Dropdown -->
+            <div class="notif-dropdown" id="notifDropdown">
+                <div class="notif-dropdown-header">
+                    <span class="fw-bold">Notifications</span>
+                    <span class="unread-count">6</span>
+                </div>
+                <div class="notif-dropdown-body">
+                    <a href="/notifications" class="notif-dd-item unread">
+                        <div class="notif-dd-icon" style="background:rgba(255,75,43,.1);color:var(--primary)"><i class="fa-solid fa-user-plus"></i></div>
+                        <div class="notif-dd-text">
+                            <div class="notif-dd-title">New User Registration</div>
+                            <div class="notif-dd-time">2 min ago</div>
+                        </div>
+                    </a>
+                    <a href="/notifications" class="notif-dd-item unread">
+                        <div class="notif-dd-icon" style="background:rgba(255,179,71,.2);color:#c87800"><i class="fa-solid fa-store"></i></div>
+                        <div class="notif-dd-text">
+                            <div class="notif-dd-title">New Restaurant Application</div>
+                            <div class="notif-dd-time">18 min ago</div>
+                        </div>
+                    </a>
+                    <a href="/notifications" class="notif-dd-item">
+                        <div class="notif-dd-icon" style="background:rgba(40,167,69,.1);color:#28a745"><i class="fa-solid fa-circle-check"></i></div>
+                        <div class="notif-dd-text">
+                            <div class="notif-dd-title">Order Delivered</div>
+                            <div class="notif-dd-time">2 hours ago</div>
+                        </div>
+                    </a>
+                    <a href="/notifications" class="notif-dd-item">
+                        <div class="notif-dd-icon" style="background:rgba(111,66,193,.1);color:#6f42c1"><i class="fa-solid fa-motorcycle"></i></div>
+                        <div class="notif-dd-text">
+                            <div class="notif-dd-title">Rider Flagged</div>
+                            <div class="notif-dd-time">3 hours ago</div>
+                        </div>
+                    </a>
+                </div>
+                <a href="/notifications" class="notif-dropdown-footer">View all notifications</a>
+            </div>
+            <div class="topbar-icon-btn fw-bold px-3" style="width:auto;" id="admin-clock">--:--</div>
+        </div>
+    </div>
+
+    <div class="admin-content">
+
+        <div class="settings-tabs">
+            <button class="stab active" onclick="setTab(this,'general')"><i class="fa-solid fa-gear"></i> General</button>
+            <button class="stab" onclick="setTab(this,'payments')"><i class="fa-solid fa-credit-card"></i> Payments</button>
+            <button class="stab" onclick="setTab(this,'delivery')"><i class="fa-solid fa-motorcycle"></i> Delivery</button>
+            <button class="stab" onclick="setTab(this,'security')"><i class="fa-solid fa-shield-halved"></i> Security</button>
+        </div>
+
+        <!-- General Settings -->
+        <div id="tab-general">
+            <div class="card-box">
+                <div class="card-header">
+                    <div>
+                        <h5>General Information</h5>
+                        <p>Basic platform identity and contact details</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Platform Name</label>
+                                <input class="form-input" type="text" value="FoodHub Nigeria" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Support Email</label>
+                                <input class="form-input" type="email" value="support@foodhub.ng" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Support Phone</label>
+                                <input class="form-input" type="tel" value="+234 800 123 4567" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Default Currency</label>
+                                <select class="form-control">
+                                    <option selected>Nigerian Naira (₦)</option>
+                                    <option>US Dollar ($)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label class="form-label">Platform Description</label>
+                                <textarea class="form-input textarea">FoodHub connects thousands of food lovers across Lagos to their favourite local restaurants with fast, reliable delivery.</textarea>
+                                <div class="form-hint">Used in SEO meta tags and app store listings.</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-end mt-1">
+                        <button class="btn-cancel">Cancel</button>
+                        <button class="btn-save"><i class="fa-solid fa-floppy-disk"></i> Save Changes</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-box">
+                <div class="card-header">
+                    <div>
+                        <h5>Feature Toggles</h5>
+                        <p>Enable or disable platform features</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="toggle-row">
+                        <div>
+                            <div class="toggle-label">Maintenance Mode</div>
+                            <div class="toggle-desc">Put the platform in read-only maintenance mode</div>
+                        </div>
+                        <label class="toggle-switch"><input type="checkbox" /><span class="toggle-slider"></span></label>
+                    </div>
+                    <div class="toggle-row">
+                        <div>
+                            <div class="toggle-label">New User Registrations</div>
+                            <div class="toggle-desc">Allow new customers to sign up</div>
+                        </div>
+                        <label class="toggle-switch"><input type="checkbox" checked /><span class="toggle-slider"></span></label>
+                    </div>
+                    <div class="toggle-row">
+                        <div>
+                            <div class="toggle-label">New Restaurant Onboarding</div>
+                            <div class="toggle-desc">Allow restaurants to apply and join</div>
+                        </div>
+                        <label class="toggle-switch"><input type="checkbox" checked /><span class="toggle-slider"></span></label>
+                    </div>
+                    <div class="toggle-row">
+                        <div>
+                            <div class="toggle-label">Rider Applications</div>
+                            <div class="toggle-desc">Accept new delivery rider applications</div>
+                        </div>
+                        <label class="toggle-switch"><input type="checkbox" checked /><span class="toggle-slider"></span></label>
+                    </div>
+                    <div class="toggle-row">
+                        <div>
+                            <div class="toggle-label">Rating & Reviews</div>
+                            <div class="toggle-desc">Allow customers to leave ratings and reviews</div>
+                        </div>
+                        <label class="toggle-switch"><input type="checkbox" checked /><span class="toggle-slider"></span></label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card-box">
+                <div class="card-header">
+                    <div>
+                        <h5>Delivery Zones</h5>
+                        <p>Active cities and zones on the platform</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <span class="zone-tag">Lagos Island <button onclick="removeZone(this)"><i class="fa-solid fa-times"></i></button></span>
+                        <span class="zone-tag">Lekki <button onclick="removeZone(this)"><i class="fa-solid fa-times"></i></button></span>
+                        <span class="zone-tag">Victoria Island <button onclick="removeZone(this)"><i class="fa-solid fa-times"></i></button></span>
+                        <span class="zone-tag">Ikeja <button onclick="removeZone(this)"><i class="fa-solid fa-times"></i></button></span>
+                        <span class="zone-tag">Yaba <button onclick="removeZone(this)"><i class="fa-solid fa-times"></i></button></span>
+                        <span class="zone-tag">Surulere <button onclick="removeZone(this)"><i class="fa-solid fa-times"></i></button></span>
+                        <span class="zone-tag">Ajah <button onclick="removeZone(this)"><i class="fa-solid fa-times"></i></button></span>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <input class="form-input" type="text" placeholder="Add new zone..." style="max-width:240px" />
+                        <button class="btn-save" style="padding:9px 18px"><i class="fa-solid fa-plus"></i> Add</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payments Tab -->
+        <div id="tab-payments" style="display:none">
+            <div class="card-box">
+                <div class="card-header">
+                    <div>
+                        <h5>Payment Configuration</h5>
+                        <p>Set up payment gateways and commission rates</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Payment Gateway</label>
+                                <select class="form-control">
+                                    <option selected>Paystack</option>
+                                    <option>Flutterwave</option>
+                                    <option>Interswitch</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Platform Commission (%)</label>
+                                <input class="form-input" type="number" value="10" />
+                                <div class="form-hint">Percentage taken from each vendor order</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Minimum Order Amount (₦)</label>
+                                <input class="form-input" type="number" value="1000" />
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Delivery Fee Base (₦)</label>
+                                <input class="form-input" type="number" value="500" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="toggle-row mt-2">
+                        <div>
+                            <div class="toggle-label">Wallet Payments</div>
+                            <div class="toggle-desc">Allow customers to pay from FoodHub wallet</div>
+                        </div>
+                        <label class="toggle-switch"><input type="checkbox" checked /><span class="toggle-slider"></span></label>
+                    </div>
+                    <div class="toggle-row">
+                        <div>
+                            <div class="toggle-label">Bank Transfer</div>
+                            <div class="toggle-desc">Allow direct bank transfer as payment method</div>
+                        </div>
+                        <label class="toggle-switch"><input type="checkbox" checked /><span class="toggle-slider"></span></label>
+                    </div>
+                    <div class="toggle-row">
+                        <div>
+                            <div class="toggle-label">Cash on Delivery</div>
+                            <div class="toggle-desc">Allow customers to pay cash to rider</div>
+                        </div>
+                        <label class="toggle-switch"><input type="checkbox" /><span class="toggle-slider"></span></label>
+                    </div>
+                    <div class="d-flex justify-content-end mt-4">
+                        <button class="btn-cancel">Cancel</button>
+                        <button class="btn-save"><i class="fa-solid fa-floppy-disk"></i> Save Changes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delivery Tab -->
+        <div id="tab-delivery" style="display:none">
+            <div class="card-box">
+                <div class="card-header">
+                    <div>
+                        <h5>Delivery Settings</h5>
+                        <p>Configure delivery time windows and rider incentives</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <div class="form-group"><label class="form-label">Max Delivery Radius (km)</label><input class="form-input" type="number" value="15" /></div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group"><label class="form-label">Estimated Delivery Time (mins)</label><input class="form-input" type="number" value="35" /></div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group"><label class="form-label">Rider Base Pay per Delivery (₦)</label><input class="form-input" type="number" value="350" /></div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group"><label class="form-label">Peak Hour Bonus (%)</label><input class="form-input" type="number" value="20" />
+                                <div class="form-hint">Applied automatically 12PM–2PM and 6PM–8PM</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-end mt-2">
+                        <button class="btn-cancel">Cancel</button>
+                        <button class="btn-save"><i class="fa-solid fa-floppy-disk"></i> Save Changes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Security Tab -->
+        <div id="tab-security" style="display:none">
+            <div class="card-box">
+                <div class="card-header">
+                    <div>
+                        <h5>Security Settings</h5>
+                        <p>Admin access and authentication controls</p>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="toggle-row">
+                        <div>
+                            <div class="toggle-label">Two-Factor Authentication</div>
+                            <div class="toggle-desc">Require 2FA for all admin logins</div>
+                        </div>
+                        <label class="toggle-switch"><input type="checkbox" checked /><span class="toggle-slider"></span></label>
+                    </div>
+                    <div class="toggle-row">
+                        <div>
+                            <div class="toggle-label">Login Alerts</div>
+                            <div class="toggle-desc">Email alert on every new admin session</div>
+                        </div>
+                        <label class="toggle-switch"><input type="checkbox" checked /><span class="toggle-slider"></span></label>
+                    </div>
+                    <div class="toggle-row">
+                        <div>
+                            <div class="toggle-label">Auto Session Timeout</div>
+                            <div class="toggle-desc">Log out inactive sessions after 30 minutes</div>
+                        </div>
+                        <label class="toggle-switch"><input type="checkbox" checked /><span class="toggle-slider"></span></label>
+                    </div>
+                    <div class="row g-3 mt-3">
+                        <div class="col-md-6">
+                            <div class="form-group"><label class="form-label">New Password</label><input class="form-input" type="password" placeholder="Enter new password" /></div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group"><label class="form-label">Confirm Password</label><input class="form-input" type="password" placeholder="Confirm new password" /></div>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-end mt-1">
+                        <button class="btn-cancel">Cancel</button>
+                        <button class="btn-save"><i class="fa-solid fa-floppy-disk"></i> Save Changes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    function setTab(btn, tab) {
+        document.querySelectorAll('.stab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        ['general', 'payments', 'delivery', 'security'].forEach(t => document.getElementById('tab-' + t).style.display = 'none');
+        document.getElementById('tab-' + tab).style.display = 'block';
+    }
+    function removeZone(btn) { btn.parentElement.remove() }
+
+    // Notification dropdown toggle
+    document.addEventListener('DOMContentLoaded', function() {
+        var bell = document.getElementById('notifBell');
+        var dd = document.getElementById('notifDropdown');
+        if (bell && dd) {
+            bell.addEventListener('click', function(e) {
+                e.stopPropagation();
+                dd.classList.toggle('open');
+            });
+            document.addEventListener('click', function(e) {
+                if (!dd.contains(e.target) && !bell.contains(e.target)) {
+                    dd.classList.remove('open');
+                }
+            });
+        }
+    });
+</script>
+
+<script src="{% static 'js/main.js' %}"></script>
+<script src="{% static 'js/admin.js' %}"></script>
+
+<script src="{% static 'aos/aos.js' %}"></script>
+<script>
+    // Initialize AOS
+    AOS.init({
+        duration: 1000,
+        once: true,
+        offset: 100
+    });
+</script>
+
+{% endblock content %}

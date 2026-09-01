@@ -1,0 +1,799 @@
+{% extends "includes/admin_base.html" %}
+{% load static %}
+{% load humanize %}
+{% block title %} Order Management {% endblock title %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+<link rel="stylesheet" href="{% static 'css/responsive.css' %}">
+<link rel="stylesheet" href="{% static 'css/admin.css' %}">
+
+<style>
+.cust-cell { display: flex; align-items: center; gap: .6rem; }
+.cust-avatar {
+    width: 30px; height: 30px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent), #ff7043);
+    display: flex; align-items: center; justify-content: center;
+    font-size: .65rem; font-weight: 800; color: #fff; flex-shrink: 0;
+}
+.cust-name  { font-weight: 600; font-size: .83rem; }
+.cust-phone { font-size: .72rem; color: var(--sub); }
+
+.action-btns {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.action-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 7px;
+    border: 1px solid var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .78rem;
+    transition: all .2s;
+    text-decoration: none;
+}
+
+.action-btn.view {
+    color: #0d6efd;
+}
+
+.action-btn.view:hover {
+    background: #0d6efd14;
+    border-color: #0d6efd;
+}
+
+.action-btn.edit {
+    color: var(--warning);
+}
+
+.action-btn.edit:hover {
+    background: #0d6efd14;
+    border-color: var(--warning);
+}
+
+.action-btn.print {
+    color: #28a745;
+}
+
+.action-btn.print:hover {
+    background: #28a74514;
+    border-color: #28a745;
+}
+
+.action-btn.del {
+    color: var(--danger);
+}
+
+.action-btn.del:hover {
+    background: #0d6efd14;
+    border-color: var(--danger);
+}
+
+
+/* ── PRINT RECEIPT (hidden) ── */
+@media print {
+    body * { visibility:hidden; }
+    #receiptContent, #receiptContent * { visibility: visible; }
+    #receiptContent { position: fixed; top: 0; left: 0; width: 100%; padding: 20px; }
+}
+</style>
+
+<div class="admin-main">
+    <div class="admin-topbar">
+        <div>            
+            <h1>Orders</h1>
+            <p style="font-size: 12px; color: var(--text-muted);">Manage and update all customer orders</p>
+        </div>
+        <div class="topbar-search"><i class="bi bi-search"></i>
+            <form action="" method="post">
+                {% csrf_token %}
+                <input type="text" id="search_name" placeholder="Search by order ID or customer..." />
+            </form>
+        </div>
+
+        <!-- jQuery + jQuery UI via CDN -->
+        <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+        <script src="https://code.jquery.com/ui/1.13.3/jquery-ui.min.js"></script>
+        <link href="https://code.jquery.com/ui/1.13.3/themes/base/jquery-ui.css" rel="stylesheet">
+
+        <script>
+            $(function () {
+                var ids = [
+                    {% for order in orders %}
+                    "#{{ order.order_id }}",
+                    {% endfor %}
+                ];
+            $("#search_name").autocomplete({
+                source: ids
+            });
+            });
+        </script>
+
+        <div class="topbar-actions">
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addOrderModal">
+                <i class="bi bi-plus-circle-fill"></i> Add New Order
+            </button>
+            <button class="btn btn-ghost btn-sm" id="export-btn"><i class="bi bi-download"></i> Export</button>
+
+            <div class="topbar-icon-btn bell"><i class="bi bi-bell-fill"></i>
+                <div class="notif-dot"></div>
+            </div>
+            <div class="topbar-icon-btn" style="font-size:13px;font-weight:700;width:auto;padding:0 12px;"
+                id="admin-clock">
+                --:--</div>
+        </div>
+    </div>
+
+    <div class="admin-content">
+        <!-- Stats -->
+        <div class="stats-grid" style="margin-bottom:24px;">
+            <div class="stat-card">
+                <div class="stat-card-top">
+                    <div class="stat-icon orange"><i class="bi bi-list-check"></i></div>
+                </div>
+                <div class="stat-num">{{ total_orders|intcomma }}</div>
+                <div class="stat-label">Total Orders</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-top">
+                    <div class="stat-icon orange"><i class="bi bi-hourglass-split"></i></div>
+                </div>
+                <div class="stat-num">{{ pending_count|intcomma }}</div>
+                <div class="stat-label">Pending</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-top">
+                    <div class="stat-icon orange"><i class="bi bi-fire"></i></div>
+                </div>
+                <div class="stat-num">{{ preparing_count|intcomma }}</div>
+                <div class="stat-label">Preparing</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-top">
+                    <div class="stat-icon blue"><i class="bi bi-truck"></i></div>
+                </div>
+                <div class="stat-num">{{ delivering_count|intcomma }}</div>
+                <div class="stat-label">Delivering</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-top">
+                    <div class="stat-icon green"><i class="bi bi-check-circle-fill"></i></div>
+                </div>
+                <div class="stat-num">{{ delivered_count|intcomma }}</div>
+                <div class="stat-label">Delivered</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-top">
+                    <div class="stat-icon red"><i class="bi bi-x-circle-fill"></i></div>
+                </div>
+                <div class="stat-num">{{ cancelled_count|intcomma }}</div>
+                <div class="stat-label">Cancelled</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-top">
+                    <div class="stat-icon blue"><i class="bi bi-currency-dollar"></i></div>
+                </div>
+                <div class="stat-num">₦{{ revenue|floatformat:0|intcomma }}</div>
+                <div class="stat-label">Revenue</div>
+            </div>         
+        </div>
+
+        <!-- Toolbar -->
+        <div class="menu-mgmt-toolbar">
+            <div class="menu-mgmt-filters">
+                <button class="filter-btn active" data-cat="all">All</button>
+                <button class="filter-btn" data-cat="pending">Pending</button>
+                <button class="filter-btn" data-cat="preparing">Preparing</button>
+                <button class="filter-btn" data-cat="delivering">Delivering</button>
+                <button class="filter-btn" data-cat="delivered">Delivered</button>
+                <button class="filter-btn" data-cat="cancelled">Cancelled</button>
+            </div>
+            <div style="margin-left:auto;display:flex;gap:8px;">
+                <form method="GET" action="" id="orderSortForm" style="display:flex;gap:8px;">
+                    <select name="sort_by" class="form-control" style="width:160px;" onchange="document.getElementById('orderSortForm').submit()">
+                        <option value="">Sort: Default</option>
+                        <option value="newest" {% if request.GET.sort_by == 'newest' %}selected{% endif %}>Sort: Newest</option>
+                        <option value="oldest" {% if request.GET.sort_by == 'oldest' %}selected{% endif %}>Sort: Oldest</option>
+                        <option value="amount_high" {% if request.GET.sort_by == 'amount_high' %}selected{% endif %}>Sort: Amount High</option>
+                        <option value="amount_low" {% if request.GET.sort_by == 'amount_low' %}selected{% endif %}>Sort: Amount Low</option>
+                    </select>
+                </form>
+            </div>
+        </div>
+
+        <!-- Customers Table -->
+        <div class="chart-card" style="padding: 0;">
+            <div class="table-wrap" style="border: none; border-radius: var(--radius-lg);">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>S/N</th>
+                            <th>Order ID</th>
+                            <th>Customer</th>
+                            <th>Type</th>
+                            <th>Table / Address</th>
+                            <th>Items</th>
+                            <th>Total (₦)</th>
+                            <th>Category</th>
+                            <th>Payments</th>
+                            <th>Payments Method</th>
+                            <th>Status</th>
+                            <th>Date & Time</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody style="text-align: center !important;" id="menuBody">
+                        {% for order in orders %}
+                        <tr data-order-id="{{ order.order_id }}">
+                            <td>{{ forloop.counter }}</td>
+                            <td>#{{ order.order_id }}</td>
+                            <td>
+                                <div class="cust-cell">
+                                    <div class="cust-avatar">
+                                        {% if order.user.signup.passport %}
+                                        <img src="{{ order.user.signup.passport_url }}" alt="" width="40" height="40" class="rounded-circle">
+                                        {% else %}
+                                        <span>{{ order.user.username|first|upper }}</span>
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <div class="cust-name">{{ order.user.signup.name|default:order.user.username }}</div>
+                                        <div class="cust-phone">{{ order.user.signup.phone|default:order.user.email }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>Delivery</td>
+                            <td>Table 4</td>
+                            <td>{{ order.items.count }}</td>
+                            <td class="price-cell text-success">₦{{ order.total|floatformat:0|intcomma }}</td>
+                            <td>
+                                {% for item in order.items.all|slice:":2" %}
+                                {{ item.name }}{% if not forloop.last %}, {% endif %}
+                                {% endfor %}
+                                {% if order.items.count > 2 %}+{{ order.items.count|add:"-2" }} more{% endif %}
+                            </td>
+                        
+                            <td>
+                               
+                            </td>
+                            <td>
+                                {% if order.payment_method == 'card' %}<i class="bi bi-credit-card"></i> Card
+                                {% elif order.payment_method == 'transfer' %}<i class="bi bi-bank"></i> Transfer
+                                {% else %}<i class="bi bi-cash"></i> COD{% endif %}
+                            </td>
+                            <td>
+                                <select class="form-control order-status-select" data-order-id="{{ order.order_id }}"
+                                    style="font-size:.75rem;padding:4px 6px;border-radius:6px;border:1px solid var(--border);background:var(--card-bg);cursor:pointer;min-width:140px;">
+                                    <option value="pending" {% if order.status == 'pending' %}selected{% endif %}>Pending</option>
+                                    <option value="confirmed" {% if order.status == 'confirmed' %}selected{% endif %}>Confirmed</option>
+                                    <option value="preparing" {% if order.status == 'preparing' %}selected{% endif %}>Preparing</option>
+                                    <option value="out_for_delivery" {% if order.status == 'out_for_delivery' %}selected{% endif %}>Out for Delivery</option>
+                                    <option value="delivered" {% if order.status == 'delivered' %}selected{% endif %}>Delivered</option>
+                                    <option value="cancelled" {% if order.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                                </select>
+                            </td>
+                            <td style="font-size:12px;color:var(--text-muted);">{{ order.created_at|date:"M j, Y · g:i A" }}</td>
+                            <td>
+                                <div class="action-btns">
+                                    <button class="action-btn view" title="View" data-bs-toggle="modal" data-bs-target="#viewOrderModal" data-id="{{ order.order_id }}"><i class="fas fa-eye"></i></button>
+                                    <button class="action-btn del" title="Delete" onclick="confirmDeleteOrder('{{ order.order_id }}')"><i class="fas fa-trash"></i></button>
+                                    <button class="action-btn print" title="Print Receipt" onclick="printReceipt('{{ order.order_id }}')"><i class="fas fa-print"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="11" style="padding:40px;color:var(--text-muted);">No orders found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+
+                    <style>
+                        table th {
+                            text-align: center !important;
+                        }
+
+                        table td,
+                        table th {
+                            min-width: max-content;
+                            text-wrap: nowrap;
+                        }
+                    </style>
+                </table>
+            </div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px 20px; border-top: 1px solid var(--border); flex-wrap: wrap; gap: 12px;">
+                <span style="font-size:13px;color:var(--text-muted);">Showing {{ orders|length }} of {{ orders|length }} orders</span>
+            </div>
+
+        </div>
+    </div>   
+</div>
+
+
+<script>
+
+    /* ── Category / Status tab filter ── */
+    function filterCat(el, cat) {
+        document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+        el.classList.add('active');
+        document.querySelectorAll('#orderBody tr').forEach(r => {
+            r.style.display = (cat === 'all' || r.dataset.status === cat) ? '' : 'none';
+        });
+        updateCount();
+    }
+
+    /* ── Status dropdown filter ── */
+    function filterStatus(val) {
+        document.querySelectorAll('#orderBody tr').forEach(r => {
+            r.style.display = (val === 'all' || r.dataset.status === val) ? '' : 'none';
+        });
+        updateCount();
+    }
+
+    /* ── Type dropdown filter ── */
+    function filterType(val) {
+        document.querySelectorAll('#orderBody tr').forEach(r => {
+            r.style.display = (val === 'all' || r.dataset.type === val) ? '' : 'none';
+        });
+        updateCount();
+    }
+
+    /* ── Search ── */
+    function searchOrders() {
+        const q = document.getElementById('searchInput').value.toLowerCase();
+        document.querySelectorAll('#orderBody tr').forEach(r => {
+            const name = r.dataset.name || '';
+            const id = r.querySelector('.order-id-badge')?.textContent.toLowerCase() || '';
+            r.style.display = (name.includes(q) || id.includes(q)) ? '' : 'none';
+        });
+        updateCount();
+    }
+
+    /* ── Sort (UI-only demo) ── */
+    function sortOrders(val) {
+        console.log('Sort by:', val);
+        // In production pass sort param to Django view
+    }
+
+    /* ── Count visible rows ── */
+    function updateCount() {
+        const v = [...document.querySelectorAll('#orderBody tr')].filter(r => r.style.display !== 'none').length;
+        document.getElementById('showCount').textContent = v;
+    }
+
+    /* ── Select all ── */
+    function toggleAll(master) {
+        document.querySelectorAll('.row-check').forEach(cb => cb.checked = master.checked);
+    }
+
+    /* ── Status step selector (Update modal) ── */
+    function selectStatus(el, val) {
+        document.querySelectorAll('.status-step').forEach(s => s.classList.remove('active'));
+        el.classList.add('active');
+        document.getElementById('selectedStatus').value = val;
+    }
+
+    /* ── Toggle table/address field (Add modal) ── */
+    function toggleTableField(type) {
+        const label = document.getElementById('tableLabel');
+        const input = document.getElementById('tableInput');
+        if (type === 'delivery') {
+            label.textContent = 'Delivery Address';
+            input.placeholder = 'e.g. 12 Adeola St, Lekki';
+        } else if (type === 'dine') {
+            label.textContent = 'Table Number';
+            input.placeholder = 'e.g. Table 4';
+        } else {
+            label.textContent = 'Pickup Point';
+            input.placeholder = 'e.g. Counter 2';
+        }
+    }
+
+    /* ── Add item row (Add modal) ── */
+    function addItemRow() {
+        const container = document.getElementById('itemsContainer');
+        const div = document.createElement('div');
+        div.className = 'row g-2 mb-2 item-row';
+        div.innerHTML = `
+            <div class="col-6">
+                <select class="form-control" name="item_name[]">
+                    <option value="">Select item</option>
+                    <option>Jollof Rice</option>
+                    <option>Spicy Chicken Wings</option>
+                    <option>Pepper Soup</option>
+                    <option>Shawarma</option>
+                    <option>Suya</option>
+                    <option>Pounded Yam</option>
+                    <option>Grilled Tilapia</option>
+                    <option>Zobo</option>
+                    <option>Chapman</option>
+                </select>
+            </div>
+            <div class="col-3">
+                <input type="number" class="form-control" name="item_qty[]" placeholder="Qty" min="1" value="1">
+            </div>
+            <div class="col-2">
+                <input type="number" class="form-control" name="item_price[]" placeholder="₦" min="0">
+            </div>
+            <div class="col-1 d-flex align-items-center">
+                <button type="button" class="action-btn del" onclick="this.closest('.item-row').remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>`;
+        container.appendChild(div);
+    }
+
+    /* ── Cancel confirm ── */
+    let rowToCancel = null;
+    function confirmCancel(btn) {
+        rowToCancel = btn.closest('tr');
+        new bootstrap.Modal(document.getElementById('cancelModal')).show();
+    }
+    document.getElementById('confirmCancelBtn').addEventListener('click', function () {
+        if (rowToCancel) {
+            // Visual feedback: update badge instead of removing row
+            const badge = rowToCancel.querySelector('.badge-status');
+            if (badge) {
+                badge.className = 'badge-status badge-cancelled';
+                badge.innerHTML = '<i class="fas fa-ban"></i> Cancelled';
+            }
+            rowToCancel.dataset.status = 'cancelled';
+        }
+        bootstrap.Modal.getInstance(document.getElementById('cancelModal')).hide();
+    });
+
+    /* ── Load order details into View modal ── */
+    function loadOrderDetails(btn) {
+        const row = btn.closest('tr');
+        const id = row.querySelector('.order-id-badge')?.textContent || '';
+        document.getElementById('modalOrderId').textContent = id;
+        // In production: fetch /api/orders/<id>/ and populate modal fields
+    }
+
+    /* ── Print receipt ── */
+    function printReceipt() {
+        document.getElementById('receiptContent').style.display = 'block';
+        window.print();
+        document.getElementById('receiptContent').style.display = 'none';
+    }
+
+    /* ── Export CSV (basic demo) ── */
+    function exportCSV() {
+        const rows = [...document.querySelectorAll('#orderBody tr')].filter(r => r.style.display !== 'none');
+        let csv = 'Order ID,Customer,Type,Amount,Status\n';
+        rows.forEach(r => {
+            const id = r.querySelector('.order-id-badge')?.textContent.trim() || '';
+            const cus = r.querySelector('.name')?.textContent.trim() || '';
+            const typ = r.dataset.type || '';
+            const amt = r.querySelector('.price-cell')?.textContent.trim() || '';
+            const sta = r.dataset.status || '';
+            csv += `"${id}","${cus}","${typ}","${amt}","${sta}"\n`;
+        });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'orders_export.csv';
+        a.click();
+    }
+
+    /* ── Pagination button highlight ── */
+    document.querySelectorAll('.page-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            document.querySelectorAll('.page-btn').forEach(b => b.classList.remove('active'));
+            if (!this.querySelector('i')) this.classList.add('active');
+        });
+    });
+
+    /* ── Init count ── */
+    updateCount();
+</script>
+<!-- ── MODAL: ADD / CREATE NEW ORDER ── -->
+<div class="modal fade" id="addOrderModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content" style="border:none;border-radius:20px;overflow:hidden;background:#fff;">
+            <div style="padding:20px 24px;border-bottom:1px solid #eee;display:flex;align-items:center;justify-content:space-between;">
+                <h5 style="font-weight:700;font-size:18px;margin:0;color:#111;">
+                    <i class="fas fa-plus-circle" style="color:var(--primary);margin-right:10px;"></i>Create New Order
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="">
+                {% csrf_token %}
+                <div class="modal-body" style="padding:20px 24px 0;max-height:60vh;overflow-y:auto;">
+                    <div class="row g-3">
+                        <!-- Customer -->
+                        <div class="col-md-6">
+                            <label style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:4px;display:block;">Customer Name <span style="color:#dc3545;">*</span></label>
+                            <input type="text" name="customer_name" class="form-control" placeholder="e.g. Amara Okafor" required
+                                style="border-radius:10px;border:1px solid #e0e0e0;padding:10px 14px;font-size:14px;">
+                        </div>
+                        <div class="col-md-6">
+                            <label style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:4px;display:block;">Phone Number</label>
+                            <input type="tel" name="phone" class="form-control" placeholder="+234 800 000 0000"
+                                style="border-radius:10px;border:1px solid #e0e0e0;padding:10px 14px;font-size:14px;">
+                        </div>
+
+                        <!-- Order Type -->
+                        <div class="col-md-6">
+                            <label style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:4px;display:block;">Order Type <span style="color:#dc3545;">*</span></label>
+                            <select name="order_type" class="form-control" required
+                                onchange="toggleTableField(this.value)"
+                                style="border-radius:10px;border:1px solid #e0e0e0;padding:10px 14px;font-size:14px;">
+                                <option value="">Select type</option>
+                                <option value="dine">Dine-In</option>
+                                <option value="takeout">Takeout</option>
+                                <option value="delivery">Delivery</option>
+                            </select>
+                        </div>
+
+                        <!-- Table / Address (dynamic) -->
+                        <div class="col-md-6" id="tableField">
+                            <label style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:4px;display:block;" id="tableLabel">Table Number</label>
+                            <input type="text" name="table_or_address" class="form-control" id="tableInput"
+                                placeholder="e.g. Table 4"
+                                style="border-radius:10px;border:1px solid #e0e0e0;padding:10px 14px;font-size:14px;">
+                        </div>
+
+                        <!-- Items Section -->
+                        <div class="col-12">
+                            <label style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:4px;display:block;">Menu Items <span style="color:#dc3545;">*</span></label>
+                            <div id="itemsContainer">
+                                <div class="row g-2 mb-2 item-row">
+                                    <div class="col-6">
+                                        <select class="form-control" name="item_name[]"
+                                            style="border-radius:10px;border:1px solid #e0e0e0;padding:10px 14px;font-size:14px;">
+                                            <option value="">Select item</option>
+                                            <option>Jollof Rice</option>
+                                            <option>Spicy Chicken Wings</option>
+                                            <option>Pepper Soup</option>
+                                            <option>Shawarma</option>
+                                            <option>Suya</option>
+                                            <option>Pounded Yam</option>
+                                            <option>Grilled Tilapia</option>
+                                            <option>Zobo</option>
+                                            <option>Chapman</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-3">
+                                        <input type="number" class="form-control" name="item_qty[]" placeholder="Qty"
+                                            min="1" value="1"
+                                            style="border-radius:10px;border:1px solid #e0e0e0;padding:10px 14px;font-size:14px;">
+                                    </div>
+                                    <div class="col-3">
+                                        <input type="number" class="form-control" name="item_price[]"
+                                            placeholder="Price ₦" min="0"
+                                            style="border-radius:10px;border:1px solid #e0e0e0;padding:10px 14px;font-size:14px;">
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" class="btn btn-primary mt-1" onclick="addItemRow()">
+                                <i class="fas fa-plus"></i> Add Another Item
+                            </button>
+                        </div>
+
+                        <!-- Payment -->
+                        <div class="col-md-6">
+                            <label style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:4px;display:block;">Payment Method</label>
+                            <select name="payment_method" class="form-control"
+                                style="border-radius:10px;border:1px solid #e0e0e0;padding:10px 14px;font-size:14px;">
+                                <option value="cash">Cash</option>
+                                <option value="card">Card</option>
+                                <option value="transfer">Bank Transfer</option>
+                                <option value="pos">POS</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:4px;display:block;">Payment Status</label>
+                            <select name="payment_status" class="form-control"
+                                style="border-radius:10px;border:1px solid #e0e0e0;padding:10px 14px;font-size:14px;">
+                                <option value="paid">Paid</option>
+                                <option value="unpaid">Unpaid</option>
+                            </select>
+                        </div>
+
+                        <!-- Discount -->
+                        <div class="col-md-6">
+                            <label style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:4px;display:block;">Discount (₦)</label>
+                            <input type="number" name="discount" class="form-control" placeholder="0" min="0"
+                                style="border-radius:10px;border:1px solid #e0e0e0;padding:10px 14px;font-size:14px;">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:4px;display:block;">Initial Status</label>
+                            <select name="status" class="form-control"
+                                style="border-radius:10px;border:1px solid #e0e0e0;padding:10px 14px;font-size:14px;">
+                                <option value="pending">Pending</option>
+                                <option value="confirmed">Confirmed</option>
+                            </select>
+                        </div>
+
+                        <div class="col-12">
+                            <label style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:4px;display:block;">Menu Items (comma-separated)</label>
+                            <input type="text" name="items" class="form-control" placeholder="e.g. Jollof Rice × 2, Chicken × 1"
+                                style="border-radius:10px;border:1px solid #e0e0e0;padding:10px 14px;font-size:14px;">
+                        </div>
+
+                        <!-- Notes -->
+                        <div class="col-12">
+                            <label style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:4px;display:block;">Order Notes</label>
+                            <textarea name="notes" class="form-control" rows="2"
+                                placeholder="Special instructions, allergies, preferences…"
+                                style="border-radius:10px;border:1px solid #e0e0e0;padding:10px 14px;font-size:14px;resize:vertical;"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div style="padding:16px 24px 20px;border-top:1px solid #eee;display:flex;gap:10px;justify-content:flex-end;">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal"
+                        style="border-radius:50px;font-size:.87rem;padding:8px 24px;border:1px solid #ddd;font-weight:600;">Cancel</button>
+                    <button type="submit"
+                        style="background:#ff6600;color:#fff;border:none;border-radius:50px;font-size:.87rem;padding:8px 24px;font-weight:600;display:inline-flex;align-items:center;gap:6px;cursor:pointer;transition:background .2s;"
+                        onmouseover="this.style.background='#e65c00'" onmouseout="this.style.background='#ff6600'">
+                        <i class="fas fa-save"></i> Create Order
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- ── MODAL: VIEW ORDER (filled by JS) ── -->
+<div class="modal fade" id="viewOrderModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:480px;">
+        <div class="modal-content" style="border:none;border-radius:20px;overflow:hidden;background:#fff;">
+            <!-- Gradient header -->
+            <div style="position:relative;height:170px;background:linear-gradient(135deg,#ff6600,#ff8833);">
+                <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;color:#fff;">
+                    <i class="fas fa-receipt" style="font-size:40px;opacity:.6;margin-bottom:8px;"></i>
+                    <h4 style="font-weight:700;margin:0;color:#fff;font-size:20px;">Order Details</h4>
+                    <p style="font-size:13px;opacity:.8;margin:4px 0 0;" id="viewModalOrderId">#----</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"
+                    style="position:absolute;top:14px;right:14px;background:rgba(0,0,0,.3);border-radius:50%;padding:8px;filter:invert(1);opacity:.8;"></button>
+            </div>
+            <div class="modal-body" id="viewOrderBody" style="padding:20px 24px 0;">
+                <!-- filled by JS -->
+            </div>
+            <div style="padding:16px 24px 20px;border-top:1px solid #eee;display:flex;gap:10px;">
+                <button class="btn btn-success" title="Print Receipt" onclick="printReceipt()"
+                    style="border-radius:50px;font-size:.87rem;padding:8px 20px;display:inline-flex;align-items:center;gap:6px;"><i class="fas fa-print"></i> Print</button>
+                <button class="btn btn-dark" data-bs-dismiss="modal"
+                    style="border-radius:50px;font-size:.87rem;padding:8px 20px;margin-left:auto;">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+  <script src="{% static 'aos/aos.js' %}"></script>
+  <script>
+    AOS.init({duration:1000,once:true,offset:100});
+
+    // ── Filter orders by status ──
+    document.querySelectorAll('.menu-mgmt-filters .filter-btn').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        document.querySelectorAll('.menu-mgmt-filters .filter-btn').forEach(function(b){b.classList.remove('active');});
+        this.classList.add('active');
+        var cat = this.dataset.cat;
+        document.querySelectorAll('#menuBody tr').forEach(function(row){
+          if (cat === 'all') { row.style.display = ''; return; }
+          var sel = row.querySelector('.order-status-select');
+          var status = sel ? sel.value : '';
+          if (cat === 'delivering') {
+            row.style.display = (status === 'out_for_delivery') ? '' : 'none';
+          } else {
+            row.style.display = (status === cat) ? '' : 'none';
+          }
+        });
+      });
+    });
+
+    // ── View order modal (populate from the clicked row) ──
+    document.querySelectorAll('.action-btn.view').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var row = this.closest('tr');
+        var orderId = row.cells[1].textContent.trim();
+        var customer = row.cells[2].querySelector('.cust-name').textContent;
+        var phone = row.cells[2].querySelector('.cust-phone').textContent;
+        var itemsCount = row.cells[4].textContent.trim();
+        var total = row.cells[6].textContent.trim();
+        var payment = row.cells[7].textContent.trim();
+        var statusEl = row.cells[8].querySelector('select');
+        var statusText = statusEl ? statusEl.options[statusEl.selectedIndex].text : '';
+        var date = row.cells[9].textContent.trim();
+
+        document.getElementById('viewModalOrderId').textContent = orderId;
+
+        var html =
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;">' +
+            '<div>' +
+              '<h4 style="font-weight:700;font-size:18px;margin:0;color:#111;">' + orderId + '</h4>' +
+              '<span style="font-size:12px;color:#888;">' + date + '</span>' +
+            '</div>' +
+            '<span style="background:#ff6600;color:#fff;font-size:11px;font-weight:700;padding:4px 14px;border-radius:50px;">' + statusText + '</span>' +
+          '</div>' +
+
+          '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;">' +
+            '<span style="background:#f0f0f0;border-radius:50px;padding:4px 14px;font-size:12px;color:#555;display:inline-flex;align-items:center;gap:4px;">' +
+              '<i class="fas fa-shopping-bag" style="color:var(--primary);"></i> ' + itemsCount + ' items' +
+            '</span>' +
+            '<span style="background:#f0f0f0;border-radius:50px;padding:4px 14px;font-size:12px;color:#555;display:inline-flex;align-items:center;gap:4px;">' +
+              '<i class="fas fa-tag" style="color:#28a745;"></i> ' + total +
+            '</span>' +
+            '<span style="background:#f0f0f0;border-radius:50px;padding:4px 14px;font-size:12px;color:#555;display:inline-flex;align-items:center;gap:4px;">' +
+              '<i class="fas fa-truck" style="color:#0d6efd;"></i> Delivery' +
+            '</span>' +
+          '</div>' +
+
+          '<div style="border-top:1px solid #eee;padding-top:14px;margin-bottom:14px;">' +
+            '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#888;margin-bottom:10px;">Customer</div>' +
+            '<div style="display:flex;align-items:center;gap:12px;">' +
+              '<div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#ff6600,#ff8833);display:flex;align-items:center;justify-content:center;font-size:1rem;font-weight:800;color:#fff;flex-shrink:0;">' + customer.charAt(0).toUpperCase() + '</div>' +
+              '<div><div style="font-weight:600;font-size:14px;color:#333;">' + customer + '</div><div style="font-size:12px;color:#888;">' + phone + '</div></div>' +
+            '</div>' +
+          '</div>' +
+
+          '<div style="border-top:1px solid #eee;padding-top:14px;">' +
+            '<div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px;">' +
+              '<span style="color:#888;">Payment</span>' +
+              '<span style="font-weight:600;color:#28a745;"><i class="fas fa-check-circle" style="font-size:11px;"></i> ' + payment + '</span>' +
+            '</div>' +
+          '</div>';
+
+        document.getElementById('viewOrderBody').innerHTML = html;
+      });
+    });
+
+    // ── Inline status dropdown update ──
+    document.querySelectorAll('.order-status-select').forEach(function(sel){
+      sel.addEventListener('change', function(){
+        var id = this.dataset.orderId;
+        var status = this.value;
+        fetch('/update_order_status/', {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: 'order_id=' + encodeURIComponent(id) + '&status=' + encodeURIComponent(status)
+        })
+        .then(function(r){return r.json();})
+        .then(function(d){
+          if (d.status === 'success') { showToast('Status updated', 'success'); }
+          else { alert(d.error || 'Error'); }
+        });
+      });
+    });
+
+    // ── Delete order ──
+    function confirmDeleteOrder(id) {
+      if (!confirm('Delete order ' + id + '?')) return;
+      fetch('/delete_order/', {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'order_id=' + encodeURIComponent(id)
+      })
+      .then(function(r){return r.json();})
+      .then(function(d){
+        if (d.status === 'success') { location.reload(); }
+        else { alert(d.error || 'Error'); }
+      });
+    }
+
+    // ── Print receipt ──
+    function printReceipt(id) { window.print(); }
+  </script>
+
+{% endblock content %}

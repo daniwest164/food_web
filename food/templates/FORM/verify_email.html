@@ -1,0 +1,80 @@
+{% extends "includes/guest.html" %}
+{% load static %}
+{% load humanize %}
+{% block title %} Verify Email{% endblock title %}
+
+{% block content %}
+
+<!-- Messages — ADDED (Jun 10): messages from sign_up/forget_password views
+     now display & get consumed here instead of leaking to other pages -->
+{% if messages %}
+  <div style="position:fixed;top:0;left:0;right:0;z-index:9999;padding:16px;">
+    {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+
+
+<div class="auth-page">
+  <div class="auth-bg"></div>
+
+  <div class="auth-card text-center">
+    <a href="/" class="auth-logo">Prime<span>Dish</span></a>
+
+    <div class="verify-icon-wrap">
+      <!-- FIXED (Jun 10): icon now changes based on mode
+           reset → lock icon, verify → envelope icon -->
+      <i class="{% if mode == 'reset' %} bi bi-lock-fill {% else %} bi bi-envelope-at-fill {% endif %}"></i>
+    </div>
+
+    <h2 class="auth-title">Check your {% if mode == 'reset' %} email for the reset link {% else %} email {% endif %}</h2>
+    <p class="auth-subtitle">
+      We sent a {% if mode == 'reset' %} password reset {% else %} verification {% endif %} link to
+      <strong style="color:var(--text)">{{ masked_email }}</strong>
+    </p>
+
+    <div class="text-center">
+      <span class="verify-email-display" id="display-email">
+        {% if masked_email %}
+          {{ masked_email }}
+        {% endif %}
+      </span>
+    </div>
+
+    <p class="auth-subtitle" style="font-size:14px;margin-top:20px;">
+      Click the link in your email to {% if mode == 'reset' %} reset your password{% else %}verify your account{% endif %}.
+      The link expires in <strong style="color:#ff6600;">10 minutes</strong>.
+    </p>
+
+    <div class="change-email-row" style="margin-top:16px;">
+      <span style="color:#888;font-size:13px;">
+        Didn't get the email?
+        <!-- FIXED (Jun 10): both modes now POST to forget_password with
+             real_email (not masked) + resend_mode hidden field.
+             forget_password view handles sending the right email type. -->
+        <form method="POST" action="{% url 'forget_password' %}" style="display: inline;">
+          {% csrf_token %}
+          <input type="hidden" name="email" value="{{ real_email|default:'' }}">
+          <input type="hidden" name="resend_mode" value="{{ mode }}">
+          <button type="submit" class="resend-btn"
+                  style="background:none;border:none;color:#ff6600;font-weight:600;cursor:pointer;font-size:13px;padding:0;font-family:'DM Sans',sans-serif;">
+            Resend link
+          </button>
+        </form>
+      </span>
+    </div>
+
+    <div class="security-tip">
+      <i class="bi bi-info-circle-fill"></i>
+      <span>For your security, this link expires in <strong style="color: #ff6600;">10 minutes</strong>. Never share it with anyone.</span>
+    </div>
+
+  </div>
+</div>
+
+{% endblock content %}

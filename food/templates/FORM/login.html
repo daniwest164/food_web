@@ -1,0 +1,75 @@
+{% extends "includes/guest.html" %}
+{% load static %}
+{% load humanize %}
+{% block title %} Login{% endblock title %}
+
+{% block content %}
+  
+<!-- Messages -->
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert  alert-{{ message.tags }} alert-dismissible fade show m-3" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+{% endif %}
+
+
+<div class="auth-page">
+  <div class="auth-bg"></div>
+    <div class="auth-card">
+      <a href="/" class="auth-logo">Prime<span>Dish</span></a>
+      <h2 class="auth-title">Welcome back!</h2>
+      <p class="auth-subtitle">Sign in to your account to continue</p>
+
+      <div class="auth-social">
+        <button class="social-auth-btn"><i class="bi bi-google" style="color:#EA4335"></i> Google</button>
+        <button class="social-auth-btn"><i class="bi bi-facebook" style="color:#1877F2"></i> Facebook</button>
+      </div>
+      <div class="auth-divider">or continue with email</div>
+
+      <form action="{% url 'login' %}" method="POST" novalidate>
+        {% csrf_token %}
+
+        <!-- Error Message Section -->
+        {% if error %}
+            <div class="alert alert-warning" role="alert">
+                {{ error }}
+            </div>
+        {% endif %} 
+  
+        <div class="form-group">
+          <label class="form-label">Email Address</label>
+          <div class="input-group">
+            <i class="bi bi-envelope input-icon"></i>
+            <input type="email" name="email" id="login-email" class="form-control" placeholder="john@example.com" required />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" style="display: flex; justify-content: space-between;">
+            <span>Password</span>
+            <a href="/forget_password" style="font-size: 13px; color: var(--primary);">Forgot password?</a>
+          </label>
+
+          <div class="input-group" style="position: relative;">
+            <i class="bi bi-lock input-icon"></i>
+            <input type="password"name="password"  id="login-password" class="form-control" placeholder="Enter your password" required />
+            <button type="button" class="password-toggle"><i class="bi bi-eye"></i></button>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;">
+          <input type="checkbox" id="remember" style="accent-color: var(--primary); width: 16px; height: 16px;" />
+          <label for="remember" style="font-size: 14px; cursor: pointer; color: var(--text-muted);">Remember me</label>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full btn-lg">Sign In</button>
+      </form>
+
+      <p class="auth-footer-text">Don't have an account? <a href="{% url 'sign_up' %}">Sign Up</a></p>
+    </div>
+</div>
+
+{% endblock content %}

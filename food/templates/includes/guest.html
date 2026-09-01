@@ -1,0 +1,415 @@
+{% load static %}
+{% load humanize %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prime Dish {% block title %} {% endblock title %}</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link rel="stylesheet" href="{% static 'bootstrap-5.3.8-dist/css/bootstrap.min.css' %}" type='text/css'>
+    <link rel="stylesheet" href="{% static 'bootstrap-icons-1.13.1/bootstrap-icons.min.css' %}" type='text/css'>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="{% static 'fontawesome-free-7.0.1-web/css/all.min.css' %}" type='text/css'>
+
+    <!-- AOS (Animate On Scroll) -->
+    <link rel="stylesheet" href="{% static 'aos/aos.css' %}">
+
+    <!-- LOGO icon for tabs bar look -->
+    <link rel="icon" href="{% static 'image/logo.png' %}">
+
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/user.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/responsive.css' %}">
+
+</head>
+<style>
+/* ---- Auth Pages ---- */
+.auth-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.auth-bg {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 70% 60% at 50% 0%, #ff66001a 0%, transparent 70%);
+    z-index: 0;
+}
+
+.auth-card {
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 44px 40px;
+    width: 100%;
+    max-width: 460px;
+    position: relative;
+    z-index: 1;
+    animation: fadeInUp 0.5s ease;
+}
+
+.auth-logo {
+    font-family: var(--font-display);
+    font-size: 38px;
+    letter-spacing: 3px;
+    margin-bottom: 28px;
+    display: block;
+    text-align: center;
+}
+
+.auth-logo span {
+    color: var(--primary);
+}
+
+.auth-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 6px;
+}
+
+.auth-subtitle {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-bottom: 32px;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 24px 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+.auth-divider::before, .auth-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+.auth-social { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+.social-auth-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 11px;
+  background: var(--card-bg);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  color: var(--text);
+}
+.social-auth-btn:hover { border-color: var(--primary); }
+.social-auth-btn i { font-size: 18px; }
+.auth-footer-text {
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-top: 20px;
+}
+.auth-footer-text a { color: var(--primary); font-weight: 600; }
+.auth-footer-text a:hover { text-decoration: underline; }
+.password-toggle {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 18px;
+  transition: var(--transition);
+}
+.password-toggle:hover { color: var(--text); }
+.auth-back {
+  position: absolute;
+  top: 20px; left: 20px;
+  display: flex; align-items: center; gap: 6px;
+  font-size: 14px; color: var(--text-muted);
+  transition: var(--transition);
+}
+.auth-back:hover { color: var(--primary); }
+@media (max-width: 480px) {
+  .auth-card { padding: 28px 20px; }
+  .auth-social { grid-template-columns: 1fr; }
+}
+
+.auth-footer-text {
+    text-align: center;
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-top: 20px;
+}
+
+.auth-footer-text a {
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.auth-footer-text a:hover {
+    text-decoration: none;
+}
+
+@media (max-width: 480px) {
+    .auth-card {
+        padding: 28px 20px;
+    }
+}
+
+/* ADDED (Jun 10): wraps all content so scroll is internal & hidden
+Prevents body/html scrollbar from appearing on Windows */
+.signup-wrap {
+    height: 100vh;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: none;     /* Firefox */
+    -ms-overflow-style: none;  /* IE */
+}
+.signup-wrap::-webkit-scrollbar { display: none; }  /* Chrome/Safari/Edge */
+
+
+
+  .verify-icon-wrap {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    background: rgba(255, 102, 0, .10);
+    border: 2px solid rgba(255, 102, 0, .25);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 24px;
+    animation: pulseRing 2s ease-in-out infinite;
+  }
+  .verify-icon-wrap i { font-size: 36px; color: #ff6600; }
+
+  .verify-email-display {
+    display: inline-block;
+    background: #ff66001a;
+    border: 1px solid #ff660033;
+    color: #ff6600;
+    font-size: 13px; font-weight: 600;
+    padding: 4px 14px;
+    border-radius: 100px;
+    margin-bottom: 28px;
+  }
+
+  .btn-verify {
+    width: 100%;
+    background: #ff6600; color: #fff;
+    border: none; border-radius: 14px;
+    padding: 14px;
+    font-size: 16px; font-weight: 600;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    gap: 10px;
+    transition: all .3s ease;
+    margin-bottom: 20px;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .btn-verify:hover:not(:disabled) {
+    background: #ff8533;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 24px rgba(255, 102, 0, .3);
+  }
+  .btn-verify:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+
+  .security-tip {
+    display: flex; align-items: flex-start; gap: 10px;
+    background: rgba(255, 102, 0, .05);
+    border: 1px solid rgba(255, 102, 0, .12);
+    border-radius: 12px;
+    padding: 12px 14px; margin-top: 24px;
+    font-size: 12px; color: #888; line-height: 1.6;
+  }
+  .security-tip i { color: #ff6600; font-size: 16px; margin-top: 1px; flex-shrink: 0; }
+
+  @keyframes pulseRing {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(255, 102, 0, .25); }
+    50% { box-shadow: 0 0 0 10px rgba(255, 102, 0, .0); }
+  }
+
+  @media (max-width: 480px) {
+    .auth-card { padding: 28px 20px; }
+  }
+
+/* ---- Alerts ---- */
+.alert {
+    border: 1px solid transparent;
+    border-radius: var(--radius);
+    padding: 12px 16px;
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+.alert-warning {
+    background: rgba(234, 179, 8, 0.12);
+    border-color: rgba(234, 179, 8, 0.3);
+    color: var(--warning);
+}
+
+.alert-success {
+    background: rgba(34, 197, 94, 0.12);
+    border-color: rgba(34, 197, 94, 0.3);
+    color: var(--success);
+}
+
+.alert-danger {
+    background: rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.3);
+    color: var(--danger);
+}
+
+.alert-info {
+    background: rgba(59, 130, 246, 0.12);
+    border-color: rgba(59, 130, 246, 0.3);
+    color: var(--info);
+}
+
+/* =============================================
+FORMS
+============================================= */
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-label {
+    display: block;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+
+.form-control {
+    width: 100%;
+    background: var(--card-bg);
+    border: 1.5px solid var(--border);
+    color: var(--text);
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    font-family: var(--font-body);
+    font-size: 15px;
+    transition: var(--transition);
+    outline: none;
+}
+
+.form-control:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px #ff66001a;
+}
+
+.form-control::placeholder {
+    color: var(--text-dim);
+}
+
+select.form-control {
+    cursor: pointer;
+}
+
+textarea.form-control {
+    resize: vertical;
+    min-height: 120px;
+}
+
+.input-group {
+    position: relative;
+}
+
+.input-group .form-control {
+    padding-left: 44px;
+}
+
+.input-group .input-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 17px;
+}
+
+/* Input group icon spacing */
+.input-group {
+  position: relative;
+}
+
+.input-group .form-control {
+  padding-left: 44px !important;
+}
+
+.input-group .input-icon {
+  position: absolute;
+  left: 14px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  color: var(--text-muted) !important;
+  font-size: 17px !important;  
+  z-index: 10;
+  display: flex !important;
+  align-items: center !important;
+}
+
+/* .password-toggle */
+.password-toggle {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 18px;
+    transition: var(--transition);
+    z-index: 10;
+}
+
+.input-group .form-control {
+    padding-right: 44px;
+}
+
+.password-toggle:hover {
+    color: var(--text);
+}
+</style>
+<body>
+
+
+    {% block content %}
+
+    {% endblock content %}
+
+
+<script>
+    // Initialize AOS
+    AOS.init({
+        duration: 1000,
+        once: true,
+        offset: 100
+    });
+</script>
+
+<script src="{% static 'js/main.js' %}"></script>
+<script src="{% static 'js/user.js' %}"></script>
+
+    <!-- Bootstrap JS -->
+    <script src="{% static 'bootstrap-5.3.8-dist/js/bootstrap.bundle.js' %}"></script>
+    <script src="{% static 'fontawesome-free-7.0.1-web/js/all.min.js' %}"></script>
+    <script src="{% static 'aos/aos.js' %}"></script>
+
+</body>
+</html>

@@ -1,0 +1,285 @@
+{% extends "includes/base.html" %}
+{% load static %}
+{% load humanize %}
+{% block title %} About Us{% endblock title %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'aos/aos.css' %}">
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+<link rel="stylesheet" href="{% static 'css/responsive.css' %}">
+
+
+<div class="page-hero">
+    <div class="container">
+        <h1>About <span>Prime Dish</span></h1>
+        <p>Building a complete food delivery ecosystem for Africa</p>
+        <div class="breadcrumb"><a href="/">Home</a><i class="bi bi-chevron-right"></i><span>About</span></div>
+    </div>
+</div>
+
+<!-- STORY -->
+<section class="section">
+    <div class="container">
+        <div class="about-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:60px;align-items:center;">
+            <div class="animate-on-scroll">
+                <span class="subtitle d-block fw-semibold text-uppercase mb-2"
+                    style="font-size:13px;letter-spacing:2px;color:var(--primary);">Our Story</span>
+                <h2 class="mb-3"
+                    style="font-family:var(--font-display);font-size:clamp(32px,4vw,52px);letter-spacing:1px;">More Than
+                    Food,<br><span style="color:var(--primary)">It's an Experience</span></h2>
+                <p class="text-muted mb-3" style="font-size:15px;line-height:1.8;">Prime Dish was born from a simple but
+                    powerful idea: every Nigerian deserves access to delicious, affordable food –
+                    delivered fast, fresh, and with love. We started in Lagos in 2023 with just 10 restaurant partners and a
+                    dream.
+                </p>
+
+                <p class="text-muted mb-4" style="font-size:15px;line-height:1.8;">Today, we serve thousands of happy
+                    customers across 5 major Nigerian cities, working with over 200 restaurant
+                    partners to bring authentic Nigerian and continental cuisine directly to your door.
+                </p>
+
+                <div class="d-grid gap-3" style="grid-template-columns:1fr 1fr;">
+                    <div class="text-center p-3"
+                        style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius-lg);">
+                        <div
+                            style="font-family:var(--font-display);font-size:36px;color:var(--primary);margin-bottom:4px;">
+                            2025</div>
+                        <div class="text-muted" style="font-size:13px;">Founded</div>
+                    </div>
+                    <div class="text-center p-3"
+                        style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius-lg);">
+                        <div
+                            style="font-family:var(--font-display);font-size:36px;color:var(--primary);margin-bottom:4px;">
+                            5</div>
+                        <div class="text-muted" style="font-size:13px;">Cities</div>
+                    </div>
+                    <div class="text-center p-3"
+                        style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius-lg);">
+                        <div
+                            style="font-family:var(--font-display);font-size:36px;color:var(--primary);margin-bottom:4px;">
+                            200+</div>
+                        <div class="text-muted" style="font-size:13px;">Restaurant Partners</div>
+                    </div>
+                    <div class="text-center p-3"
+                        style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius-lg);">
+                        <div
+                            style="font-family:var(--font-display);font-size:36px;color:var(--primary);margin-bottom:4px;">
+                            20K+</div>
+                        <div class="text-muted" style="font-size:13px;">Happy Customers</div>
+                    </div>
+                </div>
+            </div>
+            <div class="animate-on-scroll text-center p-4"
+                style="background:radial-gradient(circle at 50% 50%,rgba(255, 102, 0,0.1) 0%,transparent 70%);border-radius:32px;font-size:120px;border:1px solid rgba(255, 102, 0,0.1);">
+                <i class="fas fa-utensils" style="font-size: 140px;"></i>
+                <p class="mt-2"
+                    style="font-size:16px;font-family:var(--font-display);letter-spacing:2px;color:var(--primary);">
+                    PRIME <span>DISH</span></p>
+                <p class="text-muted" style="font-size:13px;">Crave it. We chop it. You love it.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- MISSION / VISION -->
+<section class="section" style="background:var(--bg-2);">
+    <div class="container">
+        <div class="mvv-grid d-grid gap-3" style="grid-template-columns:1fr 1fr 1fr;">
+            <div class="card animate-on-scroll">
+                <div class="d-flex align-items-center justify-content-center mb-3"
+                    style="width:52px;height:52px;border-radius:var(--radius);background:rgba(255, 102, 0,0.1);color:var(--primary);font-size:24px;">
+                    <i class="bi bi-bullseye"></i></div>
+                <h3 class="fw-bold mb-2" style="font-size:20px;">Our Mission</h3>
+                <p class="text-muted" style="font-size:14px;line-height:1.8;">To make every Nigerian's food journey
+                    seamless, affordable, and memorable – one delicious delivery at a time.</p>
+            </div>
+            <div class="card animate-on-scroll">
+                <div class="d-flex align-items-center justify-content-center mb-3"
+                    style="width:52px;height:52px;border-radius:var(--radius);background:rgba(255, 102, 0,0.1);color:var(--primary);font-size:24px;">
+                    <i class="bi bi-eye-fill"></i></div>
+                <h3 class="fw-bold mb-2" style="font-size:20px;">Our Vision</h3>
+                <p class="text-muted" style="font-size:14px;line-height:1.8;">To become Africa's most loved food
+                    delivery ecosystem, connecting millions of food lovers with the best local kitchens.</p>
+            </div>
+            <div class="card animate-on-scroll">
+                <div class="d-flex align-items-center justify-content-center mb-3"
+                    style="width:52px;height:52px;border-radius:var(--radius);background:rgba(255, 102, 0,0.1);color:var(--primary);font-size:24px;">
+                    <i class="bi bi-heart-fill"></i></div>
+                <h3 class="fw-bold mb-2" style="font-size:20px;">Our Values</h3>
+                <p class="text-muted" style="font-size:14px;line-height:1.8;">Quality, speed, reliability, and
+                    community. We treat every order like it's going to our own family's table.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- WHAT WE'RE BUILDING -->
+<section class="section">
+    <div class="container">
+        <div class="section-header">
+            <span class="subtitle">The Ecosystem</span>
+            <h2>This is What We're <span>Building</span></h2>
+            <p>A complete food delivery ecosystem for Africa</p>
+        </div>
+        <div class="d-grid gap-3 mx-auto" style="grid-template-columns:repeat(2,1fr);max-width:800px;">
+            <div class="card animate-on-scroll d-flex align-items-start gap-3">
+                <div class="d-flex align-items-center justify-content-center flex-shrink-0"
+                    style="width:48px;height:48px;border-radius:var(--radius-sm);background:rgba(255, 102, 0,0.1);font-size:22px;color:var(--primary);">
+                    <i class="bi bi-globe2"></i></div>
+                <div>
+                    <h4 class="fw-bold mb-1" style="font-size:16px;">Beautiful Website</h4>
+                    <p class="text-muted" style="font-size:13px;">Modern & responsive web experience</p>
+                </div>
+            </div>
+            <div class="card animate-on-scroll d-flex align-items-start gap-3">
+                <div class="d-flex align-items-center justify-content-center flex-shrink-0"
+                    style="width:48px;height:48px;border-radius:var(--radius-sm);background:rgba(255, 102, 0,0.1);font-size:22px;color:var(--primary);">
+                    <i class="bi bi-phone-fill"></i></div>
+                <div>
+                    <h4 class="fw-bold mb-1" style="font-size:16px;">Powerful Mobile App</h4>
+                    <p class="text-muted" style="font-size:13px;">iOS & Android ready – coming soon</p>
+                </div>
+            </div>
+            <div class="card animate-on-scroll d-flex align-items-start gap-3">
+                <div class="d-flex align-items-center justify-content-center flex-shrink-0"
+                    style="width:48px;height:48px;border-radius:var(--radius-sm);background:rgba(255, 102, 0,0.1);font-size:22px;color:var(--primary);">
+                    <i class="bi bi-graph-up-arrow"></i></div>
+                <div>
+                    <h4 class="fw-bold mb-1" style="font-size:16px;">Smart Admin Dashboard</h4>
+                    <p class="text-muted" style="font-size:13px;">Manage everything with ease</p>
+                </div>
+            </div>
+            <div class="card animate-on-scroll d-flex align-items-start gap-3">
+                <div class="d-flex align-items-center justify-content-center flex-shrink-0"
+                    style="width:48px;height:48px;border-radius:var(--radius-sm);background:rgba(255, 102, 0,0.1);font-size:22px;color:var(--primary);">
+                    <i class="bi bi-shield-lock-fill"></i></div>
+                <div>
+                    <h4 class="fw-bold mb-1" style="font-size:16px;">Fast, Secure & Reliable</h4>
+                    <p class="text-muted" style="font-size:13px;">Built for scale and performance</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- TEAM -->
+<section class="section" style="background:var(--bg-2);">
+    <div class="container">
+        <div class="section-header">
+            <span class="subtitle">The Crew</span>
+            <h2>Meet the <span>Team</span></h2>
+            <p>Passionate people building Nigeria's favourite food app</p>
+        </div>
+        <div class="team-grid d-grid gap-3" style="grid-template-columns:repeat(4,1fr);">
+            <div class="card animate-on-scroll text-center">
+                <div class="d-flex align-items-center justify-content-center fw-bold mx-auto mb-3"
+                    style="width:72px;height:72px;border-radius:50%;background:rgba(255, 102, 0,0.12);border:2px solid rgba(255, 102, 0,0.3);font-size:28px;color:var(--primary);">
+                    C</div>
+                <h4 class="fw-bold mb-1" style="font-size:16px;">Chukwuemeka Nwosu</h4>
+                <span class="fw-semibold" style="font-size:12px;color:var(--primary);">CEO & Co-Founder</span>
+                <p class="text-muted mt-2" style="font-size:13px;line-height:1.6;">Former Jumia engineer with a passion
+                    for food tech and African entrepreneurship.</p>
+                <div class="d-flex justify-content-center gap-2 mt-3">
+                    <a href="#" class="social-link"><i class="bi bi-twitter-x"></i></a>
+                    <a href="#" class="social-link"><i class="bi bi-linkedin"></i></a>
+                </div>
+            </div>
+            <div class="card animate-on-scroll text-center">
+                <div class="d-flex align-items-center justify-content-center fw-bold mx-auto mb-3"
+                    style="width:72px;height:72px;border-radius:50%;background:rgba(255, 102, 0,0.12);border:2px solid rgba(255, 102, 0,0.3);font-size:28px;color:var(--primary);">
+                    A</div>
+                <h4 class="fw-bold mb-1" style="font-size:16px;">Adaeze Okafor</h4>
+                <span class="fw-semibold" style="font-size:12px;color:var(--primary);">CTO & Co-Founder</span>
+                <p class="text-muted mt-2" style="font-size:13px;line-height:1.6;">Full-stack engineer building scalable
+                    systems for millions of users across Africa.</p>
+                <div class="d-flex justify-content-center gap-2 mt-3">
+                    <a href="#" class="social-link"><i class="bi bi-twitter-x"></i></a>
+                    <a href="#" class="social-link"><i class="bi bi-linkedin"></i></a>
+                </div>
+            </div>
+            <div class="card animate-on-scroll text-center">
+                <div class="d-flex align-items-center justify-content-center fw-bold mx-auto mb-3"
+                    style="width:72px;height:72px;border-radius:50%;background:rgba(255, 102, 0,0.12);border:2px solid rgba(255, 102, 0,0.3);font-size:28px;color:var(--primary);">
+                    M</div>
+                <h4 class="fw-bold mb-1" style="font-size:16px;">Musa Abdullahi</h4>
+                <span class="fw-semibold" style="font-size:12px;color:var(--primary);">Head of Operations</span>
+                <p class="text-muted mt-2" style="font-size:13px;line-height:1.6;">Logistics expert ensuring every
+                    delivery is on time and every customer is happy.</p>
+                <div class="d-flex justify-content-center gap-2 mt-3">
+                    <a href="#" class="social-link"><i class="bi bi-twitter-x"></i></a>
+                    <a href="#" class="social-link"><i class="bi bi-linkedin"></i></a>
+                </div>
+            </div>
+            <div class="card animate-on-scroll text-center">
+                <div class="d-flex align-items-center justify-content-center fw-bold mx-auto mb-3"
+                    style="width:72px;height:72px;border-radius:50%;background:rgba(255, 102, 0,0.12);border:2px solid rgba(255, 102, 0,0.3);font-size:28px;color:var(--primary);">
+                    T</div>
+                <h4 class="fw-bold mb-1" style="font-size:16px;">Tolulope Bello</h4>
+                <span class="fw-semibold" style="font-size:12px;color:var(--primary);">Head of Design</span>
+                <p class="text-muted mt-2" style="font-size:13px;line-height:1.6;">Creative lead building the visual
+                    identity and user experience of prime dish .</p>
+                <div class="d-flex justify-content-center gap-2 mt-3">
+                    <a href="#" class="social-link"><i class="bi bi-twitter-x"></i></a>
+                    <a href="#" class="social-link"><i class="bi bi-linkedin"></i></a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="section text-center"
+    style="background:radial-gradient(ellipse 70% 60% at 50% 50%,rgba(255, 102, 0,0.1) 0%,transparent 70%);">
+    <div class="container">
+        <h2 class="mb-3" style="font-family:var(--font-display);font-size:clamp(36px,5vw,56px);letter-spacing:1px;">Join
+            the <span style="color:var(--primary)">Prime Dish</span> Family</h2>
+        <p class="text-muted mb-4 mx-auto" style="max-width:480px;">Whether you're a food lover or a restaurant owner,
+            there's a place for you in our ecosystem.</p>
+        <div class="d-flex gap-3 justify-content-center flex-wrap">
+            <a href="/menu" class="btn btn-primary btn-lg"><i class="bi bi-bag-plus-fill"></i> Order Food</a>
+            <a href="/contact" class="btn btn-outline btn-lg"><i class="bi bi-shop"></i> Partner With Us</a>
+        </div>
+    </div>
+</section>
+
+
+<button id="back-to-top"><i class="bi bi-arrow-up-short"></i></button>
+<script src="js/main.js"></script>
+<style>
+    @media(max-width:768px) {
+
+        .about-grid,
+        .mvv-grid,
+        .team-grid {
+            grid-template-columns: 1fr !important
+        }
+    }
+
+    @media(max-width:640px) {
+        .mvv-grid {
+            grid-template-columns: 1fr !important
+        }
+
+        .team-grid {
+            grid-template-columns: 1fr 1fr !important
+        }
+    }
+</style>
+
+<!-- Bootstrap JS is loaded by includes/base.html -->
+
+<script src="js/main.js"></script>
+
+<script>
+    // Initialize AOS
+    AOS.init({
+        duration: 1000,
+        once: true,
+        offset: 100
+    });
+</script>
+
+<script src="{% static 'aos/aos.js' %}"></script>
+
+{% endblock content %}

@@ -1,0 +1,400 @@
+{% load static %}
+{% load humanize %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prime Dish {% block title %} {% endblock title %}</title>
+        
+    <!-- Bootstrap 5 CSS -->
+    <link rel="stylesheet" href="{% static 'bootstrap-5.3.8-dist/css/bootstrap.min.css' %}" type='text/css'>
+    <link rel="stylesheet" href="{% static 'bootstrap-icons-1.13.1/bootstrap-icons.min.css' %}" type='text/css'>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="{% static 'fontawesome-free-7.0.1-web/css/all.min.css' %}" type='text/css'>
+    
+    <!-- AOS (Animate On Scroll) -->
+    <link rel="stylesheet" href="{% static 'aos/aos.css' %}">
+
+    <!-- LOGO icon for tabs bar look -->
+    <link rel="icon" href="{% static 'image/logo.png' %}">
+
+    <link rel="stylesheet" href="{% static 'css/user.css' %}">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/responsive.css' %}">
+</head>
+<style>
+/* ========================================     
+    Mobile Styles 
+    ======================================== */
+.mobile-nav-open {
+    position: fixed; top: 10px; left: 350px !important; right: 0;
+    width: 50px; height: 50px; border-radius: 50%;
+    background: var(--card-bg); color: var(--text);
+    font-size: 24px;
+    display: none; justify-content: center; align-items: center;
+    border: none;
+    cursor: pointer;
+    z-index: 999;
+    transition: var(--transition);
+}
+
+/* Mobile Modal Styles */
+.mobile-nav-modal {
+    display: none;
+    position: fixed; top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 2000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.mobile-nav-modal.show {
+    display: block;
+    opacity: 1;
+    transition: var(--transition);
+}
+
+.mobile-nav-content {
+    position: fixed; top: 0; left: 0;
+    width: 280px;
+    height: 100%;
+    background: var(--bg-2);
+    border-right: 1px solid var(--border);
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    overflow-y: auto;
+    box-shadow: 2px 0 20px rgba(0, 0, 0, 0.2);
+}
+
+.mobile-nav-modal.show .mobile-nav-content {
+    transform: translateX(0);
+}
+
+.mobile-nav-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 12px 4px;
+    margin-bottom: 0;
+}
+
+.mobile-nav-header h3 {
+    color: var(--text);
+    margin: 0;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.mobile-nav-header h3 i {
+    font-size: calc(1.5rem);
+}
+
+.mobile-nav-close {
+    background: none;
+    color: var(--text-muted);
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 5px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: var(--transition);
+}
+
+.mobile-nav-close:hover {
+    background: var(--card-bg);
+}
+
+.mobile-nav-items {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.mobile-nav-items a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    color: var(--text-muted);
+    transition: var(--transition);
+    border-left: 3px solid transparent;
+}
+.mobile-nav-items a i { font-size: 18px; width: 20px; text-align: center; }
+
+/* Hide PC sidebar and adjust main content on mobile */
+@media (max-width: 768px) {
+    .user-layout .user-sidebar {
+        display: none;
+    }
+
+    .mobile-nav-open {
+        display: flex;
+        left: 10px;
+        top: 80px;
+    }
+}
+
+/* PC Styles */
+@media (min-width: 769px) {
+
+    .mobile-nav-open,
+    .mobile-nav-modal {
+        display: none !important;
+    }
+}
+</style>
+<body>
+
+<nav class="navbar navbar-expand-lg fixed-top scrolled">
+    <div class="container">
+        <a href="/" class="navbar-brand">Prime<span>Dish</span></a>
+
+        <!-- Mobile Toggle Button -->
+        <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar"
+            aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
+            <i class="bi bi-list fs-1 text-light"></i>
+        </button>
+
+        <div class="collapse navbar-collapse" id="mainNavbar">
+            <ul class="navbar-nav mx-auto">
+                <li class="nav-item"><a href="/" class="nav-link">Home</a></li>
+                <li class="nav-item"><a href="/menu" class="nav-link">Menu</a></li>
+                <li class="nav-item">
+                    <a href="/about" class="nav-link">About</a>
+                </li>
+                <li class="nav-item">
+                    <a href="/contact" class="nav-link">Contact</a>
+                </li>
+            </ul>
+            <div class="navbar-actions">
+                <a href="/cart" class="cart-btn">
+                    <i class="fa-solid fa-bag-shopping"></i>
+                    <span class="cart-count" style="display: {% if cart_count > 0 %} flex {% else %} none {% endif %}">{{ cart_count }}</span>
+                </a>
+                <div class="topbar-icon-btn bell" data-bs-toggle="modal" data-bs-target="#notifModal" style="width:38px;height:38px;border-radius:8px;background:var(--card-bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-muted);font-size:18px;position:relative;"><i class="bi bi-bell-fill"></i>
+                    {% if user_notifications %}<span style="position:absolute;top:4px;right:4px;width:8px;height:8px;border-radius:50%;background:var(--primary);border:2px solid var(--bg-2);"></span>{% endif %}
+                </div>
+                
+            </div>
+        </div>
+    </div>
+</nav>
+
+
+
+    <div class="user-layout">
+    <!-- Flash Messages
+    {% if messages %}
+    <div class="container" style="margin-top:90px;">
+        {% for message in messages %}
+        <div class="alert {% if message.tags == 'success' %}alert-success{% elif message.tags == 'error' %}alert-danger{% elif message.tags == 'warning' %}alert-warning{% else %}alert-info{% endif %} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %} -->
+    <!-- Sidebar -->
+    <aside class="user-sidebar">
+        <div class="user-profile-mini">
+            <div class="user-avatar-lg"> 
+                <form action="" method="post">
+                    {% csrf_token %}
+                        {% if user.signup.passport %}
+                            <img src="{{ user.signup.passport_url }}" alt="Profile Picture">
+                        <!-- default -->
+                        {% else %}
+                            <img src="{% static 'image/default.jpg' %}" alt="No Profile Picture">
+                        {% endif %}
+                </form>
+            </div>
+            <h4>Hi, {{ user.signup.username}} </h4>
+            <span> {{ user.signup.email }} </span>                        
+        </div>
+        <nav class="sidebar-nav">
+            <a href="/profile"><i class="bi bi-person-fill"></i> My Profile</a>
+            <!-- <a href="/cart"><i class="bi bi-bag-fill"></i> My Cart</a> -->
+            <a href="/orders"><i class="bi bi-bag-check-fill"></i> My Orders</a>
+            <a href="/track_order"><i class="bi bi-geo-alt-fill"></i> Track Order</a>
+            <a href="/setting"><i class="bi bi-gear-fill"></i> Settings</a>
+            <a href="/user_notifications" class="bi bi-megaphone-fill">Notification</a>
+            <a href="/logout" class="mt-3 border-top pt-3" style="border-top-color: var(--border) !important;"><i class="bi bi-box-arrow-right"></i>Log Out</a>
+        </nav>
+    </aside>
+
+
+    {% block content %}
+        
+    {% endblock content %}
+
+
+</div>
+
+
+<!-- Mobile Open Button (Icon Only) - Top Left Position -->
+<div class="d-block d-lg-none">
+    <button class="mobile-nav-open" id="mobileNavOpen">
+        <i class="fas fa-utensils"></i>
+    </button>
+</div>
+
+<!-- Mobile Navigation Modal (Slides from Left) -->
+<div class="mobile-nav-modal " id="mobileNavModal">
+    <div class="mobile-nav-content">
+
+        <div class="mobile-nav-header">
+            <h3> <a href="/" class="navbar-brand">Prime<span>Dish</span></a></h3>
+            <button class="mobile-nav-close" id="mobileNavClose">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <div class="mobile-nav-items">
+            <!-- Sidebar -->
+            <aside class="user-sidebar">
+                <div class="user-profile-mini">
+                    <div class="user-avatar-lg">
+                        <form action="" method="post">
+                            {% csrf_token %}
+                            {% if user.signup.passport %}
+                                <img src="{{ user.signup.passport_url }}" alt="Profile Picture">
+                            <!-- default -->
+                            {% else %}
+                                <img src="{% static 'image/default.jpg' %}" alt="No Profile Picture">
+                            {% endif %}
+                        </form>
+                    </div>
+                    <h4>Hi, {{ user.signup.username}} </h4>
+                    <span>{{ user.signup.email }} </span>
+                </div>
+                <nav class="mobile-nav-items">
+                    <a href="/profile"><i class="bi bi-person-fill"></i> My Profile</a>
+                    <a href="/orders"><i class="bi bi-bag-check-fill"></i> My Orders</a>
+                    <!-- <a href="/cart"><i class="bi bi-bag-fill"></i> My Cart</a> -->
+                    <a href="/track_order"><i class="bi bi-geo-alt-fill"></i> Track Order</a>
+                    <a href="/setting"><i class="bi bi-gear-fill"></i> Settings</a>
+                    <a href="/logout" class="mt-3 border-top pt-3" style="border-top-color: var(--border) !important;"><i class="bi bi-box-arrow-right"></i>Log Out</a>
+                </nav>
+            </aside>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // Mobile Navigation Toggle
+    document.addEventListener('DOMContentLoaded', function () {
+        const mobileOpen = document.getElementById('mobileNavOpen');
+        const mobileModal = document.getElementById('mobileNavModal');
+        const mobileClose = document.getElementById('mobileNavClose');
+
+        // Open modal
+        mobileOpen.addEventListener('click', function () {
+            mobileModal.classList.add('show');
+            document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        });
+
+        // Close modal functions
+        function closeModal() {
+            mobileModal.classList.remove('show');
+            document.body.style.overflow = ''; // Restore scrolling
+        }
+
+        mobileClose.addEventListener('click', closeModal);
+
+        // Close when clicking outside the content
+        mobileModal.addEventListener('click', function (e) {
+            if (e.target === mobileModal) {
+                closeModal();
+            }
+        });
+
+        // Close on escape key
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape' && mobileModal.classList.contains('show')) {
+                closeModal();
+            }
+        });
+    });
+</script>
+
+
+    <!-- For the main navbar at the top -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const toggler = document.querySelector('.navbar-toggler')
+            const collapse = document.getElementById('mainNavbar')
+            if (toggler && collapse) {
+                collapse.addEventListener('show.bs.collapse', function () {
+                    const icon = toggler.querySelector('i')
+                    if (icon) icon.className = 'bi bi-x-lg fs-1 text-light'
+                })
+                collapse.addEventListener('hide.bs.collapse', function () {
+                    const icon = toggler.querySelector('i')
+                    if (icon) icon.className = 'bi bi-list fs-1 text-light'
+                })
+            }
+        })
+    </script>
+
+<script src="{% static 'js/main.js' %}"></script>
+<script src="{% static 'js/user.js' %}"></script>
+<!-- Paystack Inline.js – provides the PaystackPop.setup() API for card payments -->
+<script src="https://js.paystack.co/v1/inline.js"></script>
+<script src="{% static 'js/cart.js' %}"></script>
+
+    <!-- Bootstrap JS -->
+    <script src="{% static 'bootstrap-5.3.8-dist/js/bootstrap.bundle.js' %}"></script>
+    <script src="{% static 'fontawesome-free-7.0.1-web/js/all.min.js' %}"></script>
+    <script src="{% static 'aos/aos.js' %}"></script>
+
+<script>
+    // Initialize AOS
+    AOS.init({
+        duration: 1000,
+        once: true,
+        offset: 100
+    });
+</script>
+
+<!-- Notifications Modal -->
+<div class="modal fade" id="notifModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content" style="background:var(--card-bg);border:1px solid var(--border);border-radius:16px;">
+            <div class="modal-header" style="border-bottom:1px solid var(--border);padding:18px 20px;">
+                <h5 class="modal-title fw-bold" style="font-size:1rem;color:var(--text);">Notifications</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                {% for notif in user_notifications %}
+                <div class="p-3" style="border-bottom:1px solid var(--border);">
+                    <div class="fw-semibold" style="font-size:.88rem;color:var(--text);">{{ notif.title }}</div>
+                    <div class="text-muted small mt-1">{{ notif.body }}</div>
+                    <div class="text-muted" style="font-size:.7rem;margin-top:4px;">{{ notif.created_at|timesince }} ago</div>
+                </div>
+                {% empty %}
+                <div class="text-center py-5 text-muted" style="font-size:.85rem;">No notifications yet</div>
+                {% endfor %}
+            </div>
+            <div class="modal-footer" style="border-top:1px solid var(--border);padding:12px 20px;">
+                <a href="/user_notifications" class="btn btn-primary btn-sm w-100">View All Notifications</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

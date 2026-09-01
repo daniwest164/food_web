@@ -1,0 +1,56 @@
+{% extends "includes/user_base.html" %}
+{% load static %}
+{% load humanize %}
+{% block title %} Notifications{% endblock title %}
+
+{% block content %}
+
+<div class="page-hero">
+    <div class="container">
+        <h1>Your <span>Notifications</span></h1>
+        <p>Stay updated on orders, promotions, and more</p>
+    </div>
+</div>
+
+<section class="section">
+    <div class="container" style="max-width:720px;">
+
+        <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+            <div class="d-flex align-items-center gap-2">
+                <span class="fw-bold" style="font-size:18px;">All Notifications</span>
+                <span class="badge rounded-pill" style="background:var(--primary);font-size:11px;padding:3px 10px;">{{ notifications|length }} new</span>
+            </div>
+        </div>
+
+        {% for notif in notifications %}
+        <div class="card d-flex align-items-start gap-3 mb-3" style="padding:16px 20px;border-left:3px solid var(--primary);flex-direction:row;">
+            <div class="d-flex align-items-center justify-content-center flex-shrink-0 rounded-circle" style="width:42px;height:42px;background:rgba(255, 102, 0,0.12);font-size:18px;color:var(--primary);">
+                <i class="bi bi-megaphone-fill"></i>
+            </div>
+            <div style="flex:1;min-width:0;">
+                <div class="d-flex align-items-start justify-content-between gap-2">
+                    <div>
+                        <div class="fw-bold" style="font-size:14px;">{{ notif.title }}</div>
+                        <div class="text-muted small">{{ notif.body }}</div>
+                    </div>
+                    <div class="text-muted small text-end flex-shrink-0" style="font-size:11px;white-space:nowrap;">{{ notif.created_at|timesince }} ago</div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="text-center py-5 text-muted">
+            <p style="font-size:1.1rem;">No notifications yet</p>
+            <p class="small">Check back later for updates.</p>
+        </div>
+        {% endfor %}
+
+        {% if notifications|length > 5 %}
+        <div class="text-center mt-4">
+            <button class="btn btn-ghost btn-sm" id="loadMore"><i class="bi bi-arrow-clockwise"></i> Load More</button>
+        </div>
+        {% endif %}
+
+    </div>
+</section>
+
+{% endblock content %}

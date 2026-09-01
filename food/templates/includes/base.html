@@ -1,0 +1,271 @@
+{% load static %}
+{% load humanize %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prime Dish {% block title %} {% endblock title %}</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link rel="stylesheet" href="{% static 'bootstrap-5.3.8-dist/css/bootstrap.min.css' %}" type='text/css'>
+    <link rel="stylesheet" href="{% static 'bootstrap-icons-1.13.1/bootstrap-icons.min.css' %}" type='text/css'>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="{% static 'fontawesome-free-7.0.1-web/css/all.min.css' %}" type='text/css'>
+
+    <!-- AOS (Animate On Scroll) -->
+    <link rel="stylesheet" href="{% static 'aos/aos.css' %}">
+
+    <!-- LOGO icon for tabs bar look -->
+    <link rel="icon" href="{% static 'image/logo.png' %}">
+
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/responsive.css' %}">
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar navbar-expand-lg fixed-top scrolled">
+    <div class="container">
+        <a href="/" class="navbar-brand">Prime<span>Dish</span></a>
+
+        <!-- Mobile Toggle Button -->
+        <button class="navbar-toggler border-0 shadow-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
+            <i class="bi bi-list fs-1 text-light"></i>
+        </button>
+
+        <!-- Mobile Toggle Button -->
+        <script>
+            const navBarToggler = document.querySelector('.navbar-toggler')
+            const navbarIcon = document.querySelector('.navbar-toggler i')
+            navBarToggler.addEventListener('click', function(){
+                if(navbarIcon.classList.contains('bi-list')){
+                    navbarIcon.classList.replace('bi-list', 'bi-x-lg')
+                }else{
+                    navbarIcon.classList.replace('bi-x-lg', 'bi-list')
+                }
+            })
+        </script>
+
+        <!-- Navigation Links -->
+        <div class="collapse navbar-collapse" id="mainNavbar"> 
+            <ul class="navbar-nav mx-auto ">
+                <li class="nav-item">
+                    <a href="/" class="nav-link active">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a href="/menu" class="nav-link">Menu</a>
+                </li>
+                <li class="nav-item">
+                    <a href="/about" class="nav-link">About</a>
+                </li>
+                <li class="nav-item">
+                    <a href="/contact" class="nav-link">Contact</a>
+                </li>
+            </ul>
+
+            <div class="navbar-actions">
+                <!-- Cart (visible to everyone) -->
+                <a href="/cart" class="cart-btn" title="Cart">
+                    <i class="fa-solid fa-bag-shopping"></i>
+                    <span class="cart-count" style="display:{% if cart_count > 0 %}flex{% else %}none{% endif %}">{{ cart_count }}</span>
+                    <!-- CART -->
+                </a>
+
+                {% if user.is_authenticated %}
+                <!-- User Contact -->
+                <div class="dropdown">
+                    <button class="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <!-- Dropdown button -->
+                        {% if user.signup.passport %}
+                            <img src="{{user.signup.passport_url}}" alt="Profile" width="30" height="30" class="rounded-circle">
+                        {% else %}
+                            <img src="{% static 'image/default.jpg' %}" alt="Profile" width="30" height="30" class="rounded-circle">
+                        {% endif %}
+                        <h6 class="d-inline mt-2" style="font-size: 12px;">Hi, {{user.first_name}}</h6>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow">
+                        <li>
+                            <a class="dropdown-item" href="/profile">
+                                <i class="fa fa-user me-2"></i> Dashboard
+                            </a>
+                        </li>
+                    
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                    
+                        <li>
+                            <a class="dropdown-item text-danger" href="/logout">
+                                <i class="fa fa-sign-out-alt me-2"></i> Logout
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="topbar-icon-btn bell" data-bs-toggle="modal" data-bs-target="#notifModal" style="width:38px;height:38px;border-radius:var(--radius-sm);background:var(--card-bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-muted);font-size:18px;transition:all .2s;position:relative;"><i class="bi bi-bell-fill"></i>
+                    {% if user_notifications %}<span style="position:absolute;top:4px;right:4px;width:8px;height:8px;border-radius:50%;background:var(--primary);border:2px solid var(--bg-2);"></span>{% endif %}
+                </div>
+
+                {% else %}
+                    <a href="/login" class="btn btn-outline btn-sm">Sign In</a>
+                    <a href="/sign_up" class="btn btn-primary btn-sm">Sign Up</a>
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+</nav>
+
+
+{% block content %}
+
+{% endblock content %}
+
+
+<!-- Notifications Modal -->
+<div class="modal fade" id="notifModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content" style="background:var(--card-bg);border:1px solid var(--border);border-radius:16px;">
+            <div class="modal-header" style="border-bottom:1px solid var(--border);padding:18px 20px;">
+                <h5 class="modal-title fw-bold" style="font-size:1rem;">Notifications</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0">
+                {% comment %} {% for notif in user_notifications %} {% endcomment %}
+                <div class="p-3" style="border-bottom:1px solid var(--border);">
+                    <div class="fw-semibold" style="font-size:.88rem;">{{ notif.title }}</div>
+                    <div class="text-muted small mt-1">{{ notif.body }}</div>
+                    <div class="text-muted" style="font-size:.7rem;margin-top:4px;">{{ notif.created_at|timesince }} ago</div>
+                </div>
+                {% comment %} {% empty %} {% endcomment %}
+                    <div class="text-center py-5 text-muted" style="font-size:.85rem;">No notifications yet</div>
+                {% comment %} {% endfor %} {% endcomment %}
+            </div>
+            <div class="modal-footer" style="border-top:1px solid var(--border);padding:12px 20px;">
+                <a href="/user_notifications" class="btn btn-primary btn-sm w-100">View All Notifications</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+    <div class="container">
+        <div class="row g-4">
+
+            <div class="col-12 col-lg-4 footer-brand">
+                <h2>Prime<span>Dish</span></h2>
+
+                <p>Delivering happiness to your doorstep since 2020. Fresh, delicious meals prepared with love.</p>
+                <div class="social-links">
+                    <a href="#" class="social-link"><i class="bi bi-instagram"></i></a>
+                    <a href="#" class="social-link"><i class="bi bi-twitter-x"></i></a>
+                    <a href="#" class="social-link"><i class="bi bi-facebook"></i></a>
+                    <a href="#" class="social-link"><i class="bi bi-tiktok"></i></a>
+                    <a href="#" class="social-link"><i class="bi bi-whatsapp"></i></a>
+                </div>
+            </div>
+
+            <div class="footer-col col-6 col-lg-2">
+                <h4>Quick Links</h4>
+
+                <ul>
+                    <li><a href="/">Home</a></li>
+                    <li><a href="/menu">Menu</a></li>
+                    <li><a href="/track_order">Track Order</a></li>
+                    <li><a href="/">Become a Rider</a></li>
+                    <li><a href="/">Become a Partner</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col col-6 col-lg-2">
+                <h4>Account</h4>
+
+                <ul>
+                    <li><a href="/login">Sign In</a></li>
+                    <li><a href="/sign_up">Sign Up</a></li>
+                    <li><a href="/profile">My Profile</a></li>
+                    <li><a href="/orders">My Orders</a></li>
+                    <li><a href="/cart">My Cart</a></li>
+                </ul>
+            </div>
+
+            <!-- <div class="footer-col col-12 col-lg-4">
+                <h4>Newsletter</h4>
+
+                <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">Get the latest deals and
+                    menu updates straight to your inbox.</p>
+                <form class="newsletter-form">
+                    <input type="email" class="form-control form-control-sm mb-2" placeholder="Your email address"
+                        aria-label="Email address" />
+                    <button type="submit" class="btn btn-primary btn-full">
+                        <i class="bi bi-send-fill"></i> Subscribe
+                    </button>
+                </form>
+            </div> -->
+
+            <!-- Get the App -->
+            <div class="footer-col col-12 col-lg-4">
+                <h4>Get the App</h4>
+                <button  class="w-100" style="display:flex;align-items:center;gap:12px;background:#ffffff14;border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:12px 18px;text-decoration:none;color:#fff;transition:all 0.2s;"
+                onmouseover="this.style.background='var(--primary)';this.style.borderColor='var(--primary)'"
+                onmouseout="this.style.background='rgba(255,255,255,0.08)';this.style.borderColor='rgba(255,255,255,0.12)'">
+                        <i class="fa-brands fa-apple" style="font-size:24px;"></i>
+                        <div>
+                            <div style="font-size:10px;opacity:0.7;text-transform:uppercase;letter-spacing:0.05em;">Download on the
+                            </div>
+                            <div style="font-weight:700;font-size:15px;">App Store</div>
+                        </div>
+                    </a>
+                </button>
+                <button class="w-100 mt-3" style="display:flex;align-items:center;gap:12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:12px 18px;text-decoration:none;color:#fff;transition:all 0.2s;"
+                onmouseover="this.style.background='var(--primary)';this.style.borderColor='var(--primary)'"
+                onmouseout="this.style.background='rgba(255,255,255,0.08)';this.style.borderColor='rgba(255,255,255,0.12)'">
+                    <i class="fa-brands fa-google-play" style="font-size:22px;"></i>
+                    <div>
+                        <div style="font-size:10px;opacity:0.7;text-transform:uppercase;letter-spacing:0.05em;">Get it on</div>
+                        <div style="font-weight:700;font-size:15px;">Google Play</div>
+                    </div>                    
+                </button>
+            </div>
+
+        </div>
+    </div>
+    <div class="container">
+        <div class="footer-bottom">
+            <span>&copy; 2025 Prime Dish. All rights reserved. Built with passion for food lovers.</span>
+            <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                <a href="/privacy">Privacy Policy</a>
+                <a href="/terms">Terms of Service</a>
+                <a href="#">Cookie Policy</a>
+            </div>
+        </div>
+
+    </div>
+
+</footer>
+
+
+    <!-- Bootstrap JS -->
+    <script src="{% static 'bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js' %}" type="text/javascript"></script>
+    <script src="{% static 'fontawesome-free-7.0.1-web/js/all.min.js' %}"></script>
+    
+<script src="{% static 'js/main.js' %}"></script>
+<script src="{% static 'js/cart.js' %}"></script>
+<script src="{% static 'aos/aos.js' %}"></script>
+
+<script>
+    // Initialize AOS
+    AOS.init({
+        duration: 1000,
+        once: true,
+        offset: 100
+    });
+</script>
+
+</body>
+</html>

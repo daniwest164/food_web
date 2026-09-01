@@ -1,0 +1,103 @@
+{% load static %}
+{% load humanize %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prime Dish{% block title %} {% endblock title %}</title>
+
+    <!-- Bootstrap 5 CSS -->
+    <link rel="stylesheet" href="{% static 'bootstrap-5.3.8-dist/css/bootstrap.min.css' %}" type='text/css'>
+    <link rel="stylesheet" href="{% static 'bootstrap-icons-1.13.1/bootstrap-icons.min.css' %}" type='text/css'>
+
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="{% static 'fontawesome-free-7.0.1-web/css/all.min.css' %}" type='text/css'>
+    
+    <!-- AOS (Animate On Scroll) -->
+    <link rel="stylesheet" href="{% static 'aos/aos.css' %}">
+
+    <!-- LOGO icon for tabs bar look -->
+    <link rel="icon" href="{% static 'image/logo.png' %}">
+
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'css/responsive.css' %}">
+    <link rel="stylesheet" href="{% static 'css/admin.css' %}">
+</head>
+<body class="admin-body">
+
+<!-- SIDEBAR -->
+<aside class="admin-sidebar">
+    <div class="admin-sidebar-logo">
+        <div>
+            <div class="logo-text">PRIME<span>DISH</span></div>
+        </div>
+    </div>
+
+    <div class="admin-sidebar-inner">
+        <div class="sidebar-section">
+            <h6>Main</h6>
+            <a href="/dashboard" class="active"><i class="bi bi-grid-fill"></i> Dashboard</a>
+            <a href="/order_management"><i class="bi bi-bag-check-fill"></i> Orders</a>
+            <a href="/menu_management"><i class="bi bi-journal-text"></i> Menu Management</a>
+            <a href="/customers"><i class="bi bi-people-fill"></i> Customers</a>
+        </div>
+        <div class="sidebar-section">
+            <h6>Reports</h6>
+            <a href="#"><i class="bi bi-bar-chart-line-fill"></i> Analytics</a>
+            <a href="#"><i class="bi bi-graph-up-arrow"></i> Revenue</a>
+            <a href="#"><i class="bi bi-star-fill"></i> Reviews</a>
+        </div>
+        <div class="sidebar-section">
+            <h6>System</h6>
+            <a href="#"><i class="bi bi-megaphone-fill"></i> Promotions</a>
+            <a href="#"><i class="bi bi-ticket-perforated-fill"></i> Promo Codes</a>
+            <a href="/settings"><i class="bi bi-gear-fill"></i> Settings</a> 
+            <a href="/notifications"><i class="bi bi-bell-fill"></i> Notifications</a> 
+        </div>
+    </div>
+
+    <div class="admin-sidebar-footer">
+        <div class="admin-user-info">
+            <div class="admin-avatar"><!-- Dropdown button -->
+                {% if user.signup.passport %}
+                    <img src="{{user.signup.passport_url}}" alt="Profile" width="45" height="45" class="rounded-circle">
+                {% else %}
+                    <img src="{% static 'image/default.jpg' %}" alt="Profile" width="45" height="45" class="rounded-circle">
+                {% endif %}
+            </div>
+            <div class="user-text">
+                <strong>Hi, {{user.username}}</strong>
+                <span>{{user.email}}</span>
+            </div>
+            <i class="bi bi-three-dots-vertical"></i>
+        </div>
+    </div>
+</aside>
+
+
+{% block content %}
+
+{% endblock content %}
+
+
+<script src="{% static 'js/main.js' %}"></script>
+
+    <!-- Bootstrap JS -->
+    <script src="{% static 'bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js' %}"></script>
+    <script src="{% static 'fontawesome-free-7.0.1-web/js/all.min.js' %}"></script>
+    <script src="{% static 'aos/aos.js' %}"></script>
+
+<script>
+    // Initialize AOS
+    AOS.init({
+        duration: 1000,
+        once: true,
+        offset: 100
+    });
+</script>
+
+
+</body>
+</html>

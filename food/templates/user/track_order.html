@@ -1,0 +1,188 @@
+{% extends "includes/user_base.html" %}
+{% load static %}
+{% load humanize %}
+{% block title %} Track Order{% endblock title %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'aos/aos.css' %}">
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+<link rel="stylesheet" href="{% static 'css/responsive.css' %}">
+
+
+
+<main class="user-main">
+    <h1 class="user-page-title">Track Your Order</h1>
+    <p class="user-page-subtitle">Real-time delivery updates for order <strong
+            style="color:var(--primary)">#CHO-003421</strong></p>
+
+    <!-- ETA Banner -->
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4"
+        style="background:linear-gradient(135deg,rgba(255, 102, 0,0.15),rgba(255, 102, 0,0.05));border:1px solid rgba(255, 102, 0,0.3);border-radius:var(--radius-lg);padding:20px 24px;">
+        <div class="d-flex align-items-center gap-3">
+            <div class="d-flex align-items-center justify-content-center rounded-circle"
+                style="width:52px;height:52px;background:rgba(255, 102, 0,0.15);font-size:24px;"><i
+                    class="bi bi-lightning-charge-fill" style="color:var(--primary);"></i></div>
+            <div>
+                <div style="font-size:13px;color:var(--text-muted);">Estimated Arrival</div>
+                <div style="font-family:var(--font-display);font-size:28px;color:var(--primary);" id="eta-countdown">
+                    18:30</div>
+            </div>
+        </div>
+        <div style="text-align:right;">
+            <div style="font-size:13px;color:var(--text-muted);">Rider is on the way!</div>
+            <div class="fw-bold" style="font-size:15px;">Almost there...</div>
+        </div>
+    </div>
+
+    <!-- Live Map Placeholder -->
+    <div class="tracking-map-placeholder mb-4" style="height:280px;border-radius:var(--radius-lg);">
+        <div class="map-grid"></div>
+        <div class="map-pin pin-rider" style="animation:float 2s ease-in-out infinite;">🛵</div>
+        <div class="map-pin pin-dest" style="top:22%;left:66%;animation:float 2.5s ease-in-out infinite;">📍</div>
+        <!-- fake streets -->
+        <div style="position:absolute;bottom:30px;left:0;right:0;height:2px;background:rgba(255, 102, 0,0.15);"></div>
+        <div style="position:absolute;top:0;bottom:0;left:30%;width:2px;background:rgba(255, 102, 0,0.15);"></div>
+        <div style="position:absolute;top:0;bottom:0;left:60%;width:2px;background:rgba(255, 102, 0,0.15);"></div>
+        <div style="position:absolute;top:40%;left:0;right:0;height:2px;background:rgba(255, 102, 0,0.1);"></div>
+        <div
+            style="position:absolute;top:8px;left:50%;transform:translateX(-50%);font-size:12px;color:var(--text-muted);background:rgba(10,10,10,0.7);padding:4px 12px;border-radius:20px;backdrop-filter:blur(8px);">
+            <i class="bi bi-broadcast"></i> Live Map
+        </div>
+    </div>
+
+    <!-- Tracking Steps -->
+    <div class="card" style="padding:28px;margin-bottom:20px;">
+        <h3 class="fw-bold mb-4" style="font-size:17px;">Order Progress</h3>
+        <div class="order-track-steps">
+            <div class="track-step done">
+                <div class="track-step-icon"><i class="bi bi-check-lg"></i></div>
+                <h5>Order Placed</h5>
+                <span>2:30 PM</span>
+            </div>
+            <div class="order-track-line done"></div>
+            <div class="track-step done">
+                <div class="track-step-icon"><i class="bi bi-check-lg"></i></div>
+                <h5>Confirmed</h5>
+                <span>2:32 PM</span>
+            </div>
+            <div class="order-track-line done"></div>
+            <div class="track-step active">
+                <div class="track-step-icon"><i class="bi bi-truck"></i></div>
+                <h5>On the Way</h5>
+                <span>Now</span>
+            </div>
+            <div class="order-track-line"></div>
+            <div class="track-step">
+                <div class="track-step-icon"><i class="bi bi-house-door-fill"></i></div>
+                <h5>Delivered</h5>
+                <span>~2:55 PM</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rider Info -->
+    <div class="card p-4" style="margin-bottom:20px;">
+        <h3 class="fw-bold mb-3" style="font-size:17px;">Your Rider</h3>
+        <div class="driver-card">
+            <div class="driver-avatar">K</div>
+            <div class="driver-info">
+                <h4>Kelechi Adekunle</h4>
+                <span><i class="bi bi-star-fill" style="color:var(--warning);font-size:13px;"></i> 4.9 rating
+                    &nbsp;|&nbsp; Honda CB 150</span>
+            </div>
+            <div class="driver-actions">
+                <a href="tel:+2348012345678" class="driver-btn" title="Call Rider"><i
+                        class="bi bi-telephone-fill"></i></a>
+                <a href="#" class="driver-btn" title="Message Rider"><i class="bi bi-chat-dots-fill"></i></a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Summary -->
+    <div class="card p-4">
+        <h3 class="fw-bold mb-3" style="font-size:17px;">Order Details <span class="badge badge-primary ms-2"
+                style="font-size:11px;">#CHO-003421</span></h3>
+        <div class="d-flex flex-column mb-3" style="gap:12px;">
+            <div class="d-flex align-items-center justify-content-between" style="font-size:14px;">
+                <div class="d-flex align-items-center" style="gap:10px;"><span
+                        style="font-size:24px;">🍛</span><span>Jollof Rice &amp; Chicken x2</span></div>
+                <span class="fw-semibold" style="color:var(--primary);">₦9,000</span>
+            </div>
+            <div class="d-flex align-items-center justify-content-between" style="font-size:14px;">
+                <div class="d-flex align-items-center" style="gap:10px;"><span
+                        style="font-size:24px;">🥤</span><span>Zobo Delight x1</span></div>
+                <span class="fw-semibold" style="color:var(--primary);">₦1,200</span>
+            </div>
+        </div>
+        <div class="d-flex flex-column gap-2" style="border-top:1px solid var(--border);padding-top:12px;">
+            <div class="d-flex justify-content-between" style="font-size:13px;color:var(--text-muted);">
+                <span>Subtotal</span><span>₦10,200</span></div>
+            <div class="d-flex justify-content-between" style="font-size:13px;color:var(--text-muted);"><span>Delivery
+                    Fee</span><span>₦500</span></div>
+            <div class="d-flex justify-content-between fw-bold" style="font-size:16px;"><span>Total</span><span
+                    style="color:var(--primary);font-family:var(--font-display);">₦10,700</span></div>
+        </div>
+    </div>
+
+</main>
+
+
+<script src="../js/main.js"></script>
+<script src="../js/user.js"></script>
+<style>
+    @media(max-width:768px) {
+        .user-layout {
+            flex-direction: column;
+            margin-top: 60px;
+        }
+
+        .user-sidebar {
+            width: 100%;
+            position: static;
+            height: auto;
+        }
+
+        .sidebar-nav {
+            flex-direction: row;
+            overflow-x: auto;
+            gap: 4px;
+        }
+
+        .sidebar-nav a {
+            white-space: nowrap;
+        }
+
+        .user-main {
+            padding: 20px 16px;
+        }
+
+        .order-track-steps {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .order-track-line {
+            display: none;
+        }
+    }
+</style>
+
+
+<!-- Bootstrap JS is loaded by includes/user_base.html -->
+
+<script src="js/main.js"></script>
+
+<script>
+    // Initialize AOS
+    AOS.init({
+        duration: 1000,
+        once: true,
+        offset: 100
+    });
+</script>
+
+<script src="{% static 'aos/aos.js' %}"></script>
+
+{% endblock content %}

@@ -1,0 +1,742 @@
+{% extends "includes/base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %} Cart{% endblock title %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'aos/aos.css' %}">
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+<link rel="stylesheet" href="{% static 'css/responsive.css' %}">
+<link rel="stylesheet" href="{% static 'css/cart.css' %}">
+
+<style>
+/* ========================================
+    Mobile Styles
+    ======================================== */
+.mobile-nav-open {
+    position: fixed; top: 10px; left: 350px !important; right: 0;
+    width: 50px; height: 50px; border-radius: 50%;
+    background: var(--card-bg); color: var(--text);
+    font-size: 24px;
+    display: none; justify-content: center; align-items: center;
+    border: none;
+    cursor: pointer;
+    z-index: 999;
+    transition: var(--transition);
+}
+
+/* Mobile Modal Styles */
+.mobile-nav-modal {
+    display: none;
+    position: fixed; top: 0; left: 0;
+    width: 100%; height: 100%;
+    z-index: 2000;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.mobile-nav-modal.show {
+    display: block;
+    opacity: 1;
+    transition: var(--transition);
+}
+
+.mobile-nav-content {
+    position: fixed; top: 0; left: 0;
+    width: 280px;
+    height: 100%;
+    background: var(--bg-2);
+    border-right: 1px solid var(--border);
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    overflow-y: auto;
+    box-shadow: 2px 0 20px rgba(0, 0, 0, 0.2);
+}
+
+.mobile-nav-modal.show .mobile-nav-content {
+    transform: translateX(0);
+}
+
+.mobile-nav-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 12px 4px;
+    margin-bottom: 0;
+}
+
+.mobile-nav-header h3 {
+    color: var(--text);
+    margin: 0;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.mobile-nav-header h3 i {
+    font-size: calc(1.5rem);
+}
+
+.mobile-nav-close {
+    background: none;
+    color: var(--text-muted);
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    padding: 5px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: var(--transition);
+}
+
+.mobile-nav-close:hover {
+    background: var(--card-bg);
+}
+
+.mobile-nav-items {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.mobile-nav-items a {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 11px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    color: var(--text-muted);
+    transition: var(--transition);
+    border-left: 3px solid transparent;
+}
+.mobile-nav-items a i { font-size: 18px; width: 20px; text-align: center; }
+
+@media (max-width: 768px) {
+    .mobile-nav-open {
+        display: flex;
+        left: 10px;
+        top: 80px;
+    }
+}
+
+/* PC Styles */
+@media (min-width: 769px) {
+    .mobile-nav-open,
+    .mobile-nav-modal {
+        display: none !important;
+    }
+}
+
+/* ========================================
+    Cart Layout & Components
+    ======================================== */
+.cart-layout {
+    display: flex;
+    gap: 24px;
+    align-items: flex-start;
+}
+.cart-items-col { flex: 1; min-width: 0; }
+.cart-summary { width: 380px; flex-shrink: 0; }
+.cart-summary-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 24px;
+    position: sticky;
+    top: 100px;
+}
+.cart-summary-card h3 {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: var(--text);
+}
+.summary-line {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    padding: 8px 0;
+    color: var(--text-muted);
+}
+.summary-line.total {
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--text);
+    border-top: 1px solid var(--border);
+    margin-top: 8px;
+    padding-top: 12px;
+}
+.promo-box {
+    display: flex;
+    gap: 8px;
+    margin: 16px 0;
+}
+.promo-box input {
+    flex: 1;
+    padding: 10px 14px;
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+    background: var(--bg-3);
+    color: var(--text);
+    font-size: 14px;
+    outline: none;
+}
+.payment-methods {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.payment-method {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-muted);
+    transition: var(--transition);
+}
+.payment-method input[type="radio"] { accent-color: var(--primary); }
+.payment-method.selected,
+.payment-method:has(input:checked) {
+    border-color: var(--primary);
+    background: rgba(var(--primary-rgb, 37,139,79), 0.05);
+    color: var(--text);
+    font-weight: 600;
+}
+.qty-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+.qty-btn:hover {
+    background: var(--primary);
+}
+.qty-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+}
+.food-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+    background: var(--bg-3);
+    border-radius: var(--radius);
+}
+
+@media (max-width: 768px) {
+    .cart-layout {
+        flex-direction: column;
+    }
+    .cart-summary {
+        width: 100%;
+    }
+    .menu-grid {
+        grid-template-columns: 1fr 1fr !important;
+    }
+}
+</style>
+
+<div class="page-hero">
+    <div class="container">
+        <h1>My <span>Cart</span></h1>
+        <div class="breadcrumb"><a href="/">Home</a><i class="bi bi-chevron-right"></i><span>Cart</span></div>
+    </div>
+</div>
+
+<section class="section-sm">
+    <div class="container">
+
+        {% csrf_token %}
+        <input type="hidden" id="user-email" value="{{ user.email }}">
+        <input type="hidden" id="paystack-public-key" value="{{ paystack_public_key }}">
+
+        {% if messages %}
+            <div style="margin-bottom:16px;">
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div id="cart-nonempty-view">
+            
+            {% if cart_items %}
+
+            <div class="cart-layout">
+
+                <!-- Cart Items Column -->
+                <div class="cart-items-col">
+
+                    <!-- Delivery Address Card -->
+                    <div class="cart-card" style="margin-bottom:20px;">
+                        <h3 class="cart-card-title"><i class="bi bi-geo-alt-fill text-primary"></i>Delivery Address</h3>
+                    
+                        <div id="current-address-display">
+                            <div class="d-flex align-items-center gap-3 p-3"
+                                style="background:var(--bg-3);border-radius:var(--radius);border:1px solid var(--border);">
+                                <i class="bi bi-geo-alt-fill" style="color:var(--primary);font-size:20px;"></i>
+                                <div style="flex:1;">
+                                    <div style="font-size:12px;color:var(--text-muted);">Delivering to</div>
+                                    <div style="font-size:15px;font-weight:600;" id="current-address-text">{{ delivery_address|default_if_none:'No address set' }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    
+                        <button type="button" class="btn btn-outline w-100 mt-3" data-bs-toggle="modal" data-bs-target="#addressPickerModal"
+                            style="border-radius:var(--radius);font-weight:600;font-size:14px;">
+                            <i class="bi bi-pencil-square me-1"></i> Change Address
+                        </button>
+                    </div>
+
+                    <div class="cart-card">
+                        <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-2">
+                            <h3 class="cart-card-title mb-0"><i class="bi bi-bag-check-fill text-primary"></i>Your Order Items</h3>
+                            <button class="clear-cart-btn" type="button" data-bs-toggle="modal" data-bs-target="#clearCartModal">
+                                <i class="bi bi-trash me-1"></i> Clear Cart
+                            </button>
+                        </div>
+
+                        <div id="cart-items-container">
+                            {% for item in cart_items %}
+                            <div class="checkout-item-row item-row" data-id="{{ item.menu_item.id }}">
+
+                                {% if item.menu_item.image_url %}
+                                <img class="checkout-item-img" src="{{ item.menu_item.image_url }}" alt="{{ item.menu_item.name }}">
+                                {% else %}
+                                <div class="checkout-item-img" style="display:flex;align-items:center;justify-content:center;font-size:28px;background:var(--bg-3);">
+                                    <i class="bi bi-egg-fried"></i>
+                                </div>
+                                {% endif %}
+
+                                <div class="checkout-item-details">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <div class="checkout-item-name">{{ item.menu_item.name }}</div>
+                                            <div class="checkout-item-price">₦{{ item.menu_item.price|floatformat:0|intcomma }} each</div>
+                                        </div>
+                                        <button type="button" class="checkout-item-remove" data-action="delete" data-id="{{ item.menu_item.id }}">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center mt-2">
+                                        <div class="qty-group">
+                                            <button class="qty-btn" data-action="decrease" data-id="{{ item.menu_item.id }}"{% if item.quantity <= 1 %} disabled{% endif %}>
+                                                <i class="bi bi-dash"></i>
+                                            </button>
+                                            <span class="qty-num">{{ item.quantity }}</span>
+                                            <button class="qty-btn" data-action="increase" data-id="{{ item.menu_item.id }}">
+                                                <i class="bi bi-plus"></i>
+                                            </button>
+                                        </div>
+                                        <span class="checkout-item-price fw-bold" style="font-size:15px;">₦{{ item.total_price|floatformat:0|intcomma }}</span>
+                                    </div>
+                                </div>
+
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Order Summary Column -->
+                <div class="cart-summary">
+
+                    <div class="cart-summary-card">
+                        <h3>Order Summary</h3>
+                        <div class="summary-line"><span>Subtotal</span><span class="subtotal-val" id="summary-subtotal">₦{{ subtotal|floatformat:0|intcomma }}</span></div>
+                        <div class="summary-line"><span>Delivery Fee</span><span class="delivery-val" id="summary-delivery">{% if delivery > 0 %}₦{{ delivery|floatformat:0|intcomma }}{% else %}Free{% endif %}</span></div>
+                        <div class="summary-line"><span>Discount</span><span style="color:var(--success);" id="summary-discount">-₦{{ discount|floatformat:0|intcomma }}</span></div>
+                        <div class="summary-line" id="promo-line" style="display:none;">
+                            <span style="color:var(--success);">Promo (<span id="promo-code-display"></span>)</span>
+                            <span style="color:var(--success);" id="promo-amount">-₦0</span>
+                        </div>
+                        <div class="summary-line total"><span>Total</span><span class="total-val" id="summary-total">₦{{ total|floatformat:0|intcomma }}</span></div>
+
+                        <div class="promo-box">
+                            <input type="text" id="promo-input" placeholder="Promo code (e.g. CHOPORA10)" />
+                            <button class="btn btn-ghost btn-sm" id="apply-promo">Apply</button>
+                        </div>
+                        <div id="promo-feedback" class="promo-feedback" style="display:none;"></div>
+
+                        <!-- Payment Method Selector — Jumia-style -->
+                        <div style="margin-top:18px;">
+                            <div style="font-size:13px;font-weight:700;margin-bottom:10px;color:var(--text);">Payment Method</div>
+                            <div class="payment-methods" id="payment-methods">
+                                <label class="payment-method selected" data-method="card">
+                                    <input type="radio" name="payment_method" value="card" checked>
+                                    <i class="bi bi-credit-card-2-front-fill" style="font-size:18px;color:var(--primary);"></i>
+                                    <span>Pay with Card <small style="color:var(--text-muted);font-weight:400;">(Paystack – Secured)</small></span>
+                                    <i class="bi bi-check-circle-fill" style="margin-left:auto;color:var(--primary);"></i>
+                                </label>
+                                <label class="payment-method" data-method="cash">
+                                    <input type="radio" name="payment_method" value="cash">
+                                    <i class="bi bi-cash-stack" style="font-size:18px;color:var(--success);"></i>
+                                    <span>Cash on Delivery</span>
+                                    <i class="bi bi-check-circle-fill" style="margin-left:auto;color:var(--primary);display:none;"></i>
+                                </label>
+                            </div>
+                        </div>
+
+                        <button class="btn btn-primary btn-full btn-lg mt-3" id="checkout-btn">
+                            <i class="bi bi-bag-check-fill"></i> Place Order — <span id="btn-total-label">₦{{ total|floatformat:0|intcomma }}</span>
+                        </button>
+                        <a href="/menu" class="btn btn-outline btn-full mt-2">
+                            <i class="bi bi-arrow-left"></i> Continue Shopping
+                        </a>
+
+                        <!-- Security badges -->
+                        <div style="display:flex;align-items:center;justify-content:center;gap:16px;margin-top:20px;padding-top:16px;border-top:1px solid var(--border);">
+                            <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);"><i class="bi bi-shield-lock-fill" style="color:var(--success);"></i> Secure</div>
+                            <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);"><i class="bi bi-credit-card-fill" style="color:var(--info);"></i> Encrypted</div>
+                            <div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-muted);"><i class="bi bi-arrow-counterclockwise" style="color:var(--warning);"></i> Easy Returns</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% else %}
+
+            <!-- Empty Cart View -->
+            <div class="cart-empty-view" id="empty-cart-msg">
+                <div class="empty-icon">🛒</div>
+                <h3>Your Cart is Empty</h3>
+                <p>You haven't added any items to your cart yet. Browse our menu and discover delicious food!</p>
+                <a href="/menu" class="btn btn-primary"><i class="bi bi-grid"></i> Browse Menu</a>
+            </div>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+</section>
+
+
+<!-- ═══════════════════════════════════════════
+     SUCCESS OVERLAY MODAL
+═══════════════════════════════════════════ -->
+<div class="success-overlay" id="checkout-success-overlay">
+    <div class="success-card">
+        <div class="success-checkmark">
+            <i class="bi bi-check-lg"></i>
+        </div>
+
+        <h3 style="font-weight:800;font-size:26px;color:var(--text);margin-bottom:12px;">Order Placed! 🎉</h3>
+        <p style="font-size:14px;line-height:1.6;margin-bottom:24px;color:var(--text-muted);">Your order has been received and is being prepared with love. Your order number is <strong style="color:var(--primary)" id="success-order-id">PD-0000</strong>.</p>
+
+        <div class="d-flex flex-column gap-2">
+            <a href="/track_order" class="btn btn-primary w-100 py-3" style="font-weight:700;">
+                <i class="bi bi-geo-alt-fill me-1"></i> Track Your Order
+            </a>
+            <a href="/orders" class="btn btn-outline w-100 py-3" style="font-weight:600;">
+                Go to Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+
+
+<!-- DELETE CONFIRMATION MODAL -->
+<div class="modal fade" id="deleteCartModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content text-center p-4"
+            style="border-radius:16px;border:none;box-shadow:0 10px 40px #00000033;">
+            <div style="font-size:3rem;margin-bottom:10px;">🗑️</div>
+            <h5 class="modal-title" style="color:var(--secondary-color);font-weight:600;">Remove Item?</h5>
+            <p style="font-size:.85rem;color:var(--gray-color);" id="delete-message">
+                This item will be removed from your cart.
+            </p>
+            <div class="d-flex gap-2 justify-content-center mt-3">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal"
+                    style="border-radius:50px;min-width:90px;font-size:.87rem;border:1px solid #dee2e6;">
+                    Cancel
+                </button>
+                <button type="button" class="btn btn-danger" id="delete-confirm-btn"
+                    style="border-radius:50px;min-width:90px;font-size:.87rem;box-shadow:0 2px 8px #dc35454d;">
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CLEAR CART CONFIRMATION MODAL -->
+<div class="modal fade" id="clearCartModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content text-center p-4"
+            style="border-radius:16px;border:none;box-shadow:0 10px 40px #00000033;">
+            <div style="font-size:3rem;margin-bottom:10px;">🧹</div>
+            <h5 class="modal-title" style="color:var(--secondary-color);font-weight:600;">Clear Entire Cart?</h5>
+            <p style="font-size:.85rem;color:var(--gray-color);">
+                This will remove all items from your cart. This action cannot be undone.
+            </p>
+            <div class="d-flex gap-2 justify-content-center mt-3">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal"
+                    style="border-radius:50px;min-width:90px;font-size:.87rem;border:1px solid #dee2e6;">
+                    Cancel
+                </button>
+                <button type="button" class="btn btn-danger" id="clear-cart-confirm-btn"
+                    style="border-radius:50px;min-width:90px;font-size:.87rem;box-shadow:0 2px 8px #dc35454d;">
+                    Clear All
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ADDRESS PICKER MODAL -->
+<div class="modal fade" id="addressPickerModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" style="max-width:520px;">
+        <div class="modal-content" style="border-radius:16px;border:none;box-shadow:0 10px 40px #00000033;">
+
+            <div class="modal-header" style="border-bottom:1px solid var(--border);padding:18px 24px;">
+                <h5 class="modal-title fw-bold" style="font-size:1.05rem;">
+                    <i class="bi bi-geo-alt-fill text-primary me-2"></i>Select Delivery Address
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body" style="padding:20px 24px;">
+
+                <!-- Saved Addresses -->
+                <div id="saved-addresses-list">
+                    {% for addr in addresses %}
+                    <div class="address-option-card {% if addr.is_default %}active{% endif %}" data-address-id="{{ addr.id }}" onclick="selectAddress({{ addr.id }})">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="selectedAddress" value="{{ addr.id }}" {% if addr.is_default %}checked{% endif %} style="accent-color:var(--primary);">
+                        </div>
+                        <div style="flex:1;">
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                <span style="font-weight:700;font-size:14px;text-transform:capitalize;">{{ addr.label }}</span>
+                                {% if addr.is_default %}
+                                <span style="font-size:11px;background:var(--primary);color:#fff;padding:2px 8px;border-radius:20px;font-weight:600;">Default</span>
+                                {% endif %}
+                            </div>
+                            <div style="font-size:13px;color:var(--text-muted);line-height:1.5;">
+                                {{ addr.street }}{% if addr.lga %}, {{ addr.lga }}{% endif %}, {{ addr.city }}, {{ addr.state }}
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-4" style="color:var(--text-muted);font-size:14px;">
+                        <i class="bi bi-geo-alt" style="font-size:28px;display:block;margin-bottom:8px;"></i>
+                        No saved addresses yet. Add one below.
+                    </div>
+                    {% endfor %}
+                </div>
+
+                <hr style="border-color:var(--border);margin:20px 0;">
+
+                <!-- Add New Address Form -->
+                <div id="add-address-toggle">
+                    <button type="button" class="btn btn-outline w-100" onclick="toggleAddAddressForm()" id="toggle-add-addr-btn" style="border-radius:var(--radius);font-weight:600;font-size:14px;">
+                        <i class="bi bi-plus-circle me-1"></i> Add New Address
+                    </button>
+                </div>
+                
+
+                <div id="add-address-form" style="display:none;margin-top:16px;">
+                    <form id="new-address-form" onsubmit="submitNewAddress(event)">
+                        <div style="display:flex;gap:10px;margin-bottom:12px;">
+                            <select id="addr-label" style="flex:1;padding:10px 14px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg-3);color:var(--text);font-size:14px;outline:none;">
+                                <option value="home">Home</option>
+                                <option value="work">Work</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <input type="text" id="addr-street" placeholder="Street address" required style="width:100%;padding:10px 14px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg-3);color:var(--text);font-size:14px;outline:none;margin-bottom:12px;">
+                        <div style="display:flex;gap:10px;margin-bottom:12px;">
+                            <input type="text" id="addr-city" placeholder="City" required style="flex:1;padding:10px 14px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg-3);color:var(--text);font-size:14px;outline:none;">
+                            <input type="text" id="addr-state" placeholder="State" required style="flex:1;padding:10px 14px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg-3);color:var(--text);font-size:14px;outline:none;">
+                        </div>
+                        <input type="text" id="addr-lga" placeholder="LGA (optional)" style="width:100%;padding:10px 14px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg-3);color:var(--text);font-size:14px;outline:none;margin-bottom:16px;">
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary flex-grow-1" id="save-address-btn" style="border-radius:var(--radius);font-weight:600;">
+                                <i class="bi bi-check-lg me-1"></i> Save Address
+                            </button>
+                            <button type="button" class="btn btn-outline" onclick="toggleAddAddressForm()" style="border-radius:var(--radius);font-weight:600;">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Mobile Navigation Toggle
+    document.addEventListener('DOMContentLoaded', function () {
+        const mobileOpen = document.getElementById('mobileNavOpen');
+        const mobileModal = document.getElementById('mobileNavModal');
+        const mobileClose = document.getElementById('mobileNavClose');
+
+        if (mobileOpen && mobileModal && mobileClose) {
+            mobileOpen.addEventListener('click', function () {
+                mobileModal.classList.add('show');
+                document.body.style.overflow = 'hidden';
+            });
+
+            function closeModal() {
+                mobileModal.classList.remove('show');
+                document.body.style.overflow = '';
+            }
+
+            mobileClose.addEventListener('click', closeModal);
+
+            mobileModal.addEventListener('click', function (e) {
+                if (e.target === mobileModal) {
+                    closeModal();
+                }
+            });
+
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && mobileModal.classList.contains('show')) {
+                    closeModal();
+                }
+            });
+        }
+    });
+</script>
+
+<script>
+    // ── Address Picker Functions ──
+
+    function selectAddress(addressId) {
+        // Update radio buttons
+        document.querySelectorAll('input[name="selectedAddress"]').forEach(function(r) {
+            r.checked = (parseInt(r.value) === addressId);
+        });
+        // Update active card
+        document.querySelectorAll('.address-option-card').forEach(function(card) {
+            card.classList.toggle('active', parseInt(card.dataset.addressId) === addressId);
+        });
+
+        // POST to set_default_address, then reload
+        var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        fetch('/set_default_address/' + addressId, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest',
+            }
+        })
+        .then(function(r) { return r.json ? r.json() : r; })
+        .then(function() {
+            // Close modal and reload to reflect new address
+            var modal = bootstrap.Modal.getInstance(document.getElementById('addressPickerModal'));
+            if (modal) modal.hide();
+            window.location.reload();
+        })
+        .catch(function() {
+            window.location.reload();
+        });
+    }
+
+    function toggleAddAddressForm() {
+        var form = document.getElementById('add-address-form');
+        var toggle = document.getElementById('add-address-toggle');
+        if (form.style.display === 'none') {
+            form.style.display = 'block';
+            toggle.style.display = 'none';
+        } else {
+            form.style.display = 'none';
+            toggle.style.display = 'block';
+        }
+    }
+
+    function submitNewAddress(e) {
+        e.preventDefault();
+        var btn = document.getElementById('save-address-btn');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving...';
+
+        var csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        var formData = new URLSearchParams();
+        formData.append('label', document.getElementById('addr-label').value);
+        formData.append('street', document.getElementById('addr-street').value.trim());
+        formData.append('city', document.getElementById('addr-city').value.trim());
+        formData.append('state', document.getElementById('addr-state').value.trim());
+        formData.append('lga', document.getElementById('addr-lga').value.trim());
+
+        fetch('/add_address', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken,
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            body: formData
+        })
+        .then(function(r) { return r; })
+        .then(function() {
+            // Close modal and reload to show new address
+            var modal = bootstrap.Modal.getInstance(document.getElementById('addressPickerModal'));
+            if (modal) modal.hide();
+            window.location.reload();
+        })
+        .catch(function() {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Save Address';
+        });
+    }
+</script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const toggler = document.querySelector('.navbar-toggler')
+        const collapse = document.getElementById('mainNavbar')
+        if (toggler && collapse) {
+            collapse.addEventListener('show.bs.collapse', function () {
+                const icon = toggler.querySelector('i')
+                if (icon) icon.className = 'bi bi-x-lg fs-1 text-light'
+            })
+            collapse.addEventListener('hide.bs.collapse', function () {
+                const icon = toggler.querySelector('i')
+                if (icon) icon.className = 'bi bi-list fs-1 text-light'
+            })
+        }
+    })
+</script>
+
+<script src="{% static 'js/user.js' %}"></script>
+<script src="https://js.paystack.co/v1/inline.js"></script>
+
+<script>
+    AOS.init({
+        duration: 1000,
+        once: true,
+        offset: 100
+    });
+</script>
+
+{% endblock content %}

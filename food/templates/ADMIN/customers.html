@@ -1,0 +1,558 @@
+{% extends "includes/admin_base.html" %}
+{% load static %}
+{% load humanize %}
+{% block title %} Customers{% endblock title %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+<link rel="stylesheet" href="{% static 'css/responsive.css' %}">
+<link rel="stylesheet" href="{% static 'css/admin.css' %}">
+
+<style>   
+.user-cell {
+    display: flex;
+    align-items: center;
+    text-align: start;
+    gap: 12px;
+}
+
+/* ---- Customers ---- */
+.user-avatar {
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.user-name {
+    font-weight: 500;
+    color: var(--text-muted);
+    font-size: .88rem;
+}
+
+.user-email {
+    font-size: .69rem;
+    color: var(--primary);
+}
+
+.gender {
+    color: var(--text-muted);
+}
+
+.action-btns {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.action-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 7px;
+    border: 1px solid var(--text-muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .78rem;
+    transition: all .2s;
+    text-decoration: none;
+}
+
+.action-btn.view {
+    color: #0d6efd;
+}
+
+.action-btn.view:hover {
+    background: #0d6efd14;
+    border-color: #0d6efd;
+}
+
+.action-btn.block {
+    color: var(--warning);
+}
+
+.action-btn.block:hover {
+    background: #0d6efd14;
+    border-color: var(--warning);
+}
+
+.action-btn.unblock {
+    color: #28a745;
+}
+
+.action-btn.unblock:hover {
+    background: #28a74514;
+    border-color: #28a745;
+}
+
+.action-btn.del {
+    color: var(--danger);
+}
+
+.action-btn.del:hover {
+    background: #0d6efd14;
+    border-color: var(--danger);
+}
+
+.badge-deleted {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-weight: 600;
+    background: rgba(239,68,68,0.12);
+    color: #991b1b;
+}
+</style>
+
+<div class="admin-main">
+    <div class="admin-topbar">
+        <div>
+            <h1>Customers</h1>
+            <p style="font-size: 12px; color: var(--text-muted);">Manage all registered customers</p>
+        </div>
+        <div class="topbar-search"><i class="bi bi-search"></i>
+            <form action="" method="post">
+                {% csrf_token %}
+                <input type="text" name="search_name" id="search_name"
+                    placeholder="Search customers by name or email..." />
+            </form>
+        </div>
+
+        <!-- jQuery + jQuery UI via CDN -->
+        <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+        <script src="https://code.jquery.com/ui/1.13.3/jquery-ui.min.js"></script>
+        <link href="https://code.jquery.com/ui/1.13.3/themes/base/jquery-ui.css" rel="stylesheet">
+
+        <script>
+            $(function () {  // This is the function for AWS (Auto Word Suggestion)
+                // var names = ["james", "mary", "richard", "jane"]
+                var get_name = [
+                    {% for each_name in get_all_users %}
+                     "{{ each_name.name }}",
+                {% endfor %}
+                ];
+            $("#search_name").autocomplete({ // filter names upon typing
+                source: get_name
+            });
+              });
+        </script>
+
+        <div class="topbar-actions">
+            <a href="{% url 'export_customers_csv' %}" class="btn btn-ghost btn-sm" id="export-btn"><i class="bi bi-download"></i> Export</a>
+            <div class="topbar-icon-btn bell"><i class="bi bi-bell-fill"></i>
+                <div class="notif-dot"></div>
+            </div>
+            <div class="topbar-icon-btn" style="font-size:13px;font-weight:700;width:auto;padding:0 12px;"
+                id="admin-clock">
+                --:--</div>
+        </div>
+    </div>
+
+    <div class="admin-content">
+        {% if messages %}
+        <div style="margin-bottom:16px;">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Stats -->
+        <div class="stats-grid" style="margin-bottom:24px;">
+            <div class="stat-card">
+                <div class="stat-card-top">
+                    <div class="stat-icon blue"><i class="bi bi-people-fill"></i></div>
+                </div>
+                <div class="stat-num">{{count_all_user}}</div>
+                <div class="stat-label">Total Customers</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-top">
+                    <div class="stat-icon green"><i class="bi bi-person-check-fill"></i></div>
+                </div>
+                <div class="stat-num">{{count_active_user}}</div>
+                <div class="stat-label">Active</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-top">
+                    <div class="stat-icon orange"><i class="bi bi-person-dash-fill"></i></div>
+                </div>
+                <div class="stat-num">{{count_inactive_user}}</div>
+                <div class="stat-label">Inactive</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-top">
+                    <div class="stat-icon red"><i class="bi bi-person-x-fill"></i></div>
+                </div>
+                <div class="stat-num">{{count_banned_user}}</div>
+                <div class="stat-label">Banned</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-top">
+                    <div class="stat-icon" style="background:rgba(239,68,68,0.12);color:#991b1b;"><i class="bi bi-trash-fill"></i></div>
+                </div>
+                <div class="stat-num">{{count_deleted_user}}</div>
+                <div class="stat-label">Deleted</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-card-top">
+                    <div class="stat-icon purple"><i class="bi bi-star-fill"></i></div>
+                </div>
+                <div class="stat-num">{{count_new_user}}</div>
+                <div class="stat-label">New (30 days)</div>
+            </div>
+        </div>
+
+        <!-- Filter & Search -->
+        <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:20px;">
+            <div class="menu-filter" style="margin:0;gap:8px;">
+                <a href="?{% if request.GET.sort_by %}&sort_by={{ request.GET.sort_by }}{% endif %}" class="filter-btn {% if not current_status %}active{% endif %}">All Customers</a>
+                <a href="?status=active{% if request.GET.sort_by %}&sort_by={{ request.GET.sort_by }}{% endif %}" class="filter-btn {% if current_status == 'active' %}active{% endif %}">Active</a>
+                <a href="?status=inactive{% if request.GET.sort_by %}&sort_by={{ request.GET.sort_by }}{% endif %}" class="filter-btn {% if current_status == 'inactive' %}active{% endif %}">Inactive</a>
+                <a href="?status=banned{% if request.GET.sort_by %}&sort_by={{ request.GET.sort_by }}{% endif %}" class="filter-btn {% if current_status == 'banned' %}active{% endif %}">Banned</a>
+                <a href="?status=deleted{% if request.GET.sort_by %}&sort_by={{ request.GET.sort_by }}{% endif %}" class="filter-btn {% if current_status == 'deleted' %}active{% endif %}">Deleted</a>
+            </div>
+            <div style="margin-left:auto;display:flex; gap: 8px;">
+                <form method="GET" action="" id="sortForm" style="display:flex;align-items:center;gap:8px;">
+                    <select name="sort_by" class="form-control" style="width: 180px;" onchange="document.getElementById('sortForm').submit()">
+                        <option value="">Sort By</option>
+                        <option value="orders" {% if request.GET.sort_by == 'orders' %}selected{% endif %}>Most Orders</option>
+                        <option value="newest" {% if request.GET.sort_by == 'newest' %}selected{% endif %}>Newest Joined</option>
+                        <option value="spend" {% if request.GET.sort_by == 'spend' %}selected{% endif %}>Highest Spend</option>
+                        <option value="name_asc" {% if request.GET.sort_by == 'name_asc' %}selected{% endif %}>Name A-Z</option>
+                    </select>
+                </form>
+            </div>
+        </div>
+
+        <!-- Customers Table -->
+        <div class="chart-card" style="padding: 0;">
+            <div class="table-wrap" style="border: none; border-radius: var(--radius-lg);">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>S/N</th>
+                            <th>ID</th>
+                            <th>Customer</th>
+                            <th>Gender</th>
+                            <th>Phone</th>
+                            <th>Total Orders</th>
+                            <th>Total Spent</th>
+                            <th>Joined</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody style="text-align: center !important;">
+                    {% if get_filter %}
+
+                        {% for user_info in get_filter %}
+                        <tr>
+                            <td>{{forloop.counter}}</td>
+                            <td>{{user_info.uid}}</td>
+                            <td>
+                                <div class="user-cell ">
+                                    <div class="user-avatar">
+                                        {% if user_info.passport_url %}
+                                        <img src="{{ user_info.passport_url }}" alt="No Profile" width="40px"
+                                            height="40px" class="rounded-circle">
+                                        {% else %}
+                                        <img src="{% static 'image/default.jpg' %}" alt="No Profile" width="40px"
+                                            height="40px" class="rounded-circle">
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <span class="user-name">{{user_info.name|default:"JohnDoe"}}</span>
+                                        <span class="user-email">{{ user_info.email|default:"johndoe@foodhub.com" }}</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td style="font-size:13px;" class="gender">Male</td>
+                            <td class="col-hide-sm w-100">{{ user_info.phone }}</td>
+                            <td><strong>{{ user_info.total_orders|default:0 }}</strong></td>
+                            <td><strong style="color:var(--primary);">₦{{ user_info.total_spent|default:0|floatformat:0|intcomma }}</strong></td>
+                            <td style="font-size:12px;color:var(--text-muted);">{{user_info.user.date_joined|date:"M j, Y"}}</td>
+                            <td>
+                                {% if user_info.status == 'blocked' %}
+                                    <span class="badge badge-danger">Banned</span>
+                                {% elif user_info.status == 'active' %}
+                                    <span class="badge badge-success">Active</span>
+                                {% elif user_info.status == 'deleted' %}
+                                    <span class="badge badge-deleted">Deleted</span>
+                                {% else %}
+                                    <span class="badge badge-neutral">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="action-btns">
+                                    <a href="/view_single_user/{{user_info.user_id}}" class="action-btn view"
+                                        title="View"><i class="fa-solid fa-eye"></i></a>
+                                    {% if user_info.status == 'blocked' %}
+                                    <button class="action-btn unblock" title="Unblock"
+                                        data-bs-toggle="modal" data-bs-target="#unblockModal"
+                                        data-user-id="{{user_info.user_id}}" data-user-name="{{user_info.name}}"><i
+                                            class="fa-solid fa-ban" style="transform: rotate(180deg);"></i></button>
+                                    {% elif user_info.status == 'deleted' %}
+                                    {% else %}
+                                    <button class="action-btn block" title="Block"
+                                        data-bs-toggle="modal" data-bs-target="#blockModal"
+                                        data-user-id="{{user_info.user_id}}" data-user-name="{{user_info.name}}"><i
+                                            class="fa-solid fa-ban"></i></button>
+                                    {% endif %}
+                                    <button class="action-btn del" title="Delete"
+                                        data-bs-toggle="modal" data-bs-target="#deleteModal"
+                                        data-user-id="{{user_info.user_id}}" data-user-name="{{user_info.name}}"><i
+                                            class="fa-solid fa-trash"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+
+                        {% else %}
+
+                        <style>
+                            table th {
+                                text-align: center !important;
+                            }
+
+                            table td,
+                            table th {
+                                min-width: max-content;
+                                text-wrap: nowrap;
+                            }
+                        </style>
+
+                        {%for customers in get_all_users %}
+                        <tr>
+                            <td>{{forloop.counter}}</td>
+                            <td>{{customers.uid}}</td>
+                            <td>
+                                <div class="user-cell ">
+                                    <div class="user-avatar">
+                                        {% if customers.passport_url %}
+                                        <img src="{{ customers.passport_url }}" alt="No Profile" width="40px"
+                                            height="40px" class="rounded-circle">
+                                        {% else %}
+                                        <img src="{% static 'image/default.jpg' %}" alt="No Profile" width="40px"
+                                            height="40px" class="rounded-circle">
+                                        {% endif %}
+                                    </div>
+                                    <div>
+                                        <span class="user-name">{{customers.name|default:"JohnDoe"}}</span>
+                                        <span class="user-email">{{ customers.email|default:"johndoe@foodhub.com" }}</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td style="font-size:13px;" class="gender">Male</td>
+                            <td class="col-hide-sm w-100">{{ customers.phone }}</td>
+                            <td><strong>{{ customers.total_orders|default:0 }}</strong></td>
+                            <td><strong style="color:var(--primary);">₦{{ customers.total_spent|default:0|floatformat:0|intcomma }}</strong></td>
+                            <td style="font-size:12px;color:var(--text-muted);">{{customers.user.date_joined|date:"M j, Y"}}</td>
+                            <td>
+                                {% if customers.status == 'blocked' %}
+                                <span class="badge badge-danger">Banned</span>
+                                {% elif customers.status == 'active' %}
+                                <span class="badge badge-success">Active</span>
+                                {% elif customers.status == 'deleted' %}
+                                <span class="badge badge-deleted">Deleted</span>
+                                {% else %}
+                                <span class="badge badge-neutral">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="action-btns">
+                                    <a href="/view_single_user/{{customers.user_id}}" class="action-btn view" title="View"><i class="fa-solid fa-eye"></i></a>
+                                    {% if customers.status == 'blocked' %}
+                                    <button class="action-btn unblock" title="Unblock"
+                                        data-bs-toggle="modal" data-bs-target="#unblockModal"
+                                        data-user-id="{{customers.user_id}}" data-user-name="{{customers.name}}"><i
+                                            class="fa-solid fa-ban" style="transform: rotate(180deg);"></i></button>
+                                    {% elif customers.status == 'deleted' %}
+                                    {% else %}
+                                    <button class="action-btn block" title="Block"
+                                        data-bs-toggle="modal" data-bs-target="#blockModal"
+                                        data-user-id="{{customers.user_id}}" data-user-name="{{customers.name}}"><i
+                                            class="fa-solid fa-ban"></i></button>
+                                    {% endif %}
+                                    <button class="action-btn del" title="Delete"
+                                        data-bs-toggle="modal" data-bs-target="#deleteModal"
+                                        data-user-id="{{customers.user_id}}" data-user-name="{{customers.name}}"><i
+                                            class="fa-solid fa-trash"></i></button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+
+                    {% endif %}
+                    </tbody>
+
+                </table>
+            </div>
+
+            <div
+                style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-top:1px solid var(--border);flex-wrap:wrap;gap:12px;">
+                <span style="font-size:13px;color:var(--text-muted);">Showing {{count_all_user}} of {{count_all_user}} customers</span>
+                <div style="display:flex;gap:6px;">
+                    <button class="btn btn-outline btn-sm" disabled><i class="bi bi-chevron-left"></i></button>
+                    <button class="btn btn-primary btn-sm">1</button>
+                    <button class="btn btn-outline btn-sm">2</button>
+                    <button class="btn btn-outline btn-sm">3</button>
+                    <button class="btn btn-outline btn-sm"><i class="bi bi-chevron-right"></i></button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!--  MODAL: BLOCK CONFIRM -->
+<div class="modal fade" id="blockModal" tabindex="-1" aria-labelledby="blockModalLabel" aria-hidden="true"
+    data-bs-backdrop="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content text-center p-4"
+            style="border-radius:16px;border:none;box-shadow:0 10px 40px rgba(0,0,0,.2);">
+            <div style="font-size:3rem;margin-bottom:10px;">🚫</div>
+            <h5 class="modal-title" id="blockModalLabel" style="color:var(--secondary-color);font-weight:600;">Block
+                User?</h5>
+            <p style="font-size:.85rem;color:var(--gray-color);" class="block-message">This user will no longer be able
+                to access their account or place orders.</p>
+            <div class="d-flex gap-2 justify-content-center mt-3">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal"
+                    style="border-radius:50px;min-width:90px;font-size:.87rem;border:1px solid #dee2e6;">Cancel</button>
+                <a href="#" class="btn btn-warning confirm-block-btn" id="confirmBlockBtn"
+                    style="border-radius:50px;min-width:90px;font-size:.87rem;color:#fff;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(255,193,7,0.3);">Yes,
+                    Block</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--  MODAL: UNBLOCK CONFIRM-->
+<div class="modal fade" id="unblockModal" tabindex="-1" aria-labelledby="unblockModalLabel" aria-hidden="true"
+    data-bs-backdrop="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content text-center p-4"
+            style="border-radius:16px;border:none;box-shadow:0 10px 40px rgba(0,0,0,.2);">
+            <div style="font-size:3rem;margin-bottom:10px;">✅</div>
+            <h5 class="modal-title" id="unblockModalLabel" style="color:var(--secondary-color);font-weight:600;">Unblock
+                User?</h5>
+            <p style="font-size:.85rem;color:var(--gray-color);" class="unblock-message">This user will regain access to
+                their account and be able to place orders again.</p>
+            <div class="d-flex gap-2 justify-content-center mt-3">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal"
+                    style="border-radius:50px;min-width:90px;font-size:.87rem;border:1px solid #dee2e6;">Cancel</button>
+                <a href="#" class="btn btn-success confirm-unblock-btn" id="confirmUnblockBtn"
+                    style="border-radius:50px;min-width:90px;font-size:.87rem;color:#fff;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(40,167,69,0.3);">Yes,
+                    Unblock</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--  MODAL: DELETE CONFIRM -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true"
+    data-bs-backdrop="true">
+    <div class="modal-dialog modal-dialog-centered modal-sm">
+        <div class="modal-content text-center p-4"
+            style="border-radius:16px;border:none;box-shadow:0 10px 40px #00000033;">
+            <div style="font-size:3rem;margin-bottom:10px;">🗑️</div>
+            <h5 class="modal-title" id="deleteModalLabel" style="color:var(--secondary-color);font-weight:600;">Delete
+                User?</h5>
+            <p style="font-size:.85rem;color:var(--gray-color);" class="delete-message">This action cannot be undone.
+                The user and all associated records will be permanently removed.</p>
+            <div class="d-flex gap-2 justify-content-center mt-3">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal"
+                    style="border-radius:50px;min-width:90px;font-size:.87rem;border:1px solid #dee2e6;">Cancel</button>
+                <a href="#" class="btn btn-danger confirm-delete-btn" id="confirmDeleteBtn"
+                    style="border-radius:50px;min-width:90px;font-size:.87rem;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(220,53,69,0.3);">Delete</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script>
+// Wait for DOM to be ready
+document.addEventListener('DOMContentLoaded', function () {
+    let userToBlock = null;
+    let userToUnblock = null;
+    let userToDelete = null;
+
+    // Block modal - get user data from button that triggered it
+    const blockModal = document.getElementById('blockModal');
+    blockModal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        userToBlock = button.getAttribute('data-user-id');
+    });
+
+    // Unblock modal
+    const unblockModal = document.getElementById('unblockModal');
+    unblockModal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        userToUnblock = button.getAttribute('data-user-id');
+    });
+
+    // Delete modal
+    const deleteModal = document.getElementById('deleteModal');
+    deleteModal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        userToDelete = button.getAttribute('data-user-id');
+    });
+
+    // Handle block confirmation
+    document.getElementById('confirmBlockBtn').addEventListener('click', function (e) {
+        e.preventDefault();
+        if (userToBlock) {
+            window.location.href = '/block/' + userToBlock;
+        }
+    });
+
+    // Handle unblock confirmation
+    document.getElementById('confirmUnblockBtn').addEventListener('click', function (e) {
+        e.preventDefault();
+        if (userToUnblock) {
+            window.location.href = '/unblock/' + userToUnblock;
+        }
+    });
+
+    // Handle delete confirmation
+    document.getElementById('confirmDeleteBtn').addEventListener('click', function (e) {
+        e.preventDefault();
+        if (userToDelete) {
+            window.location.href = '/delete/' + userToDelete;
+        }
+    });
+
+    // Export CSV toast
+    var exportBtn = document.getElementById('export-btn');
+    if (exportBtn) {
+        exportBtn.addEventListener('click', function () {
+            showToast('Customers exported successfully!', 'success');
+        });
+    }
+});
+</script>
+
+<script src="{% static 'js/main.js' %}"></script>
+<script src="{% static 'js/admin.js' %}"></script>
+
+<script src="{% static 'aos/aos.js' %}"></script>
+<script>
+    // Initialize AOS
+    AOS.init({
+        duration: 1000,
+        once: true,
+        offset: 100
+    });
+</script>
+
+{% endblock content %}

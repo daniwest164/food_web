@@ -1,0 +1,296 @@
+{% extends "includes/admin_base.html" %}
+{% load static %}
+{% load humanize %}
+{% block title %} {{get_user_row.name}} Info {% endblock title %}
+
+{% block content %}
+
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+<link rel="stylesheet" href="{% static 'css/responsive.css' %}">
+<link rel="stylesheet" href="{% static 'css/admin.css' %}">
+
+<style>
+/* Back button */
+.btn-back {
+    width: 15%; height: 50px; border-radius: 8px;
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 16px;
+    background: var(--bg-3);
+    font-size: .84rem; font-weight: 500; text-decoration: none;
+    margin-bottom: 20px;
+    transition: all .2s;
+}
+
+/* ─── PROFILE HERO ─── */
+.profile-hero {
+    background: var(--bg-3);
+    border-radius: 16px;
+    padding: 24px;
+    display: flex; align-items: flex-start; gap: 20px;
+    flex-wrap: wrap;
+    box-shadow: 0 1px 4px var(--black-color);
+    margin-bottom: 20px;
+}
+.profile-name {
+    font-size: 1.35rem; font-weight: 700; color: var(--dark-color);
+    margin-bottom: 4px;
+}
+.profile-email, .profile-phone {
+    font-size: .84rem; font-weight: 400;
+    color: var(--primary);
+    margin-bottom: 10px;
+}
+
+
+/* ─── INFO CARDS ─── */
+.info-card {
+    background: var(--bg-3);
+    border-radius: 16px;
+    padding: 0;
+    box-shadow: var(--box-shadow);
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.info-card-header {
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--text);
+}
+
+.info-card-header h6 {
+    color: var(--primary);
+    font-size: .92rem;
+    font-weight: 700;
+    text-align: center;
+    margin: 0;
+}
+
+.info-card-body {
+    padding: 20px;
+}
+
+.info-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 9px 0;
+    border-bottom: 1px solid #565050b0;
+}
+
+.info-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.info-row:first-child {
+    padding-top: 0;
+}
+
+.info-label {
+    color: var(--text-muted);
+    font-weight: 500;
+    font-size: .76rem;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    width: 140px;
+    flex-shrink: 0;
+}
+
+.info-value {
+    font-size: .88rem;
+    color: var(--gray-color);
+    font-weight: 400;
+}
+
+.info-value.bold {
+    font-weight: 100;
+}
+
+.action-btn {
+    width: 30px; height: 30px; border-radius: 7px;
+    border: 1px solid var(--text-muted);
+    cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+    font-size: .78rem; transition: all .2s; text-decoration: none;
+    background: var(--bg-3);
+}
+.action-btn.block { color: var(--warning); }
+.action-btn.block:hover { background: #ffc1071a; border-color: var(--warning); }
+.action-btn.del { color: var(--danger); }
+.action-btn.del:hover { background: #dc35451a; border-color: var(--danger); }
+</style>
+
+
+<div class="admin-main">
+
+    <div class="admin-topbar">
+        <div>
+            <h1>User View</h1>
+            <p style="font-size: 12px; color: var(--text-muted);">Manage all registered customers</p>
+        </div>
+        <h1 class="text-center text-light">{{get_user_row.name}} Details </h1>
+    </div>
+
+    <div class="container">   
+        <!-- Back button -->
+        <a href="/customers" class="btn-back mt-3">
+            <i class="fas fa-arrow-left"></i> Back to Users
+        </a>
+
+        <!-- Profile Hero -->
+        <div class="profile-hero">
+            <div class="profile-avatar">
+                <form action="" method="post">
+                {% csrf_token %}                
+                    {% if get_user_row.passport %}
+                        <img src="{{get_user_row.passport_url}}" alt="No Profile" width="100px" height="100px" class="rounded-circle">
+                    {% else %}
+                        <img src="{% static 'image/default.jpg' %}" alt="No Profile" width="100px" height="100px" class="rounded-circle">
+                    {% endif %}
+                </form>
+            </div>
+        
+            <div class="profile-info mt-3">
+                <span class="profile-name d-block text-light"><i class="bi bi-person-plus me-2"></i>Hi, {{get_user_row.name}}</span>
+                <span class="profile-email"><i class="bi bi-envelope me-1"></i>{{get_user_row.email}}</span>
+                <span class="profile-phone"><i class="bi bi-phone me-1 ps-2"></i>{{get_user_row.phone}}</span>
+            </div>
+        </div>     
+    
+        <!-- Down below the information  -->
+        <div class="row g-3">
+            <!-- Left column -->
+            <div class="col-lg-6 ">
+        
+                <!-- Personal Info -->
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <h6 class=""><i class="fa-solid fa-id-card"></i> Personal Information</h6>
+                    </div>
+                    <div class="info-card-body">
+                        <div class="info-row">
+                            <h2 class="info-label">First Name</h2>
+                            <h3 class="info-value bold">{{get_user_row.name}}</h3>
+                        </div>
+                        <div class="info-row">
+                            <h2 class="info-label">Email</h2>
+                            <h3 class="info-value">{{get_user_row.email}}</h3>
+                        </div>
+                        <div class="info-row">
+                            <h2 class="info-label">Phone</h2>
+                            <h3 class="info-value">{{get_user_row.phone}}</h3>
+                        </div>
+                        <div class="info-row">
+                            <h2 class="info-label">Gender</h2>
+                            <h3 class="info-value">{{get_user_row.gender}}</h3>
+                        </div>
+                        <div class="info-row">
+                            <h2 class="info-label">Date of Birth</h2>
+                            <h3 class="info-value">{{get_user_row.dob}}</h3>
+                        </div>
+                        <div class="info-row">
+                            <h2 class="info-label">User ID</h2>
+                            <h3 class="info-value" style="font-family: monospace; font-size:.8rem; color: var(--text-dim)">{{get_user_row.uid}}</h3>
+                        </div>
+                    </div>
+                </div>
+                <!-- Delivery Address -->
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <h6><i class="fa-solid fa-location-dot"></i> Delivery Address</h6>
+                    </div>
+                    <div class="info-card-body">
+                        <div class="info-row">
+                            <h2 class="info-label">Address</h2>
+                            <h3 class="info-value">{{get_user_row.location|default:"Not Provided"}}</h3>
+                        </div>
+                        <div class="info-row">
+                            <h2 class="info-label">City</h2>
+                            <h3 class="info-value">{{get_user_row.city|default:"Not Provided"}}</h3>
+                        </div>
+                        <div class="info-row">
+                            <h2 class="info-label">State</h2>
+                            <h3 class="info-value">{{get_user_row.state|default:"Not Provided"}}</h3>
+                        </div>
+                        
+                    </div>
+                </div>
+        
+            </div>
+        
+            <!-- Right column -->
+            <div class="col-lg-6">
+                <!-- Account Info -->
+                <div class="info-card">
+                    <div class="info-card-header">
+                        <h6><i class="fa-solid fa-shield-halved"></i> Account Information</h6>
+                    </div>
+                    <div class="info-card-body">
+                        <div class="info-row">
+                            <h2 class="info-label">Role</h2>
+                            <h3 class="info-value">
+                                {% if get_user_row.user.is_staff %}
+                                <span style="background:rgba(108,117,125,.1);color:#6c757d;padding:3px 10px;border-radius:20px;font-size:.78rem;font-weight:500">Admin</span>
+                                {% else %}
+                                <span style="background:rgba(13,110,253,.1);color:#0d6efd;padding:3px 10px;border-radius:20px;font-size:.78rem;font-weight:500">Customer</span>
+                                {% endif %}
+                            </h3>
+                        </div>
+                        <div class="info-row">
+                            <h2 class="info-label">Status</h2>
+                            <h3 class="info-value">
+                                {% if get_user_row.status == 'blocked' %}
+                                <span style="background:rgba(220,53,69,.1);color:#dc3545;padding:3px 10px;border-radius:20px;font-size:.78rem;font-weight:500;display:inline-flex;align-items:center;gap:5px"><span style="width:6px;height:6px;background:#dc3545;border-radius:50%;display:inline-block"></span>Banned</span>
+                                {% elif get_user_row.status == 'active' %}
+                                <span style="background:rgba(40,167,69,.1);color:#28a745;padding:3px 10px;border-radius:20px;font-size:.78rem;font-weight:500;display:inline-flex;align-items:center;gap:5px"><span style="width:6px;height:6px;background:#28a745;border-radius:50%;display:inline-block"></span>Active</span>
+                                {% else %}
+                                <span style="background:rgba(108,117,125,.1);color:#6c757d;padding:3px 10px;border-radius:20px;font-size:.78rem;font-weight:500;display:inline-flex;align-items:center;gap:5px"><span style="width:6px;height:6px;background:#6c757d;border-radius:50%;display:inline-block"></span>Inactive</span>
+                                {% endif %}
+                            </h3>
+                        </div>
+                        <div class="info-row">
+                            <h2 class="info-label">Email Verified</h2>
+                            <h3 class="info-value">
+                                {% if get_user_row.is_verified %}
+                                <span style="color:#28a745"><i class="fa-solid fa-circle-check me-1"></i>Verified</span>
+                                {% else %}
+                                <span style="color:#dc3545"><i class="fa-solid fa-circle-xmark me-1"></i>Not Verified</span>
+                                {% endif %}
+                            </h3>
+                        </div>
+                        <div class="info-row">
+                            <h2 class="info-label">Phone Verified</h2>
+                            <h3 class="info-value">
+                                {% if get_user_row.is_verified %}
+                                <span style="color:#28a745"><i class="fa-solid fa-circle-check me-1"></i>Verified</span>
+                                {% else %}
+                                <span style="color:#dc3545"><i class="fa-solid fa-circle-xmark me-1"></i>Not Verified</span>
+                                {% endif %}
+                            </h3>
+                        </div>
+                        <div class="info-row">
+                            <h2 class="info-label">Joined</h2>
+                            <h3 class="info-value">{{get_user_row.user.date_joined|date:"F j, Y"}}</h3>
+                        </div>
+                        <div class="info-row">
+                            <h2 class="info-label">Last Login</h2>
+                            <h3 class="info-value">{{get_user_row.user.last_login|naturaltime}}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    
+    </div>
+</div>
+
+
+
+
+<script src="{% static 'js/main.js' %}"></script>
+<script src="{% static 'js/admin.js' %}"></script>
+
+
+
+<script src="{% static 'aos/aos.js' %}"></script>
+
+{% endblock content %}
