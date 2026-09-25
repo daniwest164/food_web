@@ -1,11 +1,11 @@
 /* =============================================
-   CHOPORA - CART JAVASCRIPT (Choply-style)
+   PRIME DISH - CART JAVASCRIPT (Prime Dish-style)
    Django renders the cart HTML. This file adds
    interactive +/–/delete via fetch() and updates
    quantities, prices, and summary in-place.
    ============================================= */
 
-var appliedPromo = null; // {code: 'CHOPORA10', rate: 0.1} when active
+var appliedPromo = null; // {code: 'PRIMEDISH10', rate: 0.1} when active
 
 document.addEventListener('DOMContentLoaded', function () {
   // Event delegation for all cart operations
@@ -78,7 +78,9 @@ function updateCartBadge(count) {
     el.textContent = count;
     el.style.display = count > 0 ? 'flex' : 'none';
   });
-  localStorage.setItem('choporta_cart_count', count);
+  localStorage.setItem('primedish_cart_count', count);
+  // migrate legacy Chopora key if present
+  if (localStorage.getItem('choporta_cart_count') !== null) localStorage.removeItem('choporta_cart_count');
 }
 
 function setText(id, val) {
@@ -293,7 +295,7 @@ function applyPromo() {
   if (!input) return;
   var code = input.value.trim().toUpperCase();
 
-  if (code === 'CHOPORA10') {
+  if (code === 'PRIMEDISH10' || code === 'CHOPORA10') {
     appliedPromo = { code: code, rate: 0.1 };
     input.value = '';
     if (feedback) {
@@ -330,24 +332,33 @@ function fetchCartAndSync() {
 function showSuccessOverlay(orderId) {
   // Jumia-style: clear cart badge + localStorage immediately so cart icon shows 0 everywhere
   updateCartBadge(0);
+  localStorage.removeItem('primedish_cart_count');
   localStorage.removeItem('choporta_cart_count');
 
   var overlay = document.getElementById('checkout-success-overlay');
   if (!overlay) {
-    window.location.href = '/orders';
+    window.location.href = orderId ? ('/order/' + orderId + '/') : '/orders';
     return;
   }
 
   var orderIdEl = document.getElementById('success-order-id');
   if (orderIdEl) orderIdEl.textContent = orderId || 'PD-0000';
 
+  // Jumia-style: wire buttons to the new order detail + track pages (like /customer/order/detail/1334558426/ and /customer/order/track/...)
+  var trackBtn = overlay.querySelector('a[href*="track_order"]');
+  var detailBtn = overlay.querySelector('a[href="/orders"]');
+  if (orderId) {
+    if (trackBtn) trackBtn.href = '/order/track/' + orderId + '/';
+    if (detailBtn) { detailBtn.href = '/order/' + orderId + '/'; detailBtn.innerHTML = '<i class="bi bi-receipt me-1"></i> View Order Detail'; }
+  }
+
   overlay.classList.add('show');
   spawnConfetti(overlay);
 
-  // Auto-redirect to orders page where the new order is visible
+  // Auto-redirect to Jumia-style order detail page where the new order is visible
   setTimeout(function () {
-    window.location.href = '/orders';
-  }, 4000);
+    window.location.href = orderId ? ('/order/' + orderId + '/') : '/orders';
+  }, 3000);
 }
 
 function spawnConfetti(container) {
@@ -372,6 +383,14 @@ function spawnConfetti(container) {
 // ========================  CHECKOUT  ========================
 
 function handleCheckout() {
+  // Guests must login first — send them to login, then back to cart to pay
+  var authEl = document.getElementById('user-is-authenticated');
+  if (!authEl || authEl.value !== '1') {
+    showToast('Please login or sign up to complete your payment', 'danger');
+    setTimeout(function () { window.location.href = '/login?next=/cart'; }, 900);
+    return;
+  }
+
   var btn = document.getElementById('checkout-btn');
   if (!btn) return;
 

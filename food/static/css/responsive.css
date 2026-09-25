@@ -1,5 +1,5 @@
 /* =============================================
-   CHOPORA - RESPONSIVE STYLESHEET
+   PRIME DISH - RESPONSIVE STYLESHEET
    Mobile, Tablet, Desktop
 ============================================= */
 
@@ -153,6 +153,33 @@
   /* Toast */
   .toast-container { bottom: 16px; right: 16px; left: 16px; }
   .toast { min-width: unset; }
+}
+
+/* About  */
+@media(max-width: 768px) {
+
+  .about-grid,
+  .mvv-grid,
+  .team-grid {
+      grid-template-columns: 1fr !important
+  }
+}
+
+@media(max-width: 640px) {
+  .mvv-grid {
+      grid-template-columns: 1fr !important
+  }
+
+  .team-grid {
+      grid-template-columns: 1fr 1fr !important
+  }
+}
+
+@media(max-width:768px) {
+  .contact-grid,
+  .partner-grid {
+      grid-template-columns: 1fr !important
+  }
 }
 
 /* ---- Very Small (360px) ---- */

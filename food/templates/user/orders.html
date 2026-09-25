@@ -3,6 +3,7 @@
 {% load humanize %}
 
 {% block title %} Orders{% endblock title %}
+{% block mobile_title %}My Orders{% endblock %}
 
 {% block content %}
 
@@ -10,229 +11,213 @@
 <link rel="stylesheet" href="{% static 'css/style.css' %}">
 <link rel="stylesheet" href="{% static 'css/responsive.css' %}">
 
+<style>
+/* Screenshot layout — dark background, image bigger without box */
+.orders-page{ max-width:100%; }
+.orders-breadcrumb{ font-size:12px; color:var(--text-muted); display:flex; align-items:center; gap:6px; margin-bottom:8px; }
+.orders-breadcrumb a{ color:var(--text-muted); }
+.orders-breadcrumb a:hover{ color:var(--primary); }
+.orders-breadcrumb i{ font-size:10px; }
+.orders-title{ font-size:28px; font-weight:800; color:var(--text); margin:0 0 4px; }
+.orders-subtitle{ font-size:13px; color:var(--text-muted); margin:0 0 16px; }
+.orders-tabs{ display:flex; gap:10px; margin-bottom:16px; flex-wrap:wrap; }
+.orders-page .filter-btn{ background:var(--card-bg); border:1.5px solid var(--border); border-radius:100px; padding:8px 18px; font-size:13px; font-weight:600; color:var(--text-muted); text-transform:none; display:inline-flex; align-items:center; gap:6px; }
+.orders-page .filter-btn.active{ background:rgba(255,102,0,0.12); color:var(--primary); border-color:var(--primary); }
+.orders-page .filter-btn:hover{ border-color:var(--primary); color:var(--primary); }
+.count-badge{ font-size:11px; font-weight:800; background:rgba(255,255,255,0.08); border:1px solid var(--border); padding:1px 6px; border-radius:20px; line-height:1.2; }
+.orders-page .filter-btn.active .count-badge{ background:var(--primary); color:#fff; border-color:var(--primary); }
 
+/* Card — dark, bigger image without box */
+.screenshot-card{ background:var(--card-bg); border:1px solid var(--border); border-radius:12px; margin-bottom:12px; padding:12px 16px; display:flex; gap:16px; align-items:flex-start; transition:border-color .15s; }
+.screenshot-card:hover{ border-color:rgba(255,102,0,.25); }
+.screenshot-img{ width:96px; height:96px; border:none; border-radius:8px; object-fit:cover; background:transparent; flex-shrink:0; padding:0; }
+.screenshot-img.ph{ width:96px; height:96px; display:flex; align-items:center; justify-content:center; font-size:32px; background:var(--bg-3); border-radius:8px; flex-shrink:0; }
+.screenshot-content{ flex:1; min-width:0; }
+.screenshot-title{ font-size:13px; color:var(--text); line-height:1.35; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.screenshot-order{ font-size:12px; color:var(--text-muted); margin-top:3px; }
+.screenshot-badge{ display:inline-block; margin-top:6px; font-size:10px; font-weight:700; text-transform:uppercase; color:#fff; background:#2e8de1; padding:2px 6px; border-radius:2px; letter-spacing:.3px; line-height:1.4; }
+.screenshot-badge.pending{ background:#75757a; }
+.screenshot-badge.confirmed{ background:#f59e0b; }
+.screenshot-badge.preparing{ background:#f68b1e; }
+.screenshot-badge.shipped{ background:#2e8de1; }
+.screenshot-badge.delivered{ background:#00a652; }
+.screenshot-badge.cancelled{ background:#ed1c24; }
+.screenshot-delivered{ font-size:11px; color:var(--text-muted); margin-top:6px; }
+.screenshot-desc{ font-size:11px; color:var(--text-muted); margin-top:6px; line-height:1.45; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.screenshot-link{ font-size:12px; color:var(--primary); font-weight:700; white-space:nowrap; text-decoration:none; flex-shrink:0; padding:7px 16px; border:1.5px solid var(--primary); border-radius:100px; background:transparent; transition:all .2s; display:inline-flex; align-items:center; justify-content:center; }
+.screenshot-link:hover{ color:#fff; background:var(--primary); text-decoration:none; box-shadow:0 4px 12px rgba(255,102,0,.25); transform:translateY(-1px); }
+.cancel-btn{ font-size:11px; font-weight:700; color:var(--danger); background:transparent; border:1.5px solid rgba(239,68,68,.3); border-radius:100px; padding:6px 14px; cursor:pointer; transition:all .2s; white-space:nowrap; }
+.cancel-btn:hover{ color:#fff; background:var(--danger); border-color:var(--danger); box-shadow:0 4px 12px rgba(239,68,68,.25); transform:translateY(-1px); }
+.orders-empty{ background:var(--card-bg); border:1px solid var(--border); border-radius:12px; padding:48px 20px; text-align:center; box-shadow:var(--shadow); }
+@media(max-width:768px){
+  .user-layout{ flex-direction:column; margin-top:60px; }
+  .user-sidebar{ width:100%; position:static; height:auto; }
+  .sidebar-nav{ flex-direction:row; overflow-x:auto; gap:4px; }
+  .sidebar-nav a{ white-space:nowrap; }
+  .user-main{ padding:16px 12px !important; }
+  .screenshot-card{ padding:10px 12px; }
+  .screenshot-img{ width:80px; height:80px; }
+  .screenshot-img.ph{ width:80px; height:80px; }
+}
+</style>
 
   {% csrf_token %}
 <main class="user-main">
-  {% if messages %}
-  <div style="margin-bottom:16px;">
-    {% for message in messages %}
-    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-      {{ message }}
-      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-    {% endfor %}
-  </div>
-  {% endif %}
-    <h1 class="user-page-title">My Orders</h1>
-    <p class="user-page-subtitle">Track and manage all your past and current orders</p>
+  <div class="orders-page" data-aos="fade-up">
 
-    <!-- Filter Tabs -->
-    <div class="d-flex gap-2 flex-wrap mb-4">
-      <button class="filter-btn active" data-cat="all">All Orders</button>
-      <button class="filter-btn" data-cat="active">Active</button>
-      <button class="filter-btn" data-cat="delivered">Delivered</button>
-      <button class="filter-btn" data-cat="cancelled">Cancelled</button>
+    {% if messages %}
+    <div style="margin-bottom:12px;">
+      {% for message in messages %}
+      <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    <h1 class="orders-title">My Orders</h1>
+    <p class="orders-subtitle">Track and manage all your past and current orders</p>
+
+    <div class="orders-tabs">
+      <button class="filter-btn active" data-cat="delivered">ONGOING/DELIVERED <span class="count-badge">({{ ongoing_count|default:0 }})</span></button>
+      <button class="filter-btn" data-cat="cancelled">CANCELED/RETURNED <span class="count-badge">({{ cancelled_count|default:0 }})</span></button>
     </div>
 
     <div class="orders-list">
 
       {% for order in orders %}
-      <div class="order-card" data-status="{{ order.status }}">
-        <div class="order-card-header">
-          <div>
-            <div class="order-id">Order <span>#{{ order.order_id }}</span></div>
-            <div class="order-date">
-              <i class="bi bi-calendar3"></i>
-              {{ order.created_at|date:"M j, Y" }} · {{ order.created_at|date:"g:i A" }}
-            </div>
-          </div>
+      {% with first_item=order.items.all.0 total_items=order.items.count %}
+      <div class="screenshot-card order-card" data-status="{{ order.status }}">
+        {% if first_item and first_item.menu_item and first_item.menu_item.image_url %}
+          <img class="screenshot-img" src="{{ first_item.menu_item.image_url }}" alt="{{ first_item.name }}">
+        {% elif first_item %}
+          <div class="screenshot-img ph">🍽️</div>
+        {% else %}
+          <div class="screenshot-img ph">📦</div>
+        {% endif %}
 
-          {% if order.status == 'pending' or order.status == 'confirmed' or order.status == 'preparing' %}
-          <span class="badge badge-primary">
-            <i class="bi bi-circle-fill" style="font-size:8px;animation:pulse 1.5s infinite;"></i>
-            {{ order.get_status_display }}
-          </span>
+        <div class="screenshot-content">
+          <div class="screenshot-title" title="{% if first_item %}{{ first_item.name }}{% else %}Order {{ order.order_id }}{% endif %}">{% if first_item %}{{ first_item.name }}{% else %}Order {{ order.order_id }}{% endif %}</div>
+          {% if first_item and first_item.menu_item and first_item.menu_item.description %}
+            <div class="screenshot-desc">{{ first_item.menu_item.description|truncatechars:130 }}</div>
+          {% endif %}
+          {% if order.status == 'pending' %}
+            <span class="screenshot-badge pending">PENDING</span>
+          {% elif order.status == 'confirmed' %}
+            <span class="screenshot-badge confirmed">CONFIRMED</span>
+          {% elif order.status == 'preparing' %}
+            <span class="screenshot-badge preparing">PACKED</span>
           {% elif order.status == 'out_for_delivery' %}
-          <span class="badge badge-primary">
-            <i class="bi bi-circle-fill" style="font-size:8px;animation:pulse 1.5s infinite;"></i>
-            Out for Delivery
-          </span>
+            <span class="screenshot-badge shipped">SHIPPED</span>
           {% elif order.status == 'delivered' %}
-          <span class="badge badge-success"><i class="bi bi-check-circle-fill"></i> Delivered</span>
+            <span class="screenshot-badge delivered">DELIVERED</span>
           {% elif order.status == 'cancelled' %}
-          <span class="badge badge-danger"><i class="bi bi-x-circle-fill"></i> Cancelled</span>
+            <span class="screenshot-badge cancelled">CANCELED</span>
           {% endif %}
-          {% if order.payment_status == 'paid' %}
-          <span class="badge" style="background:rgba(34,197,94,.15);color:var(--success);border:1px solid rgba(34,197,94,.3);margin-left:6px;font-size:.72rem;"><i class="bi bi-shield-check"></i> Paid {% if order.payment_method == 'card' %}· Card{% endif %}</span>
-          {% elif order.payment_status == 'pending' and order.payment_method == 'cash' %}
-          <span class="badge" style="background:rgba(234,179,8,.15);color:#a16207;border:1px solid rgba(234,179,8,.3);margin-left:6px;font-size:.72rem;"><i class="bi bi-cash-stack"></i> Cash on Delivery</span>
-          {% endif %}
+          <div class="screenshot-order">Order {{ order.order_id }}</div>
         </div>
-        <div class="order-items-preview">
-          {% for item in order.items.all %}
-          <div class="order-item-chip">
-            <span class="chip-icon" style="width:60px;height:60px;border-radius:8px;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;">
-              {% if item.menu_item and item.menu_item.image_url %}
-              <img src="{{ item.menu_item.image_url }}" alt="{{ item.name }}"
-                   style="width:100%;height:100%;object-fit:cover;">
-              {% else %}
-              <span style="font-size:24px;">🍽️</span>
-              {% endif %}
-            </span>
-            <div>
-              <div style="font-weight:600;">{{ item.name }}</div>
-              <div style="font-size:.78rem;color:var(--gray-color);">x{{ item.quantity }}</div>
-            </div>
-          </div>
-          {% endfor %}
-          {% if order.status == 'delivered' %}
-          <div class="rating-box" style="display:none;margin-top:10px;padding:12px 16px;background:var(--bg-3);border-radius:var(--radius);">
-            <div style="font-size:.78rem;font-weight:600;margin-bottom:8px;">Rate your items:</div>
-            {% for item in order.items.all %}
-            {% if item.menu_item %}
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
-              <span style="font-size:.82rem;min-width:100px;">{{ item.name }}</span>
-              <div class="star-rating" data-item-id="{{ item.menu_item.id }}" data-user-score="{{ item.user_score }}" style="display:inline-flex;">
-                <div class="stars-display">
-                  {% for i in "12345"|make_list %}
-                  <i class="bi {% if forloop.counter <= item.user_score %}bi-star-fill filled{% else %}bi-star{% endif %}" data-score="{{ forloop.counter }}"></i>
-                  {% endfor %}
-                </div>
-              </div>
-            </div>
-            {% endif %}
-            {% endfor %}
-          </div>
+
+        <div style="display:flex; flex-direction:column; gap:8px; align-items:flex-end; flex-shrink:0;">
+          <a href="/order/{{ order.order_id }}/" class="screenshot-link">See details</a>
+          {% if order.status == 'confirmed' %}
+            <button type="button" class="cancel-btn" data-bs-toggle="modal" data-bs-target="#cancelOrderModal" data-order-id="{{ order.order_id }}">Cancel Order</button>
           {% endif %}
-        </div>
-        <div class="order-card-footer">
-          <div>
-            <div class="order-total-label">Order Total {% if order.payment_reference %}<span style="font-size:.7rem;color:var(--text-muted);">· Ref: {{ order.payment_reference|slice:":12" }}</span>{% endif %}</div>
-            <div class="order-total-val">₦{{ order.total|floatformat:0|intcomma }}</div>
-            {% if order.delivery_address %}<div style="font-size:.72rem;color:var(--text-muted);margin-top:2px;"><i class="bi bi-geo-alt"></i> {{ order.delivery_address|truncatechars:60 }}</div>{% endif %}
-          </div>
-          <div class="order-actions">
-            {% if order.status == 'pending' or order.status == 'confirmed' or order.status == 'preparing' or order.status == 'out_for_delivery' %}
-            <a href="/track_order" class="btn btn-ghost btn-sm"><i class="bi bi-geo-alt-fill"></i> Track</a>
-            {% endif %}
-            {% if order.status == 'delivered' %}
-            <button class="btn btn-ghost btn-sm reorder-btn"><i class="bi bi-arrow-repeat"></i> Reorder</button>
-            <button class="btn btn-outline btn-sm rate-btn"><i class="bi bi-star-fill"></i> Rate</button>
-            {% elif order.status == 'cancelled' %}
-            <button class="btn btn-ghost btn-sm reorder-btn"><i class="bi bi-arrow-repeat"></i> Try Again</button>
-            {% endif %}
-            <button class="btn btn-outline btn-sm"><i class="bi bi-headset"></i> Help</button>
-          </div>
         </div>
       </div>
+      {% endwith %}
       {% empty %}
-      <div style="text-align:center;padding:60px 20px;color:var(--text-muted);">
-        <div style="font-size:3rem;margin-bottom:16px;"><i class="bi bi-receipt-cutoff"></i></div>
-        <h4 style="color:var(--text);">No orders yet</h4>
-        <p>Place your first order and it will appear here.</p>
-        <a href="/menu" class="btn btn-primary"><i class="bi bi-grid"></i> Browse Menu</a>
+      <div class="orders-empty">
+        <div style="font-size:48px; margin-bottom:12px;">📦</div>
+        <h4 style="font-size:16px; font-weight:700; color:var(--text); margin-bottom:6px;">You have no orders yet</h4>
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:16px;">Browse our menu and discover delicious meals.</p>
+        <a href="/menu" style="display:inline-flex; align-items:center; justify-content:center; padding:10px 20px; border-radius:4px; font-size:13px; font-weight:700; text-transform:uppercase; background:var(--primary); color:#fff; text-decoration:none;">Continue Shopping</a>
       </div>
       {% endfor %}
     </div>
-  </main>
+  </div>
+</main>
 
+<!-- Cancel Order Modal — like ADMIN/customers.html delete modal -->
+<div class="modal fade" id="cancelOrderModal" tabindex="-1" aria-labelledby="cancelOrderModalLabel" aria-hidden="true" data-bs-backdrop="true">
+  <div class="modal-dialog modal-dialog-centered modal-sm">
+    <div class="modal-content text-center p-4" style="border-radius:16px;border:none;box-shadow:0 10px 40px #00000033;">
+      <div style="font-size:3rem;margin-bottom:10px;">⚠️</div>
+      <h5 class="modal-title" id="cancelOrderModalLabel" style="color:var(--secondary-color);font-weight:600;">Cancel Order?</h5>
+      <p style="font-size:.85rem;color:var(--gray-color);" class="cancel-message">This order will be cancelled and cannot be undone. Are you sure?</p>
+      <div class="d-flex gap-2 justify-content-center mt-3">
+        <button type="button" class="btn btn-light" data-bs-dismiss="modal" style="border-radius:50px;min-width:90px;font-size:.87rem;border:1px solid #dee2e6;">Keep Order</button>
+        <button type="button" class="btn btn-danger" id="confirmCancelBtn" style="border-radius:50px;min-width:90px;font-size:.87rem;box-shadow:0 2px 8px rgba(220,53,69,0.3);">Yes, Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
 
-<style>
-  @media(max-width:768px){.user-layout{flex-direction:column;margin-top:60px;}.user-sidebar{width:100%;position:static;height:auto;}.sidebar-nav{flex-direction:row;overflow-x:auto;gap:4px;}.sidebar-nav a{white-space:nowrap;}.user-main{padding:20px 16px;}}
-
-  .stars-display { display:flex; align-items:center; gap:2px; cursor:pointer; }
-  .stars-display i { color:#ccc; font-size:15px; transition:color .15s ease,transform .15s ease; }
-  .stars-display i.filled,
-  .stars-display i.hovered { color:var(--warning); }
-  .stars-display i:hover { transform:scale(1.3); }
-</style>
-
-<!-- Bootstrap JS is loaded by includes/user_base.html -->
 
 <script src="{% static 'aos/aos.js' %}"></script>
 
 <script>
-  AOS.init({duration:1000,once:true,offset:100});
+  AOS.init({duration:800,once:true,offset:80});
 
-  // Toggle rating box on Rate button click
-  document.querySelectorAll('.rate-btn').forEach(function(btn){
-    btn.addEventListener('click', function(){
-      var card = this.closest('.order-card');
-      var box = card.querySelector('.rating-box');
-      if (box) {
-        var isHidden = box.style.display === 'none';
-        box.style.display = isHidden ? '' : 'none';
-        this.innerHTML = isHidden ? '<i class="bi bi-star-fill"></i> Close' : '<i class="bi bi-star-fill"></i> Rate';
-      }
-    });
-  });
-
-  // One-click star rating for delivered items
-  document.querySelectorAll('.star-rating').forEach(function (container) {
-    var stars = container.querySelectorAll('.stars-display i');
-    var itemId = container.dataset.itemId;
-    var userScore = parseInt(container.dataset.userScore) || 0;
-    var csrf = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
-
-    function fillStars(score) {
-      stars.forEach(function (s) {
-        var val = parseInt(s.dataset.score);
-        s.className = val <= score ? 'bi bi-star-fill filled' : 'bi bi-star';
+  // Filter — ONGOING/DELIVERED vs CANCELED/RETURNED + show counts
+  (function(){
+    var btns = document.querySelectorAll('.filter-btn');
+    var cards = document.querySelectorAll('.order-card');
+    // Sync badges with actual DOM counts (fallback if server counts missing)
+    (function updateCounts(){
+      var delivered = 0, cancelled = 0;
+      cards.forEach(function(c){ if(c.dataset.status === 'cancelled') cancelled++; else delivered++; });
+      var delBadge = document.querySelector('[data-cat="delivered"] .count-badge');
+      var canBadge = document.querySelector('[data-cat="cancelled"] .count-badge');
+      if(delBadge) delBadge.textContent = '(' + delivered + ')';
+      if(canBadge) canBadge.textContent = '(' + cancelled + ')';
+    })();
+    function applyFilter(cat){
+      btns.forEach(function(b){ b.classList.toggle('active', b.dataset.cat === cat); });
+      cards.forEach(function(card){
+        var status = card.dataset.status;
+        var show = false;
+        if (cat === 'delivered') {
+          show = status !== 'cancelled';
+        } else if (cat === 'cancelled') {
+          show = status === 'cancelled';
+        }
+        card.style.display = show ? '' : 'none';
       });
     }
-
-    fillStars(userScore);
-
-    stars.forEach(function (star) {
-      star.addEventListener('click', function (e) {
-        e.stopPropagation();
-        var score = parseInt(this.dataset.score);
-        if (score === userScore) return;
-
-        fetch('/submit_rating/' + itemId, {
-          method: 'POST',
-          headers: {
-            'X-CSRFToken': csrf,
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body: 'score=' + score
-        })
-        .then(function (r) { return r.json(); })
-        .then(function (data) {
-          if (data.rating !== undefined) {
-            userScore = score;
-            container.dataset.userScore = userScore;
-            fillStars(score);
-            showToast('Rating saved: ' + data.rating.toFixed(1) + ' stars', 'success');
-          } else if (data.error) {
-            showToast(data.error, 'warning');
-          } else {
-            showToast('Error submitting rating', 'danger');
-          }
-        })
-        .catch(function () { showToast('Network error', 'danger'); });
-      });
+    btns.forEach(function(btn){
+      btn.addEventListener('click', function(){ applyFilter(this.dataset.cat); });
     });
-  });
+    if (btns.length) applyFilter(btns[0].dataset.cat);
+  })();
 
-  // Filter orders by status
-  document.querySelectorAll('.filter-btn').forEach(function(btn){
-    btn.addEventListener('click', function(){
-      document.querySelectorAll('.filter-btn').forEach(function(b){b.classList.remove('active');});
-      this.classList.add('active');
-      var cat = this.dataset.cat;
-      document.querySelectorAll('.order-card').forEach(function(card){
-        var status = card.dataset.status;
-        if (cat === 'all') {
-          card.style.display = '';
-        } else if (cat === 'active') {
-          card.style.display = (status === 'pending' || status === 'confirmed' || status === 'preparing' || status === 'out_for_delivery') ? '' : 'none';
-        } else {
-          card.style.display = (status === cat) ? '' : 'none';
+  // Cancel Order modal — like ADMIN/customers.html delete modal
+  document.addEventListener('DOMContentLoaded', function () {
+    let orderToCancel = null;
+    const cancelModal = document.getElementById('cancelOrderModal');
+    if (cancelModal) {
+      cancelModal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        orderToCancel = button.getAttribute('data-order-id');
+        const msg = cancelModal.querySelector('.cancel-message');
+        if (msg && orderToCancel) msg.textContent = 'Order ' + orderToCancel + ' will be cancelled and cannot be undone. Are you sure?';
+      });
+      document.getElementById('confirmCancelBtn').addEventListener('click', function () {
+        if (orderToCancel) {
+          var form = document.createElement('form');
+          form.method = 'POST';
+          form.action = '/cancel_order/' + orderToCancel + '/';
+          var csrf = document.querySelector('[name=csrfmiddlewaretoken]').value;
+          var input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = 'csrfmiddlewaretoken';
+          input.value = csrf;
+          form.appendChild(input);
+          document.body.appendChild(form);
+          form.submit();
         }
       });
-    });
+    }
   });
 </script>
 

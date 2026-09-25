@@ -46,6 +46,10 @@ urlpatterns = [
     path('forget_password', views.forget_password_page, name="forget_password"),
     path('reset_password/<int:id>', views.reset_password_page, name="reset_password"), 
 
+    # GOOGLE OAUTH
+    path('auth/google', views.google_auth_initiate, name="google_auth"),
+    path('auth/google/callback', views.google_auth_callback, name="google_auth_callback"), 
+
     # LEGAL PAGES
     path('terms', views.terms_of_service, name="terms_of_service"),
     path('privacy', views.privacy_policy, name="privacy_policy"), 
@@ -53,10 +57,17 @@ urlpatterns = [
     # User Profile pages
     path('profile', views.profile, name="profile"),
     path('orders', views.orders, name="orders"),
-    
+    # Jumia-style order detail: shows like https://www.jumia.com.ng/customer/order/detail/<id>/
+    path('order/<str:order_id>/', views.order_detail, name="order_detail"),
+    path('customer/order/detail/<str:order_id>/', views.order_detail, name="jumia_order_detail"),
+    # Jumia-style track: https://www.jumia.com.ng/customer/order/track/<id>/
+    path('order/track/<str:order_id>/', views.track_order, name="order_track"),
+    path('customer/order/track/<str:order_id>/', views.track_order, name="jumia_order_track"),
+    path('cancel_order/<str:order_id>/', views.cancel_order, name="cancel_order"),
 
 
     path('track_order', views.track_order, name="track_order"),
+    path('track_order/<str:order_id>/', views.track_order, name="track_order_with_id"),
     path('setting', views.setting, name="setting"),
     path('add_address', views.add_address, name="add_address"),
     path('edit_address/<int:address_id>', views.edit_address, name="edit_address"),
@@ -65,7 +76,7 @@ urlpatterns = [
     path('logout', views.logout_page),
     path('delete_account', views.delete_account_page, name="delete_account"),
 
-    # ADMIN PAGES  
+    # ADMIN PAGES
     path('dashboard', views.dashboard_page, name="dashboard"),
     path('add_admin', views.add_admin_page, name="add_admin"), 
     path('admin_profile', views.admin_profile_page, name="admin_profile"), 
@@ -94,7 +105,6 @@ urlpatterns = [
 
     path('settings', views.settings_page, name="settings"), 
     path('notifications', views.notifications_page, name="notifications"),
-    path('user_notifications', views.user_notifications_page, name="user_notifications"),
     path('mark_notification_read/', views.mark_notification_read, name="mark_notification_read"), 
 
     path('admin/', admin.site.urls),

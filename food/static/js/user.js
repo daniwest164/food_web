@@ -1,5 +1,5 @@
 /* =============================================
-   CHOPORA - USER PAGES JAVASCRIPT
+   PRIME DISH - USER PAGES JAVASCRIPT
 ============================================= */
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -86,6 +86,34 @@ document.addEventListener('DOMContentLoaded', function () {
       document.querySelectorAll(`[data-group="${group}"].tab-panel`).forEach(p => p.classList.add('hidden'));
       this.classList.add('active');
       document.querySelector(`[data-group="${group}"][data-panel="${target}"]`)?.classList.remove('hidden');
+    });
+  });
+
+  // ---- Notification dropdown: mark all as read ----
+  const markAllRead = document.querySelector('.mark-all-read');
+  if (markAllRead) {
+    markAllRead.addEventListener('click', function (e) {
+      e.preventDefault();
+      e.stopPropagation();
+      const dropdown = this.closest('.notif-dropdown');
+      const list = dropdown ? dropdown.querySelector('.notif-list') : null;
+      const bellBadge = document.querySelector('.bell-badge, .topbar-icon-btn.bell .unread-dot-badge');
+      const notifCount = document.querySelector('.notif-count');
+      if (list) {
+        list.querySelectorAll('.notif-item.unread').forEach(item => item.classList.remove('unread'));
+        list.querySelectorAll('.notif-item .notif-dot, .notif-item .unread-dot').forEach(dot => dot.remove());
+      }
+      if (bellBadge) bellBadge.remove();
+      if (notifCount) notifCount.remove();
+    });
+  }
+
+  // ---- Notification item click: mark as read ----
+  document.querySelectorAll('.notif-item.unread').forEach(item => {
+    item.addEventListener('click', function (e) {
+      this.classList.remove('unread');
+      const dot = this.querySelector('.notif-dot, .unread-dot');
+      if (dot) dot.remove();
     });
   });
 });

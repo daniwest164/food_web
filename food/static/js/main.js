@@ -1,5 +1,5 @@
 /* =============================================
-   CHOPORA - MAIN JAVASCRIPT
+   PRIME DISH - MAIN JAVASCRIPT
 ============================================= */
 
 document.addEventListener('DOMContentLoaded', function () {

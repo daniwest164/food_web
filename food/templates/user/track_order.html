@@ -1,188 +1,181 @@
 {% extends "includes/user_base.html" %}
 {% load static %}
 {% load humanize %}
-{% block title %} Track Order{% endblock title %}
+{% block title %}Track {{ order.order_id }}{% endblock title %}
+{% block mobile_title %}Track Order{% endblock %}
 
 {% block content %}
-
 <link rel="stylesheet" href="{% static 'aos/aos.css' %}">
 <link rel="stylesheet" href="{% static 'css/style.css' %}">
 <link rel="stylesheet" href="{% static 'css/responsive.css' %}">
-
-
-
-<main class="user-main">
-    <h1 class="user-page-title">Track Your Order</h1>
-    <p class="user-page-subtitle">Real-time delivery updates for order <strong
-            style="color:var(--primary)">#CHO-003421</strong></p>
-
-    <!-- ETA Banner -->
-    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4"
-        style="background:linear-gradient(135deg,rgba(255, 102, 0,0.15),rgba(255, 102, 0,0.05));border:1px solid rgba(255, 102, 0,0.3);border-radius:var(--radius-lg);padding:20px 24px;">
-        <div class="d-flex align-items-center gap-3">
-            <div class="d-flex align-items-center justify-content-center rounded-circle"
-                style="width:52px;height:52px;background:rgba(255, 102, 0,0.15);font-size:24px;"><i
-                    class="bi bi-lightning-charge-fill" style="color:var(--primary);"></i></div>
-            <div>
-                <div style="font-size:13px;color:var(--text-muted);">Estimated Arrival</div>
-                <div style="font-family:var(--font-display);font-size:28px;color:var(--primary);" id="eta-countdown">
-                    18:30</div>
-            </div>
-        </div>
-        <div style="text-align:right;">
-            <div style="font-size:13px;color:var(--text-muted);">Rider is on the way!</div>
-            <div class="fw-bold" style="font-size:15px;">Almost there...</div>
-        </div>
-    </div>
-
-    <!-- Live Map Placeholder -->
-    <div class="tracking-map-placeholder mb-4" style="height:280px;border-radius:var(--radius-lg);">
-        <div class="map-grid"></div>
-        <div class="map-pin pin-rider" style="animation:float 2s ease-in-out infinite;">🛵</div>
-        <div class="map-pin pin-dest" style="top:22%;left:66%;animation:float 2.5s ease-in-out infinite;">📍</div>
-        <!-- fake streets -->
-        <div style="position:absolute;bottom:30px;left:0;right:0;height:2px;background:rgba(255, 102, 0,0.15);"></div>
-        <div style="position:absolute;top:0;bottom:0;left:30%;width:2px;background:rgba(255, 102, 0,0.15);"></div>
-        <div style="position:absolute;top:0;bottom:0;left:60%;width:2px;background:rgba(255, 102, 0,0.15);"></div>
-        <div style="position:absolute;top:40%;left:0;right:0;height:2px;background:rgba(255, 102, 0,0.1);"></div>
-        <div
-            style="position:absolute;top:8px;left:50%;transform:translateX(-50%);font-size:12px;color:var(--text-muted);background:rgba(10,10,10,0.7);padding:4px 12px;border-radius:20px;backdrop-filter:blur(8px);">
-            <i class="bi bi-broadcast"></i> Live Map
-        </div>
-    </div>
-
-    <!-- Tracking Steps -->
-    <div class="card" style="padding:28px;margin-bottom:20px;">
-        <h3 class="fw-bold mb-4" style="font-size:17px;">Order Progress</h3>
-        <div class="order-track-steps">
-            <div class="track-step done">
-                <div class="track-step-icon"><i class="bi bi-check-lg"></i></div>
-                <h5>Order Placed</h5>
-                <span>2:30 PM</span>
-            </div>
-            <div class="order-track-line done"></div>
-            <div class="track-step done">
-                <div class="track-step-icon"><i class="bi bi-check-lg"></i></div>
-                <h5>Confirmed</h5>
-                <span>2:32 PM</span>
-            </div>
-            <div class="order-track-line done"></div>
-            <div class="track-step active">
-                <div class="track-step-icon"><i class="bi bi-truck"></i></div>
-                <h5>On the Way</h5>
-                <span>Now</span>
-            </div>
-            <div class="order-track-line"></div>
-            <div class="track-step">
-                <div class="track-step-icon"><i class="bi bi-house-door-fill"></i></div>
-                <h5>Delivered</h5>
-                <span>~2:55 PM</span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Rider Info -->
-    <div class="card p-4" style="margin-bottom:20px;">
-        <h3 class="fw-bold mb-3" style="font-size:17px;">Your Rider</h3>
-        <div class="driver-card">
-            <div class="driver-avatar">K</div>
-            <div class="driver-info">
-                <h4>Kelechi Adekunle</h4>
-                <span><i class="bi bi-star-fill" style="color:var(--warning);font-size:13px;"></i> 4.9 rating
-                    &nbsp;|&nbsp; Honda CB 150</span>
-            </div>
-            <div class="driver-actions">
-                <a href="tel:+2348012345678" class="driver-btn" title="Call Rider"><i
-                        class="bi bi-telephone-fill"></i></a>
-                <a href="#" class="driver-btn" title="Message Rider"><i class="bi bi-chat-dots-fill"></i></a>
-            </div>
-        </div>
-    </div>
-
-    <!-- Order Summary -->
-    <div class="card p-4">
-        <h3 class="fw-bold mb-3" style="font-size:17px;">Order Details <span class="badge badge-primary ms-2"
-                style="font-size:11px;">#CHO-003421</span></h3>
-        <div class="d-flex flex-column mb-3" style="gap:12px;">
-            <div class="d-flex align-items-center justify-content-between" style="font-size:14px;">
-                <div class="d-flex align-items-center" style="gap:10px;"><span
-                        style="font-size:24px;">🍛</span><span>Jollof Rice &amp; Chicken x2</span></div>
-                <span class="fw-semibold" style="color:var(--primary);">₦9,000</span>
-            </div>
-            <div class="d-flex align-items-center justify-content-between" style="font-size:14px;">
-                <div class="d-flex align-items-center" style="gap:10px;"><span
-                        style="font-size:24px;">🥤</span><span>Zobo Delight x1</span></div>
-                <span class="fw-semibold" style="color:var(--primary);">₦1,200</span>
-            </div>
-        </div>
-        <div class="d-flex flex-column gap-2" style="border-top:1px solid var(--border);padding-top:12px;">
-            <div class="d-flex justify-content-between" style="font-size:13px;color:var(--text-muted);">
-                <span>Subtotal</span><span>₦10,200</span></div>
-            <div class="d-flex justify-content-between" style="font-size:13px;color:var(--text-muted);"><span>Delivery
-                    Fee</span><span>₦500</span></div>
-            <div class="d-flex justify-content-between fw-bold" style="font-size:16px;"><span>Total</span><span
-                    style="color:var(--primary);font-family:var(--font-display);">₦10,700</span></div>
-        </div>
-    </div>
-
-</main>
-
-
-<script src="../js/main.js"></script>
-<script src="../js/user.js"></script>
 <style>
-    @media(max-width:768px) {
-        .user-layout {
-            flex-direction: column;
-            margin-top: 60px;
-        }
-
-        .user-sidebar {
-            width: 100%;
-            position: static;
-            height: auto;
-        }
-
-        .sidebar-nav {
-            flex-direction: row;
-            overflow-x: auto;
-            gap: 4px;
-        }
-
-        .sidebar-nav a {
-            white-space: nowrap;
-        }
-
-        .user-main {
-            padding: 20px 16px;
-        }
-
-        .order-track-steps {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 16px;
-        }
-
-        .order-track-line {
-            display: none;
-        }
-    }
+.orders-breadcrumb{font-size:13px;color:var(--text-muted);display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.orders-breadcrumb a{color:var(--text-muted)} .orders-breadcrumb a:hover{color:var(--primary)} .orders-breadcrumb i{font-size:10px}
+.tr-eta{background:linear-gradient(135deg,rgba(255,102,0,.14),rgba(255,102,0,.04));border:1px solid rgba(255,102,0,.3);border-radius:16px;padding:20px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.tr-timeline{background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:24px}
+.tr-step{display:flex;gap:14px;position:relative;padding-bottom:22px}
+.tr-step:last-child{padding-bottom:0}
+.tr-step::before{content:'';position:absolute;left:17px;top:34px;bottom:-2px;width:2px;background:var(--border)}
+.tr-step:last-child::before{display:none}
+.tr-step.done::before{background:var(--primary)}
+.tr-icon{width:36px;height:36px;border-radius:50%;background:var(--bg-3);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--text-muted);font-size:16px}
+.tr-step.done .tr-icon{background:var(--primary);border-color:var(--primary);color:#fff}
+.tr-step.active .tr-icon{background:var(--primary);border-color:var(--primary);color:#fff;box-shadow:0 0 0 6px rgba(255,102,0,.18)}
+.tr-step.cancelled .tr-icon{background:var(--danger);border-color:var(--danger);color:#fff}
+.tr-label{font-weight:700;font-size:14px}
+.tr-desc{font-size:12px;color:var(--text-muted)}
+.tr-time{font-size:12px;color:var(--text-muted);white-space:nowrap}
+@media(max-width:576px){.tr-time{display:block;margin-top:4px}}
 </style>
 
+<main class="user-main">
+  <!-- Breadcrumb -->
+  <div class="orders-breadcrumb">
+    <a href="/">Home</a><i class="bi bi-chevron-right"></i>
+    <a href="/orders">My Orders</a><i class="bi bi-chevron-right"></i>
+    <a href="/order/{{ order.order_id }}/">Order {{ order.order_id }}</a><i class="bi bi-chevron-right"></i>
+    <span style="color:var(--primary)">Track</span>
+  </div>
 
-<!-- Bootstrap JS is loaded by includes/user_base.html -->
+  <h1 class="user-page-title">Track Your Order</h1>
+  <p class="user-page-subtitle">Tracking for <strong style="color:var(--primary)">#{{ order.order_id }}</strong> • Placed on {{ order.created_at|date:"M j, Y g:i A" }} • <a href="/order/{{ order.order_id }}/" style="color:var(--primary);text-decoration:underline">View Order Detail</a></p>
 
-<script src="js/main.js"></script>
+  <!-- ETA Banner — Jumia shows estimated delivery -->
+  {% if is_cancelled %}
+  <div class="tr-eta" style="background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.3)">
+    <div style="display:flex;align-items:center;gap:14px">
+      <div style="width:52px;height:52px;border-radius:50%;background:rgba(239,68,68,.15);display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--danger)"><i class="bi bi-x-circle-fill"></i></div>
+      <div><div style="font-size:13px;color:var(--text-muted)">Order Status</div><div style="font-size:22px;font-weight:800;color:var(--danger)">Cancelled</div></div>
+    </div>
+    <div style="font-size:13px;color:var(--text-muted)">This order was cancelled. Contact support if this was a mistake.</div>
+  </div>
+  {% elif is_delivered %}
+  <div class="tr-eta" style="background:rgba(34,197,94,.1);border-color:rgba(34,197,94,.3)">
+    <div style="display:flex;align-items:center;gap:14px">
+      <div style="width:52px;height:52px;border-radius:50%;background:rgba(34,197,94,.15);display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--success)"><i class="bi bi-check-circle-fill"></i></div>
+      <div><div style="font-size:13px;color:var(--text-muted)">Delivered on</div><div style="font-size:22px;font-weight:800;color:var(--success)">{{ eta|date:"M j, Y" }}</div></div>
+    </div>
+    <div style="text-align:right"><div style="font-size:13px;color:var(--text-muted)">Delivered to</div><div style="font-weight:700;font-size:13px">{{ order.delivery_address|truncatechars:48 }}</div></div>
+  </div>
+  {% else %}
+  <div class="tr-eta">
+    <div style="display:flex;align-items:center;gap:14px">
+      <div style="width:52px;height:52px;border-radius:50%;background:rgba(255,102,0,.15);display:flex;align-items:center;justify-content:center;font-size:24px;color:var(--primary)"><i class="bi bi-lightning-charge-fill"></i></div>
+      <div><div style="font-size:13px;color:var(--text-muted)">Estimated Arrival</div><div style="font-family:var(--font-display);font-size:28px;color:var(--primary)" id="eta-countdown">{{ eta|date:"g:i A" }}</div><div style="font-size:11px;color:var(--text-muted)">{{ eta|date:"l, M j" }} • {% if remaining_minutes > 0 %}~{{ remaining_minutes }} min left{% else %}Arriving soon{% endif %}</div></div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:13px;color:var(--text-muted)">Status</div>
+      <div class="fw-bold" style="font-size:15px;color:var(--primary)">{{ order.get_status_display }}</div>
+      <div style="font-size:12px;color:var(--text-muted)">Courier: Prime Dish Express</div>
+    </div>
+  </div>
+  {% endif %}
 
-<script>
-    // Initialize AOS
-    AOS.init({
-        duration: 1000,
-        once: true,
-        offset: 100
-    });
-</script>
+  <!-- Live Map Placeholder — like Jumia map -->
+  {% if not is_cancelled and not is_delivered %}
+  <div class="tracking-map-placeholder mb-4" style="height:280px;border-radius:16px;position:relative;overflow:hidden;background:var(--card-bg);border:1px solid var(--border)">
+    <div class="map-grid" style="position:absolute;inset:0;opacity:.06;background-image:linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px);background-size:32px 32px"></div>
+    <div class="map-pin pin-rider" style="position:absolute;top:52%;left:28%;animation:float 2s ease-in-out infinite;font-size:26px">🛵</div>
+    <div class="map-pin pin-dest" style="position:absolute;top:22%;left:66%;animation:float 2.5s ease-in-out infinite;font-size:24px">📍</div>
+    <div style="position:absolute;bottom:30px;left:0;right:0;height:2px;background:rgba(255,102,0,.15)"></div>
+    <div style="position:absolute;top:0;bottom:0;left:30%;width:2px;background:rgba(255,102,0,.15)"></div>
+    <div style="position:absolute;bottom:12px;left:50%;transform:translateX(-50%);font-size:11px;color:var(--text-muted);background:rgba(10,10,10,.7);padding:4px 12px;border-radius:20px;backdrop-filter:blur(8px)"><i class="bi bi-broadcast"></i> Live tracking • Rider is 2.4 km away</div>
+    <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);font-size:11px;color:var(--text-muted);background:rgba(10,10,10,.7);padding:4px 12px;border-radius:20px;backdrop-filter:blur(8px)"><i class="bi bi-geo-alt"></i> {{ order.delivery_address|truncatechars:36 }}</div>
+  </div>
+  {% endif %}
+
+  <div style="display:grid;grid-template-columns:1.2fr .8fr;gap:18px;align-items:start">
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <!-- Tracking Steps — Jumia vertical timeline -->
+      <div class="tr-timeline">
+        <h3 class="fw-bold mb-3" style="font-size:15px"><i class="bi bi-signpost-split text-primary"></i> Shipment Activity</h3>
+        {% if is_cancelled %}
+          <div class="tr-step cancelled">
+            <div class="tr-icon"><i class="bi bi-x-lg"></i></div>
+            <div style="flex:1"><div class="tr-label">Order Cancelled</div><div class="tr-desc">Your order was cancelled.</div></div><div class="tr-time">{{ order.updated_at|date:"M j, g:i A" }}</div>
+          </div>
+          <div class="tr-step">
+            <div class="tr-icon"><i class="bi bi-bag"></i></div>
+            <div style="flex:1"><div class="tr-label">Order Placed</div><div class="tr-desc">Order #{{ order.order_id }} was placed</div></div><div class="tr-time">{{ order.created_at|date:"M j, g:i A" }}</div>
+          </div>
+        {% else %}
+          {% for step in steps %}
+          {% with forloop.counter0 as idx %}
+          <div class="tr-step {% if idx < current_index %}done{% elif idx == current_index %}done active{% endif %}">
+            <div class="tr-icon"><i class="bi {{ step.icon }}"></i></div>
+            <div style="flex:1">
+              <div class="tr-label">{{ step.label }}</div>
+              <div class="tr-desc">{{ step.desc }} {% if idx == current_index %}• <span style="color:var(--primary);font-weight:700">Current</span>{% endif %}</div>
+            </div>
+            <div class="tr-time">
+              {% if idx <= current_index %}{{ step.time|date:"M j, g:i A" }}{% else %}—{% endif %}
+            </div>
+          </div>
+          {% endwith %}
+          {% endfor %}
+        {% endif %}
+        <div style="margin-top:16px;padding:12px;background:var(--bg-3);border:1px dashed var(--border);border-radius:10px;font-size:12px;color:var(--text-muted)">
+          <i class="bi bi-info-circle"></i> Tracking ID: <b style="color:var(--text)">{{ order.order_id }}</b> • Courier: Prime Dish Express • <a href="/order/{{ order.order_id }}/" style="color:var(--primary)">View invoice</a>
+        </div>
+      </div>
+
+      <!-- Rider Info — only when out_for_delivery -->
+      {% if order.status == 'out_for_delivery' %}
+      <div class="card p-4">
+        <h3 class="fw-bold mb-3" style="font-size:15px"><i class="bi bi-person-badge text-primary"></i> Your Rider</h3>
+        <div class="driver-card" style="display:flex;align-items:center;gap:14px">
+          <div class="driver-avatar" style="width:48px;height:48px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:18px">K</div>
+          <div class="driver-info" style="flex:1"><h4 style="font-size:15px;font-weight:700;margin:0">Kelechi Adekunle</h4><span style="font-size:12px;color:var(--text-muted)"><i class="bi bi-star-fill" style="color:var(--warning)"></i> 4.9 • Honda CB 150 • <span style="color:var(--success)">Online</span></span></div>
+          <div class="driver-actions" style="display:flex;gap:8px">
+            <a href="tel:+2348012345678" class="driver-btn" title="Call Rider" style="width:36px;height:36px;border-radius:50%;background:var(--bg-3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center"><i class="bi bi-telephone-fill"></i></a>
+            <a href="#" class="driver-btn" title="Message" style="width:36px;height:36px;border-radius:50%;background:var(--bg-3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center"><i class="bi bi-chat-dots-fill"></i></a>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Right — Order Details like Jumia side panel -->
+    <div style="display:flex;flex-direction:column;gap:18px">
+      <div class="card p-4">
+        <h3 class="fw-bold mb-3" style="font-size:15px">Order Details <span class="badge badge-primary ms-1" style="font-size:11px">#{{ order.order_id }}</span></h3>
+        <div style="display:flex;flex-direction:column;gap:12px">
+          {% for item in order.items.all %}
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px">
+            <div style="display:flex;align-items:center;gap:10px;min-width:0">
+              {% if item.menu_item and item.menu_item.image_url %}
+                <img src="{{ item.menu_item.image_url }}" alt="{{ item.name }}" style="width:44px;height:44px;border-radius:8px;object-fit:cover;border:1px solid var(--border)">
+              {% else %}
+                <span style="width:44px;height:44px;border-radius:8px;background:var(--bg-3);display:flex;align-items:center;justify-content:center;font-size:20px">🍽️</span>
+              {% endif %}
+              <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px">{{ item.name }} <span style="color:var(--text-muted)">x{{ item.quantity }}</span></span>
+            </div>
+            <span style="font-weight:700;color:var(--primary)">₦{{ item.total_price|floatformat:0|intcomma }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        <div style="border-top:1px solid var(--border);margin-top:14px;padding-top:12px;display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text-muted)"><span>Subtotal</span><span>₦{{ order.subtotal|floatformat:0|intcomma }}</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text-muted)"><span>Delivery Fee</span><span>{% if order.delivery > 0 %}₦{{ order.delivery|floatformat:0|intcomma }}{% else %}Free{% endif %}</span></div>
+          {% if order.discount and order.discount > 0 %}<div style="display:flex;justify-content:space-between;font-size:13px;color:var(--success)"><span>Discount</span><span>-₦{{ order.discount|floatformat:0|intcomma }}</span></div>{% endif %}
+          <div style="display:flex;justify-content:space-between;font-weight:800;font-size:16px"><span>Total</span><span style="color:var(--primary)">₦{{ order.total|floatformat:0|intcomma }}</span></div>
+          <div style="font-size:11px;color:var(--text-muted)">Payment: {% if order.payment_method == 'cash' %}Cash on Delivery{% else %}Card (Paystack) — {{ order.payment_status|capfirst }}{% endif %}{% if order.payment_reference %} • {{ order.payment_reference }}{% endif %}</div>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:14px">
+          <a href="/order/{{ order.order_id }}/" class="btn btn-outline btn-sm" style="flex:1;border-radius:100px"><i class="bi bi-receipt"></i> Detail</a>
+          <a href="/contact" class="btn btn-ghost btn-sm" style="flex:1;border-radius:100px"><i class="bi bi-headset"></i> Help</a>
+        </div>
+      </div>
+
+      <div class="card p-4" style="background:linear-gradient(135deg,rgba(255,102,0,.06),transparent)">
+        <h3 class="fw-bold mb-2" style="font-size:14px"><i class="bi bi-geo-alt-fill text-primary"></i> Delivery Address</h3>
+        <div style="font-size:13px;line-height:1.6;color:var(--text-muted)">{{ order.delivery_address|default:"No address — contact support" }}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:8px">Method: <b style="color:var(--text)">Door Delivery</b> • Prime Dish Express</div>
+      </div>
+    </div>
+  </div>
+</main>
 
 <script src="{% static 'aos/aos.js' %}"></script>
-
+<script>AOS.init({duration:700,once:true});</script>
 {% endblock content %}

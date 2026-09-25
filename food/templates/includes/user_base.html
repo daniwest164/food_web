@@ -24,21 +24,14 @@
     <link rel="stylesheet" href="{% static 'css/user.css' %}">
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <link rel="stylesheet" href="{% static 'css/responsive.css' %}">
+    <link rel="stylesheet" href="{% static 'css/notifications.css' %}">
 </head>
 <style>
-/* ========================================     
-    Mobile Styles 
+/* ========================================
+    Mobile dashboard pill bar (mobile only)
     ======================================== */
-.mobile-nav-open {
-    position: fixed; top: 10px; left: 350px !important; right: 0;
-    width: 50px; height: 50px; border-radius: 50%;
-    background: var(--card-bg); color: var(--text);
-    font-size: 24px;
-    display: none; justify-content: center; align-items: center;
-    border: none;
-    cursor: pointer;
-    z-index: 999;
-    transition: var(--transition);
+.mobile-dash-bar {
+    display: none;
 }
 
 /* Mobile Modal Styles */
@@ -134,27 +127,69 @@
 }
 .mobile-nav-items a i { font-size: 18px; width: 20px; text-align: center; }
 
-/* Hide PC sidebar and adjust main content on mobile */
+/* Mobile: column layout + pill bar, hide PC sidebar */
 @media (max-width: 768px) {
+    .user-layout {
+        flex-direction: column;
+    }
+
     .user-layout .user-sidebar {
         display: none;
     }
 
-    .mobile-nav-open {
+    .mobile-dash-bar {
         display: flex;
-        left: 10px;
-        top: 80px;
+        align-items: center;
+        gap: 10px;
+        background: var(--bg-2);
+        border: 1px solid var(--border);
+        border-radius: 100px;
+        padding: 7px 8px 7px 9px;
+        margin: 10px 12px 4px;
+    }
+
+    .mobile-dash-menu {
+        width: 34px; height: 34px;
+        border-radius: 50%;
+        background: transparent;
+        border: none;
+        color: var(--text);
+        font-size: 16px;
+        display: flex; align-items: center; justify-content: center;
+        cursor: pointer;
+        flex-shrink: 0;
+    }
+
+    .mobile-dash-title {
+        flex: 1;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-muted);
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    .mobile-dash-avatar {
+        width: 34px; height: 34px;
+        border-radius: 50%;
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 12px; font-weight: 800;
+        color: var(--primary);
+        text-decoration: none;
+        flex-shrink: 0;
     }
 }
 
 /* PC Styles */
 @media (min-width: 769px) {
 
-    .mobile-nav-open,
+    .mobile-dash-bar,
     .mobile-nav-modal {
         display: none !important;
     }
 }
+
 </style>
 <body>
 
@@ -184,11 +219,48 @@
                     <i class="fa-solid fa-bag-shopping"></i>
                     <span class="cart-count" style="display: {% if cart_count > 0 %} flex {% else %} none {% endif %}">{{ cart_count }}</span>
                 </a>
-                <div class="topbar-icon-btn bell" data-bs-toggle="modal" data-bs-target="#notifModal" style="width:38px;height:38px;border-radius:8px;background:var(--card-bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-muted);font-size:18px;position:relative;"><i class="bi bi-bell-fill"></i>
-                    {% if user_notifications %}<span style="position:absolute;top:4px;right:4px;width:8px;height:8px;border-radius:50%;background:var(--primary);border:2px solid var(--bg-2);"></span>{% endif %}
+                <div class="dropdown">
+                    <div class="bell-btn dropdown-toggle" id="notifDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
+                        <i class="bi bi-bell"></i>
+                        {% if user_notifications %}<span class="bell-badge">{{ user_notifications|length }}</span>{% endif %}
+                    </div>
+                    <ul class="dropdown-menu dropdown-menu-end notif-dropdown" aria-labelledby="notifDropdown">
+                        <li>
+                            <div class="notif-head">
+                                <span class="notif-head-title">Notifications {% if user_notifications %}<span class="notif-count">{{ user_notifications|length }}</span>{% endif %}</span>
+                                <button type="button" class="notif-mark mark-all-read">Mark all as read</button>
+                            </div>
+                        </li>
+                        <li><div class="notif-list">
+                            {% for notif in user_notifications %}
+                            <a {% if 'Order' in notif.title or 'Deliver' in notif.title %}href="/orders"{% else %}href="#" onclick="return false;"{% endif %} class="notif-item {% if not notif.is_read %}unread{% endif %}">
+                                {% if 'Order' in notif.title or 'Deliver' in notif.title %}
+                                    <span class="notif-ico order"><i class="bi bi-bag-check-fill"></i></span>
+                                {% elif 'Payment' in notif.title or 'Paid' in notif.title %}
+                                    <span class="notif-ico payment"><i class="bi bi-credit-card-2-front-fill"></i></span>
+                                {% elif 'Menu' in notif.title or 'Rating' in notif.title %}
+                                    <span class="notif-ico food"><i class="bi bi-egg-fried"></i></span>
+                                {% elif 'User' in notif.title or 'Account' in notif.title or 'Registration' in notif.title %}
+                                    <span class="notif-ico user"><i class="bi bi-person-fill"></i></span>
+                                {% else %}
+                                    <span class="notif-ico system"><i class="bi bi-bell-fill"></i></span>
+                                {% endif %}
+                                <span class="notif-body">
+                                    <div class="notif-title">{{ notif.title }}</div>
+                                    <div class="notif-text">{{ notif.body }}</div>
+                                    <div class="notif-time">{{ notif.created_at|timesince }} ago</div>
+                                </span>
+                                {% if not notif.is_read %}<span class="notif-dot"></span>{% endif %}
+                            </a>
+                            {% empty %}
+                            <div class="notif-empty">
+                                <i class="bi bi-bell-slash"></i>
+                                You're all caught up.<br>No new notifications yet.
+                            </div>
+                            {% endfor %}
+                        </div></li>
+                    </ul>
                 </div>
-                
-            </div>
         </div>
     </div>
 </nav>
@@ -196,6 +268,14 @@
 
 
     <div class="user-layout">
+    <!-- Mobile dashboard pill bar (mobile only, replaces floating circle) -->
+    <div class="mobile-dash-bar">
+        <button class="mobile-dash-menu" id="mobileDashMenu" aria-label="Open menu">
+            <i class="fas fa-bars"></i>
+        </button>
+        <span class="mobile-dash-title">{% block mobile_title %}My Dashboard{% endblock %}</span>
+        <a href="/profile" class="mobile-dash-avatar">{% if user.first_name %}{{ user.first_name|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}{% else %}PD{% endif %}</a>
+    </div>
     <!-- Flash Messages
     {% if messages %}
     <div class="container" style="margin-top:90px;">
@@ -230,7 +310,6 @@
             <a href="/orders"><i class="bi bi-bag-check-fill"></i> My Orders</a>
             <a href="/track_order"><i class="bi bi-geo-alt-fill"></i> Track Order</a>
             <a href="/setting"><i class="bi bi-gear-fill"></i> Settings</a>
-            <a href="/user_notifications" class="bi bi-megaphone-fill">Notification</a>
             <a href="/logout" class="mt-3 border-top pt-3" style="border-top-color: var(--border) !important;"><i class="bi bi-box-arrow-right"></i>Log Out</a>
         </nav>
     </aside>
@@ -243,13 +322,6 @@
 
 </div>
 
-
-<!-- Mobile Open Button (Icon Only) - Top Left Position -->
-<div class="d-block d-lg-none">
-    <button class="mobile-nav-open" id="mobileNavOpen">
-        <i class="fas fa-utensils"></i>
-    </button>
-</div>
 
 <!-- Mobile Navigation Modal (Slides from Left) -->
 <div class="mobile-nav-modal " id="mobileNavModal">
@@ -297,7 +369,7 @@
 <script>
     // Mobile Navigation Toggle
     document.addEventListener('DOMContentLoaded', function () {
-        const mobileOpen = document.getElementById('mobileNavOpen');
+        const mobileOpen = document.getElementById('mobileDashMenu');
         const mobileModal = document.getElementById('mobileNavModal');
         const mobileClose = document.getElementById('mobileNavClose');
 
@@ -370,31 +442,7 @@
     });
 </script>
 
-<!-- Notifications Modal -->
-<div class="modal fade" id="notifModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-scrollable">
-        <div class="modal-content" style="background:var(--card-bg);border:1px solid var(--border);border-radius:16px;">
-            <div class="modal-header" style="border-bottom:1px solid var(--border);padding:18px 20px;">
-                <h5 class="modal-title fw-bold" style="font-size:1rem;color:var(--text);">Notifications</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body p-0">
-                {% for notif in user_notifications %}
-                <div class="p-3" style="border-bottom:1px solid var(--border);">
-                    <div class="fw-semibold" style="font-size:.88rem;color:var(--text);">{{ notif.title }}</div>
-                    <div class="text-muted small mt-1">{{ notif.body }}</div>
-                    <div class="text-muted" style="font-size:.7rem;margin-top:4px;">{{ notif.created_at|timesince }} ago</div>
-                </div>
-                {% empty %}
-                <div class="text-center py-5 text-muted" style="font-size:.85rem;">No notifications yet</div>
-                {% endfor %}
-            </div>
-            <div class="modal-footer" style="border-top:1px solid var(--border);padding:12px 20px;">
-                <a href="/user_notifications" class="btn btn-primary btn-sm w-100">View All Notifications</a>
-            </div>
-        </div>
-    </div>
-</div>
+
 
 </body>
 </html>

@@ -24,13 +24,13 @@
       <p class="auth-subtitle">Sign in to your account to continue</p>
 
       <div class="auth-social">
-        <button class="social-auth-btn"><i class="bi bi-google" style="color:#EA4335"></i> Google</button>
-        <button class="social-auth-btn"><i class="bi bi-facebook" style="color:#1877F2"></i> Facebook</button>
+        <a href="{% url 'google_auth' %}" class="social-auth-btn"><i class="bi bi-google" style="color:#EA4335"></i>Google</a>
       </div>
       <div class="auth-divider">or continue with email</div>
 
       <form action="{% url 'login' %}" method="POST" novalidate>
         {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next|default:'' }}">
 
         <!-- Error Message Section -->
         {% if error %}

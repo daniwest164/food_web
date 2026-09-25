@@ -1,8 +1,10 @@
 import json
 import urllib.request  # used to call Paystack's verification API (no extra dependencies needed)
 import urllib.error
+import urllib.parse
 import traceback
 import logging
+from types import SimpleNamespace
 from functools import wraps
 from django.shortcuts import render, redirect, get_object_or_404
 from datetime import datetime
@@ -24,12 +26,14 @@ from django.contrib.auth.decorators import login_required
 from rest_framework.views import APIView 
 from rest_framework.response import Response
 from django.http import HttpResponse, JsonResponse
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.decorators import login_required as base_login_required
+from django.utils.crypto import get_random_string
 
 
 # Create your views here.
@@ -141,6 +145,187 @@ def logout_page(request):
     return redirect('/login')
 
 # End General Views Section
+
+# ==============================================  GOOGLE OAUTH  ==============================================
+def _build_google_authorize_url(state):
+    """Build the Google OAuth2 authorization URL."""
+    params = urllib.parse.urlencode({
+        'client_id': settings.GOOGLE_CLIENT_ID,
+        'redirect_uri': settings.GOOGLE_REDIRECT_URI,
+        'response_type': 'code',
+        'scope': 'openid email profile',
+        'state': state,
+        'prompt': 'select_account',
+    })
+    return f'https://accounts.google.com/o/oauth2/v2/auth?{params}'
+
+
+def _exchange_google_code(code):
+    """Exchange the authorization code for an access token."""
+    data = urllib.parse.urlencode({
+        'code': code,
+        'client_id': settings.GOOGLE_CLIENT_ID,
+        'client_secret': settings.GOOGLE_CLIENT_SECRET,
+        'redirect_uri': settings.GOOGLE_REDIRECT_URI,
+        'grant_type': 'authorization_code',
+    }).encode()
+    req = urllib.request.Request(
+        'https://oauth2.googleapis.com/token',
+        data=data,
+        method='POST',
+        headers={'Content-Type': 'application/x-www-form-urlencoded'},
+    )
+    response = urllib.request.urlopen(req, timeout=30)
+    return json.loads(response.read())
+
+
+def _fetch_google_userinfo(access_token):
+    """Fetch the signed-in Google user's profile."""
+    req = urllib.request.Request(
+        'https://www.googleapis.com/oauth2/v3/userinfo',
+        headers={'Authorization': f'Bearer {access_token}'},
+    )
+    response = urllib.request.urlopen(req, timeout=30)
+    return json.loads(response.read())
+
+
+def _base_username_from_email(email):
+    base = email.split('@')[0].lower()
+    base = re.sub(r'[^a-zA-Z0-9_.]', '', base)[:25] or 'user'
+    return base
+
+
+def _unique_username(base):
+    username = base
+    attempt = 0
+    while User.objects.filter(username=username).exists() and attempt < 10:
+        username = f'{base}{random.randint(100, 999)}'
+        attempt += 1
+    return username
+
+
+def google_auth_initiate(request):
+    """Redirect the user to Google's OAuth2 authorization page."""
+    if request.user.is_authenticated:
+        return redirect('home')
+    state = get_random_string(32)
+    request.session['google_oauth_state'] = state
+    return redirect(_build_google_authorize_url(state))
+
+
+def google_auth_callback(request):
+    """Handle Google's OAuth2 callback: exchange code, create/login the user."""
+    error = request.GET.get('error')
+    if error:
+        messages.error(request, f'Google sign-in failed: {error.replace("_", " ")}')
+        return redirect('/login')
+
+    code = request.GET.get('code')
+    state = request.GET.get('state')
+
+    if not code:
+        messages.error(request, 'Google sign-in failed: no authorization code returned.')
+        return redirect('/login')
+
+    session_state = request.session.pop('google_oauth_state', None)
+    if session_state and state != session_state:
+        messages.error(request, 'Google sign-in failed: invalid state parameter. Please try again.')
+        return redirect('/login')
+
+    try:
+        token_data = _exchange_google_code(code)
+        access_token = token_data['access_token']
+        user_info = _fetch_google_userinfo(access_token)
+    except Exception:
+        messages.error(request, 'Could not connect to Google. Please try again.')
+        return redirect('/login')
+
+    google_email = (user_info.get('email') or '').strip().lower()
+    if not google_email:
+        messages.error(request, 'Google did not return a valid email address.')
+        return redirect('/login')
+
+    # Block blocked/deleted accounts
+    if SignUp.objects.filter(email=google_email, status='deleted').exists():
+        messages.error(request, 'This account has been deleted and cannot be accessed.')
+        return redirect('/login')
+    blocked_row = SignUp.objects.filter(email=google_email, status='blocked').first()
+    if blocked_row:
+        messages.error(request, 'Your account has been blocked. Please contact support@primedish.ng')
+        return redirect('/login')
+
+    user = User.objects.filter(email=google_email).first()
+
+    if user is None:
+        # New user — auto-create the account
+        given = (user_info.get('given_name') or '').strip()
+        family = (user_info.get('family_name') or '').strip()
+        first_name = given or google_email.split('@')[0]
+        last_name = family or ''
+        username = _unique_username(_base_username_from_email(google_email))
+
+        user = User.objects.create_user(
+            username=username,
+            email=google_email,
+            password=None,
+            first_name=first_name,
+            last_name=last_name,
+        )
+        user.set_unusable_password()
+        user.save()
+
+        signup_row = SignUp.objects.create(
+            user=user,
+            name=f'{first_name} {last_name}'.strip() or username,
+            email=google_email,
+            username=username,
+            is_superuser='0',
+            uid=f"#USR-{random.randint(100000, 999999)}",
+            status='active',
+            is_verified=True,
+        )
+
+        Notification.objects.create(
+            title=f"New User Registration: {signup_row.name}",
+            body=f"{signup_row.name} ({google_email}) just created a new account via Google sign-in.",
+            notification_type='system',
+        )
+        messages.success(request, f"Welcome {username}! Your account was created via Google.")
+    else:
+        signup_row = SignUp.objects.filter(user=user).first()
+        if signup_row is None:
+            signup_row = SignUp.objects.create(
+                user=user,
+                name=f'{user.first_name} {user.last_name}'.strip() or user.username,
+                email=google_email,
+                username=user.username,
+                is_superuser='1' if user.is_superuser else '0',
+                uid=f"#USR-{random.randint(100000, 999999)}",
+                status='active',
+                is_verified=True,
+            )
+
+        if signup_row.status == 'blocked':
+            messages.error(request, 'Your account has been blocked. Please contact support@primedish.ng')
+            return redirect('/login')
+        if signup_row.status == 'deleted':
+            messages.error(request, 'This account has been deleted and cannot be accessed.')
+            return redirect('/login')
+
+        if str(signup_row.is_superuser) == '1' and not user.is_superuser:
+            user.is_staff = True
+            user.is_superuser = True
+            user.save()
+
+        if signup_row.status != 'active':
+            signup_row.status = 'active'
+            signup_row.save()
+        messages.success(request, f"Welcome back, {user.username}!")
+
+    login(request, user)
+    if user.is_superuser:
+        return redirect('/dashboard')
+    return redirect('/menu')
 
 # ==============================================  LEGAL PAGES   ============================================== 
 def terms_of_service(request):
@@ -316,23 +501,24 @@ def login_page(request):
     if current_user.is_authenticated:
         return redirect('home')
     else:
+        next_url = request.POST.get('next') or request.GET.get('next', '')
         if request.method == "POST":
             email = request.POST.get('email', '').strip()
             password = request.POST.get('password', '').strip()
             
             # Validation for input 
             if not email or not password:
-                return render(request, './FORM/login.html', {'error': "All Inputs are Required"})
+                return render(request, './FORM/login.html', {'error': "All Inputs are Required", 'next': next_url})
             
             # Check database if user exists 
             user_obj = User.objects.filter(email=email).first()
             if not user_obj:
-                return render(request, './FORM/login.html', {'error': "User does not exist"})
+                return render(request, './FORM/login.html', {'error': "User does not exist", 'next': next_url})
 
             user = authenticate(username=user_obj.username, password=password)
 
             if user is None: 
-                return render(request, './FORM/login.html', {'error': "Account Not Found, check email / password"})
+                return render(request, './FORM/login.html', {'error': "Account Not Found, check email / password", 'next': next_url})
             
             # Get the user's signup row (one query)
             signup_row = SignUp.objects.filter(user=user).first()
@@ -371,6 +557,13 @@ def login_page(request):
             # All checks passed — log the user in
             login(request, user)
 
+            # Move any guest (session) cart items into the user's DB cart
+            _merge_session_cart_into_user(request, user)
+
+            # Return to the page that required login (e.g. /cart to pay)
+            if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
+                return redirect(next_url)
+
             # Mark user as active
             if signup_row.status != 'active':
                 signup_row.status = 'active'
@@ -381,7 +574,7 @@ def login_page(request):
                 return redirect("/dashboard")
             else:
                 return redirect("/menu")
-        return render(request, './FORM/login.html')
+        return render(request, './FORM/login.html', {'next': next_url})
 
 # ==============================================  FORGET PASSWORD   ============================================== 
 def forget_password_page(request):
@@ -539,6 +732,7 @@ def reset_password_page(request, id):
 
  # ==============================================  Start User Views Section ============================================== 
 # User Profile pages
+@login_required(login_url='login')
 def profile(request):
     user_orders = Order.objects.filter(user=request.user)
     total_orders = user_orders.count()
@@ -585,16 +779,19 @@ def profile(request):
         'reward_points': reward_points,
     })
 
-@login_required(login_url='login')
 @csrf_exempt
 def clear_cart(request):
     """Clear all items from the user's cart."""
     if request.method == 'POST':
-        try:
-            cart = Cart.objects.get(user=request.user)
-            cart.items.all().delete()
-        except Cart.DoesNotExist:
-            pass
+        if not request.user.is_authenticated:
+            request.session['cart'] = {}
+            request.session.modified = True
+        else:
+            try:
+                cart = Cart.objects.get(user=request.user)
+                cart.items.all().delete()
+            except Cart.DoesNotExist:
+                pass
         return JsonResponse({'status': 'success'})
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
@@ -672,6 +869,7 @@ def place_order(request):
     })
 
 
+@login_required(login_url='login')
 def orders(request):
     user_orders = Order.objects.filter(user=request.user).prefetch_related('items', 'items__menu_item')
     # Build a score lookup and annotate each item
@@ -682,9 +880,121 @@ def orders(request):
     for order in user_orders:
         for item in order.items.all():
             item.user_score = user_ratings.get(item.menu_item_id, 0) if item.menu_item else 0
+    cancelled_count = user_orders.filter(status='cancelled').count()
+    ongoing_count = user_orders.exclude(status='cancelled').count()
     return render(request, './user/orders.html', {
         'orders': user_orders,
+        'ongoing_count': ongoing_count,
+        'cancelled_count': cancelled_count,
     })
+
+
+@login_required(login_url='login')
+def order_detail(request, order_id):
+    """Jumia-style order detail page: /order/<order_id>/  or  /customer/order/detail/<order_id>/"""
+    # Allow admin to view any order, normal users only their own
+    if request.user.is_superuser:
+        order = get_object_or_404(Order.objects.prefetch_related('items', 'items__menu_item'), order_id=order_id)
+    else:
+        order = get_object_or_404(Order.objects.prefetch_related('items', 'items__menu_item'), order_id=order_id, user=request.user)
+    # Build progress steps like Jumia — map status to active step index
+    # Jumia shows: Order Placed -> Confirmed -> Shipped -> Out for Delivery -> Delivered
+    status_order = ['pending', 'confirmed', 'preparing', 'out_for_delivery', 'delivered']
+    try:
+        current_index = status_order.index(order.status)
+    except ValueError:
+        current_index = -1  # cancelled
+
+    # Determine badge color / label
+    is_cancelled = order.status == 'cancelled'
+    is_delivered = order.status == 'delivered'
+    is_active = order.status in ['pending', 'confirmed', 'preparing', 'out_for_delivery']
+
+    # Item count for header
+    item_count = order.items.count()
+    total_qty = sum(i.quantity for i in order.items.all())
+
+    context = {
+        'order': order,
+        'status_order': status_order,
+        'current_index': current_index,
+        'is_cancelled': is_cancelled,
+        'is_delivered': is_delivered,
+        'is_active': is_active,
+        'item_count': item_count,
+        'total_qty': total_qty,
+    }
+    return render(request, './user/order_detail.html', context)
+
+
+@login_required(login_url='login')
+def track_order(request, order_id=None):
+    """Jumia-style tracking page. Supports /track_order, /order/track/<id>/, /customer/order/track/<id>/"""
+    order = None
+    if order_id:
+        if request.user.is_superuser and request.user.is_authenticated:
+            order = get_object_or_404(Order.objects.prefetch_related('items', 'items__menu_item'), order_id=order_id)
+        elif request.user.is_authenticated:
+            order = get_object_or_404(Order.objects.prefetch_related('items', 'items__menu_item'), order_id=order_id, user=request.user)
+        else:
+            return redirect('/login')
+    else:
+        # No id → show latest order for logged-in user (fallback for old /track_order link)
+        if not request.user.is_authenticated:
+            return redirect('/login')
+        order = Order.objects.filter(user=request.user).prefetch_related('items', 'items__menu_item').order_by('-created_at').first()
+        if not order:
+            messages.info(request, "You have no orders yet.")
+            return redirect('/orders')
+
+    # Build tracking steps — Jumia-style vertical timeline
+    status_order = ['pending', 'confirmed', 'preparing', 'out_for_delivery', 'delivered']
+    try:
+        current_index = status_order.index(order.status)
+    except ValueError:
+        current_index = -1  # cancelled
+
+    # Map each step to display data; timestamps are estimated from created_at + offset for demo
+    # In production you would store actual status timestamps
+    from datetime import timedelta as td
+    base = order.created_at
+    steps = [
+        {'key': 'pending', 'label': 'Order Placed', 'desc': 'Your order has been placed', 'icon': 'bi-bag-check-fill', 'time': base},
+        {'key': 'confirmed', 'label': 'Order Confirmed', 'desc': 'Seller has confirmed your order', 'icon': 'bi-patch-check-fill', 'time': base + td(minutes=5)},
+        {'key': 'preparing', 'label': 'Preparing / Packed', 'desc': 'Your order is being prepared', 'icon': 'bi-box-seam-fill', 'time': base + td(minutes=20)},
+        {'key': 'out_for_delivery', 'label': 'Out for Delivery', 'desc': 'Rider is on the way', 'icon': 'bi-truck', 'time': base + td(minutes=40)},
+        {'key': 'delivered', 'label': 'Delivered', 'desc': 'Order delivered successfully', 'icon': 'bi-house-check-fill', 'time': base + td(minutes=55)},
+    ]
+
+    # ETA logic: if not delivered/cancelled, ETA = created_at + 60 min
+    eta = base + td(minutes=60)
+    remaining_minutes = max(0, int((eta - timezone.now()).total_seconds() // 60)) if order.status != 'delivered' and order.status != 'cancelled' else 0
+
+    context = {
+        'order': order,
+        'steps': steps,
+        'current_index': current_index,
+        'eta': eta,
+        'remaining_minutes': remaining_minutes,
+        'is_cancelled': order.status == 'cancelled',
+        'is_delivered': order.status == 'delivered',
+    }
+    return render(request, './user/track_order.html', context)
+
+
+@login_required(login_url='login')
+def cancel_order(request, order_id):
+    """User cancels own order — only when status is 'confirmed' (admin confirmed), shows below See details"""
+    if request.method != 'POST':
+        return redirect('orders')
+    order = get_object_or_404(Order, order_id=order_id, user=request.user)
+    if order.status == 'confirmed':
+        order.status = 'cancelled'
+        order.save()
+        messages.success(request, f"Order {order_id} cancelled.")
+    else:
+        messages.error(request, "Only confirmed orders can be cancelled.")
+    return redirect('orders')
 
 # ------------------------------------------------------------
 #   Helper: returns full cart data as dict for JSON responses
@@ -706,6 +1016,48 @@ def _get_delivery_address(user):
     return ''
 
 
+def _session_cart(request):
+    """Guest cart stored in session as {str(item_id): qty}."""
+    data = request.session.get('cart')
+    if not isinstance(data, dict):
+        return {}
+    clean = {}
+    for k, v in data.items():
+        try:
+            qty = int(v)
+            if qty > 0:
+                clean[str(int(k))] = qty
+        except (ValueError, TypeError):
+            continue
+    return clean
+
+
+def _save_session_cart(request, cart):
+    request.session['cart'] = {str(k): int(v) for k, v in cart.items() if int(v) > 0}
+    request.session.modified = True
+
+
+def _merge_session_cart_into_user(request, user):
+    """Move guest session items into the user's DB cart (called on login)."""
+    sess = _session_cart(request)
+    if not sess:
+        return
+    cart, _ = Cart.objects.get_or_create(user=user)
+    for item_id, qty in sess.items():
+        try:
+            menu_item = MenuItem.objects.get(id=int(item_id), is_available=True)
+        except (MenuItem.DoesNotExist, ValueError):
+            continue
+        cart_item, created = CartItem.objects.get_or_create(cart=cart, menu_item=menu_item)
+        if not created:
+            cart_item.quantity += qty
+        else:
+            cart_item.quantity = qty
+        cart_item.save()
+    request.session['cart'] = {}
+    request.session.modified = True
+
+
 def _cart_items(request):
     if not request.user.is_authenticated:
         return None, []
@@ -725,17 +1077,26 @@ def _cart_count(request):
 
 def _get_cart_json(request):
     """Build full cart data dict used by cart_data + cart operation views"""
-    cart, cart_items = _cart_items(request)
     user = request.user
+    if user.is_authenticated:
+        cart, cart_items = _cart_items(request)
+        lines = [(item.menu_item, item.quantity) for item in cart_items]
+    else:
+        # Guest cart lives in the session
+        sess = _session_cart(request)
+        menu_items = MenuItem.objects.filter(
+            id__in=[int(i) for i in sess.keys()], is_available=True
+        ).in_bulk()
+        lines = [(menu_items[int(i)], qty) for i, qty in sess.items() if int(i) in menu_items]
+
     items_data = []
     total_discount = 0.0  # accumulated savings from menu-item discounts
 
-    for item in cart_items:
-        mi = item.menu_item
+    for mi, quantity in lines:
         og_price = float(mi.price)
         disc_price = float(mi.discounted_price)  # respects discount %
-        item_total = disc_price * item.quantity
-        item_saving = (og_price - disc_price) * item.quantity
+        item_total = disc_price * quantity
+        item_saving = (og_price - disc_price) * quantity
         total_discount += item_saving
 
         items_data.append({
@@ -745,17 +1106,17 @@ def _get_cart_json(request):
             'category': mi.category,
             'price': og_price,                    # original unit price
             'discounted_price': disc_price,       # discounted unit price
-            'quantity': item.quantity,
+            'quantity': quantity,
             'total_price': round(item_total, 2), # line total after discount
             'discount_pct': mi.discount or 0,    # e.g. 15 means 15%
         })
 
-    subtotal = round(sum(item.total_price for item in cart_items), 2)
+    subtotal = round(sum(d['total_price'] for d in items_data), 2)
     delivery = 500.0 if subtotal > 0 else 0.0
     total = round(subtotal + delivery, 2)
 
     # delivery address from Address model
-    delivery_address = _get_delivery_address(request.user) if request.user.is_authenticated else ''
+    delivery_address = _get_delivery_address(user) if user.is_authenticated else ''
 
     return {
         'status': 'success',
@@ -764,7 +1125,8 @@ def _get_cart_json(request):
         'delivery': delivery,
         'discount': round(total_discount, 2),   # total savings from discounts
         'total': total,
-        'cart_count': _cart_count(request),
+        'cart_count': (sum(d['quantity'] for d in items_data)
+                       if not user.is_authenticated else _cart_count(request)),
         'item_count': len(items_data),
         'delivery_address': delivery_address,
     }
@@ -778,14 +1140,33 @@ def cart_data(request):
 
 def cart(request):
     """Render the cart page – items & summary rendered by Django template"""
-    cart, cart_items = _cart_items(request)
-    subtotal = sum(item.total_price for item in cart_items)
+    if request.user.is_authenticated:
+        cart, cart_items = _cart_items(request)
+        subtotal = sum(item.total_price for item in cart_items)
+        total_discount = sum(
+            (float(item.menu_item.price) - float(item.menu_item.discounted_price)) * item.quantity
+            for item in cart_items
+        )
+    else:
+        # Guest cart lives in the session — shape DB-like objects for the template
+        sess = _session_cart(request)
+        menu_items = MenuItem.objects.filter(
+            id__in=[int(i) for i in sess.keys()], is_available=True
+        ).in_bulk()
+        cart_items = [
+            SimpleNamespace(
+                menu_item=menu_items[int(i)],
+                quantity=qty,
+                total_price=round(float(menu_items[int(i)].discounted_price) * qty, 2),
+            )
+            for i, qty in sess.items() if int(i) in menu_items
+        ]
+        subtotal = sum(item.total_price for item in cart_items)
+        total_discount = sum(
+            (float(item.menu_item.price) - float(item.menu_item.discounted_price)) * item.quantity
+            for item in cart_items
+        )
     delivery = 500 if subtotal > 0 else 0
-    # total savings from menu-item discounts
-    total_discount = sum(
-        (float(item.menu_item.price) - float(item.menu_item.discounted_price)) * item.quantity
-        for item in cart_items
-    )
     total = subtotal + delivery
     if request.user.is_authenticated:
         delivery_address = _get_delivery_address(request.user)
@@ -811,11 +1192,17 @@ def add_to_cart(request, item_id):
     """Add item to cart (or +1 if already in cart), return full cart JSON"""
     if request.method == 'POST':
         menu_item = get_object_or_404(MenuItem, id=item_id, is_available=True)
-        cart, _ = Cart.objects.get_or_create(user=request.user)
-        cart_item, created = CartItem.objects.get_or_create(cart=cart, menu_item=menu_item)
-        if not created:
-            cart_item.quantity += 1
-            cart_item.save()
+        if request.user.is_authenticated:
+            cart, _ = Cart.objects.get_or_create(user=request.user)
+            cart_item, created = CartItem.objects.get_or_create(cart=cart, menu_item=menu_item)
+            if not created:
+                cart_item.quantity += 1
+                cart_item.save()
+        else:
+            sess = _session_cart(request)
+            key = str(menu_item.id)
+            sess[key] = sess.get(key, 0) + 1
+            _save_session_cart(request, sess)
         return JsonResponse(_get_cart_json(request))
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
@@ -829,6 +1216,15 @@ def update_cart(request, item_id):
             qty = int(body.get('quantity', request.POST.get('quantity', 1)))
         except (ValueError, json.JSONDecodeError):
             qty = int(request.POST.get('quantity', 1))
+
+        if not request.user.is_authenticated:
+            sess = _session_cart(request)
+            if qty <= 0:
+                sess.pop(str(item_id), None)
+            else:
+                sess[str(item_id)] = qty
+            _save_session_cart(request, sess)
+            return JsonResponse(_get_cart_json(request))
 
         cart = get_object_or_404(Cart, user=request.user)
         cart_item = get_object_or_404(CartItem, cart=cart, menu_item_id=item_id)
@@ -845,6 +1241,11 @@ def update_cart(request, item_id):
 def remove_from_cart(request, item_id):
     """Remove item from cart, return full cart JSON"""
     if request.method == 'POST':
+        if not request.user.is_authenticated:
+            sess = _session_cart(request)
+            sess.pop(str(item_id), None)
+            _save_session_cart(request, sess)
+            return JsonResponse(_get_cart_json(request))
         cart = get_object_or_404(Cart, user=request.user)
         CartItem.objects.filter(cart=cart, menu_item_id=item_id).delete()
         return JsonResponse(_get_cart_json(request))
@@ -1029,9 +1430,7 @@ def verify_paystack_payment(request):
 
     
 
-def track_order(request):
-    return render(request, './user/track_order.html')
-
+@login_required(login_url='login')
 def setting(request):
     addresses = Address.objects.filter(user=request.user)
     return render(request, './user/setting.html', {'addresses': addresses})
@@ -1599,11 +1998,4 @@ def notifications_page(request):
     return render(request, './ADMIN/notifications.html', {
         'notifications': all_notifications,
         'get_all_users': get_all_users,
-    })
-
-
-def user_notifications_page(request):
-    notifications = Notification.objects.filter(is_active=True)
-    return render(request, './user/notifications.html', {
-        'notifications': notifications,
     })

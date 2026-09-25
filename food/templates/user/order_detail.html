@@ -1,0 +1,256 @@
+{% extends "includes/user_base.html" %}
+{% load static %}
+{% load humanize %}
+{% block title %}Order {{ order.order_id }}{% endblock title %}
+{% block mobile_title %}Order Detail{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'aos/aos.css' %}">
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+<link rel="stylesheet" href="{% static 'css/responsive.css' %}">
+
+<style>
+/* Orders detail — Prime Dish dark theme (matched to reference) */
+.orders-breadcrumb{font-size:13px;color:var(--text-muted);display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.orders-breadcrumb a{color:var(--text-muted)}
+.orders-breadcrumb a:hover{color:var(--primary)}
+.orders-breadcrumb i{font-size:10px}
+.jd-header-card{background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:22px 24px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
+.jd-header-left h1{font-size:22px;font-weight:800;margin-bottom:6px}
+.jd-header-left h1 span{color:var(--primary)}
+.jd-meta{font-size:13px;color:var(--text-muted);display:flex;gap:14px;flex-wrap:wrap;align-items:center}
+.jd-meta b{color:var(--text)}
+.jd-badge{padding:6px 12px;border-radius:100px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:6px;border:1px solid}
+.jd-badge.pending{background:rgba(234,179,8,.12);color:#eab308;border-color:rgba(234,179,8,.3)}
+.jd-badge.confirmed{background:rgba(59,130,246,.12);color:#60a5fa;border-color:rgba(59,130,246,.3)}
+.jd-badge.preparing{background:rgba(249,115,22,.12);color:#fb923c;border-color:rgba(249,115,22,.3)}
+.jd-badge.delivery{background:rgba(168,85,247,.12);color:#c084fc;border-color:rgba(168,85,247,.3)}
+.jd-badge.delivered{background:rgba(34,197,94,.12);color:#22c55e;border-color:rgba(34,197,94,.3)}
+.jd-badge.cancelled{background:rgba(239,68,68,.12);color:#ef4444;border-color:rgba(239,68,68,.3)}
+/* --- reference layout: main + right rail, delivery/payment side by side --- */
+.od-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}
+@media(max-width:992px){.od-grid{grid-template-columns:1fr}}
+.od-main{display:flex;flex-direction:column;gap:18px;min-width:0}
+.od-duo{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
+@media(max-width:768px){.od-duo{grid-template-columns:1fr}}
+.od-rail{min-width:0}
+.od-rail-card{position:sticky;top:90px}
+.od-vsteps{display:flex;flex-direction:column}
+.od-vstep{display:flex;gap:12px;position:relative;padding-bottom:20px}
+.od-vstep:last-child{padding-bottom:0}
+.od-vstep::before{content:'';position:absolute;left:15px;top:34px;bottom:0;width:2px;background:#2a2d33}
+.od-vstep:last-child::before{display:none}
+.od-vstep.done::before{background:var(--primary)}
+.od-vicon{width:32px;height:32px;border-radius:50%;background:#1c1e22;border:2px solid #2a2d33;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;color:#7a7d85}
+.od-vstep.done .od-vicon{background:var(--primary);border-color:var(--primary);color:#fff}
+.od-vstep.active .od-vicon{box-shadow:0 0 0 5px rgba(255,102,0,.18)}
+.od-vlabel{font-weight:800;font-size:13px;color:#fff}
+.od-vstep:not(.done) .od-vlabel{color:#7a7d85}
+.od-vsub{font-size:11.5px;color:#7a7d85;margin-top:2px}
+.jd-card{background:#111214;border:1px solid #232428;border-radius:12px;padding:24px}
+.jd-card h3{font-size:14px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:#fff;margin-bottom:20px;display:flex;align-items:center;gap:8px}
+.jd-card h3 i{color:var(--primary);font-size:16px}
+/* --- reference-matched info blocks --- */
+.od-label{font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#7a7d85;margin:0 0 12px}
+.od-block{margin-bottom:24px}
+.od-block:last-of-type{margin-bottom:0}
+.od-method{display:flex;align-items:center;gap:12px}
+.od-method>i{font-size:26px;color:var(--primary);flex-shrink:0}
+.od-method-name{font-weight:800;font-size:14px;color:#fff}
+.od-method-sub{font-size:12.5px;color:#9aa0aa;margin-top:2px}
+.od-ship-name{font-weight:800;font-size:14px;color:#fff;margin-bottom:6px}
+.od-ship-line{font-size:13px;color:#9aa0aa;line-height:1.65}
+.od-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 0;font-size:13.5px}
+.od-row .k{color:#9aa0aa}
+.od-row .v{color:#fff;font-weight:700;text-align:right}
+.od-row .v.mono{font-size:12.5px;letter-spacing:.3px}
+.od-paid{background:rgba(34,197,94,.15);color:#22c55e;padding:3px 12px;border-radius:100px;font-weight:800;font-size:12px}
+.od-total-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding-top:4px}
+.od-total-row .k{font-weight:800;font-size:15px;color:#fff}
+.od-total-row .v{font-weight:800;font-size:17px;color:var(--primary)}
+.od-track-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:22px;background:var(--primary);color:#fff;font-weight:800;font-size:15px;border:none;border-radius:100px;padding:15px 20px;cursor:pointer;text-decoration:none;transition:.25s}
+.od-track-btn:hover{background:var(--primary-dark);color:#fff;transform:translateY(-1px)}
+.od-help-title{font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#fff;display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.od-help-title i{color:var(--primary)}
+.od-help p{font-size:13px;color:#9aa0aa;margin-bottom:16px;line-height:1.6}
+.od-help-actions{display:flex;gap:10px;flex-wrap:wrap}
+.od-btn-ghost{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;font-size:12.5px;font-weight:700;border-radius:100px;border:1px solid #33353b;background:#17181c;color:#fff;text-decoration:none;transition:.25s}
+.od-btn-ghost:hover{border-color:var(--primary);color:#fff}
+.od-btn-orange{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;font-size:12.5px;font-weight:700;border-radius:100px;border:1px solid rgba(255,102,0,.4);background:rgba(255,102,0,.08);color:var(--primary);text-decoration:none;transition:.25s}
+.od-btn-orange:hover{background:rgba(255,102,0,.16)}
+.od-rail .od-help-actions a{flex:1;justify-content:center}
+.jd-item-row{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border)}
+.jd-item-row:last-child{border-bottom:none}
+.jd-item-img{width:72px;height:72px;border-radius:10px;object-fit:cover;background:var(--bg-3);flex-shrink:0;border:1px solid var(--border)}
+.jd-item-img.ph{display:flex;align-items:center;justify-content:center;font-size:28px}
+.jd-item-name{font-weight:700;font-size:14px}
+.jd-item-qty{font-size:12px;color:var(--text-muted)}
+.jd-price{font-weight:800;color:var(--primary)}
+</style>
+
+<main class="user-main">
+  <!-- Breadcrumb -->
+  <div class="orders-breadcrumb">
+    <a href="/"><i class="bi bi-house"></i> Home</a><i class="bi bi-chevron-right"></i>
+    <a href="/orders">My Orders</a><i class="bi bi-chevron-right"></i>
+    <span style="color:var(--primary)">Order {{ order.order_id }}</span>
+  </div>
+
+  <!-- Header card — Jumia order header -->
+  <div class="jd-header-card" data-aos="fade-up">
+    <div class="jd-header-left">
+      <h1>Order <span>#{{ order.order_id }}</span></h1>
+      <div class="jd-meta">
+        <span><i class="bi bi-calendar3"></i> Placed on {{ order.created_at|date:"d M Y" }} at {{ order.created_at|date:"g:i A" }}</span>
+        <span>• {{ item_count }} item{{ item_count|pluralize }} ({{ total_qty }} unit{{ total_qty|pluralize }})</span>
+        {% if order.payment_reference %}<span>• Ref: {{ order.payment_reference|slice:":14" }}</span>{% endif %}
+      </div>
+    </div>
+    <div style="text-align:right;display:flex;flex-direction:column;gap:8px;align-items:flex-end">
+      {% if is_cancelled %}
+        <span class="jd-badge cancelled"><i class="bi bi-x-circle-fill"></i> Cancelled</span>
+      {% elif is_delivered %}
+        <span class="jd-badge delivered"><i class="bi bi-check-circle-fill"></i> Delivered</span>
+      {% elif order.status == 'out_for_delivery' %}
+        <span class="jd-badge delivery"><i class="bi bi-truck"></i> Out for Delivery</span>
+      {% elif order.status == 'preparing' %}
+        <span class="jd-badge preparing"><i class="bi bi-fire"></i> Preparing</span>
+      {% elif order.status == 'confirmed' %}
+        <span class="jd-badge confirmed"><i class="bi bi-patch-check-fill"></i> Confirmed</span>
+      {% else %}
+        <span class="jd-badge pending"><i class="bi bi-clock-fill"></i> Pending</span>
+      {% endif %}
+      <a href="/order/track/{{ order.order_id }}/" class="btn btn-primary btn-sm" style="border-radius:100px"><i class="bi bi-geo-alt-fill"></i> Track Order</a>
+    </div>
+  </div>
+
+  <div class="od-grid">
+    <!-- LEFT — Items -->
+    <div class="od-main">
+      <div class="jd-card" data-aos="fade-up" data-aos-delay="100">
+        <h3><i class="bi bi-box2-heart"></i> Items in your order — {{ item_count }} item{{ item_count|pluralize }}</h3>
+        {% for item in order.items.all %}
+        <div class="jd-item-row">
+          {% if item.menu_item and item.menu_item.image_url %}
+            <img class="jd-item-img" src="{{ item.menu_item.image_url }}" alt="{{ item.name }}">
+          {% else %}
+            <div class="jd-item-img ph">🍽️</div>
+          {% endif %}
+          <div style="flex:1;min-width:0">
+            <div class="jd-item-name">{{ item.name }}</div>
+            <div class="jd-item-qty">
+              QTY: {{ item.quantity }} {% if item.menu_item %}• {{ item.menu_item.category|capfirst }}{% endif %}
+              {% if item.discounted_price != item.price %}<span style="text-decoration:line-through;margin-left:6px">₦{{ item.price|floatformat:0|intcomma }}</span>{% endif %}
+            </div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:4px">Seller: <b style="color:var(--text)">Prime Dish</b> • <span style="color:var(--success)"><i class="bi bi-shield-check"></i> Prime Dish Express</span></div>
+            <div style="margin-top:8px;display:flex;gap:8px">
+              <a href="/menu" class="btn btn-ghost btn-sm" style="padding:6px 12px;font-size:12px;border-radius:100px"><i class="bi bi-arrow-repeat"></i> Buy Again</a>
+              {% if is_delivered and item.menu_item %}<button class="btn btn-outline btn-sm rate-again-btn" data-id="{{ item.menu_item.id }}" style="padding:6px 12px;font-size:12px;border-radius:100px"><i class="bi bi-star"></i> Rate</button>{% endif %}
+            </div>
+          </div>
+          <div style="text-align:right">
+            <div class="jd-price">₦{{ item.total_price|floatformat:0|intcomma }}</div>
+            <div style="font-size:12px;color:var(--text-muted)">₦{{ item.discounted_price|floatformat:0|intcomma }} each</div>
+            {% if order.status == 'delivered' %}<span style="font-size:11px;background:rgba(34,197,94,.12);color:var(--success);padding:3px 8px;border-radius:100px;font-weight:700">DELIVERED</span>{% elif is_cancelled %}<span style="font-size:11px;background:rgba(239,68,68,.12);color:var(--danger);padding:3px 8px;border-radius:100px;font-weight:700">CANCELLED</span>{% else %}<span style="font-size:11px;background:rgba(234,179,8,.12);color:#ca8a04;padding:3px 8px;border-radius:100px;font-weight:700">{{ order.get_status_display|upper }}</span>{% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <!-- Delivery + Payment side by side — matches reference -->
+      <div class="od-duo">
+        <!-- Delivery -->
+        <div class="jd-card" data-aos="fade-up" data-aos-delay="140">
+          <h3><i class="bi bi-geo-alt-fill"></i> Delivery Information</h3>
+          <div class="od-block">
+            <p class="od-label">Delivery Method</p>
+            <div class="od-method">
+              <i class="bi bi-truck"></i>
+              <div><div class="od-method-name">Door Delivery</div><div class="od-method-sub">Delivered between {{ order.created_at|date:"D j M" }} and {{ order.created_at|date:"D j M" }}</div></div>
+            </div>
+          </div>
+          <div class="od-block">
+            <p class="od-label">Shipping Address</p>
+            <div class="od-ship-name">{{ request.user.first_name }} {{ request.user.last_name }} — {{ request.user.username }}</div>
+            <div class="od-ship-line">{{ order.delivery_address|default:"No delivery address provided" }}</div>
+            {% if request.user.email %}<div class="od-ship-line">{{ request.user.email }}</div>{% endif %}
+          </div>
+          <div class="od-block">
+            <p class="od-label">Billing Address</p>
+            <div class="od-ship-line">Same as shipping address</div>
+          </div>
+          <a href="/order/track/{{ order.order_id }}/" class="od-track-btn"><i class="bi bi-geo-alt"></i> Track Shipment</a>
+        </div>
+
+        <!-- Payment -->
+        <div class="jd-card" data-aos="fade-up" data-aos-delay="160">
+          <h3><i class="bi bi-wallet2"></i> Payment Information</h3>
+          <div class="od-block">
+            <div class="od-row"><span class="k">Payment Method</span><span class="v">{% if order.payment_method == 'cash' %}Cash on Delivery{% else %}Card (Paystack){% endif %}</span></div>
+            <div class="od-row"><span class="k">Payment Status</span>
+              {% if order.payment_status == 'paid' %}<span class="od-paid">Paid</span>
+              {% elif order.payment_method == 'cash' %}<span class="od-paid" style="background:rgba(234,179,8,.15);color:#eab308">Pay on Delivery</span>
+              {% else %}<span class="od-paid" style="background:rgba(234,179,8,.15);color:#eab308">Pending</span>{% endif %}
+            </div>
+            {% if order.payment_reference %}<div class="od-row"><span class="k">Reference</span><span class="v mono">{{ order.payment_reference }}</span></div>{% endif %}
+          </div>
+          <div class="od-block">
+            <p class="od-label">Payment Details</p>
+            <div class="od-row"><span class="k">Items Total ({{ total_qty }} item{{ total_qty|pluralize }})</span><span class="v" style="font-weight:600;color:#c9ccd2">₦{{ order.subtotal|floatformat:0|intcomma }}</span></div>
+            <div class="od-row"><span class="k">Delivery Fees</span><span class="v" style="font-weight:600;color:#c9ccd2">{% if order.delivery > 0 %}₦{{ order.delivery|floatformat:0|intcomma }}{% else %}Free{% endif %}</span></div>
+            {% if order.discount and order.discount > 0 %}<div class="od-row"><span class="k">Discount</span><span class="v" style="color:var(--success)">-₦{{ order.discount|floatformat:0|intcomma }}</span></div>{% endif %}
+            <div class="od-total-row"><span class="k">Total Amount</span><span class="v">₦{{ order.total|floatformat:0|intcomma }}</span></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT RAIL — vertical shipment progress like the reference -->
+    <aside class="od-rail">
+      <div class="jd-card od-rail-card" data-aos="fade-up" data-aos-delay="100">
+        <h3><i class="bi bi-signpost-split"></i> Shipment Progress</h3>
+        {% if is_cancelled %}
+          <div style="display:flex;align-items:center;gap:10px;color:var(--danger);font-weight:700;font-size:13px"><i class="bi bi-x-circle-fill" style="font-size:20px"></i> This order was cancelled.</div>
+        {% else %}
+          <div class="od-vsteps">
+            <div class="od-vstep done {% if order.status == 'pending' %}active{% endif %}">
+              <div class="od-vicon"><i class="bi bi-bag-check-fill"></i></div>
+              <div style="flex:1;min-width:0"><div class="od-vlabel">Order Placed</div><div class="od-vsub">{{ order.created_at|date:"M j, g:i A" }}</div></div>
+            </div>
+            <div class="od-vstep {% if current_index >= 1 %}done{% endif %} {% if order.status == 'confirmed' %}active{% endif %}">
+              <div class="od-vicon"><i class="bi bi-patch-check-fill"></i></div>
+              <div style="flex:1;min-width:0"><div class="od-vlabel">Confirmed</div><div class="od-vsub">{% if current_index >= 1 %}Confirmed{% else %}Pending{% endif %}</div></div>
+            </div>
+            <div class="od-vstep {% if current_index >= 2 %}done{% endif %} {% if order.status == 'preparing' %}active{% endif %}">
+              <div class="od-vicon"><i class="bi bi-box-seam-fill"></i></div>
+              <div style="flex:1;min-width:0"><div class="od-vlabel">Packed</div><div class="od-vsub">{% if current_index >= 2 %}Packed{% else %}Waiting{% endif %}</div></div>
+            </div>
+            <div class="od-vstep {% if current_index >= 3 %}done{% endif %} {% if order.status == 'out_for_delivery' %}active{% endif %}">
+              <div class="od-vicon"><i class="bi bi-truck"></i></div>
+              <div style="flex:1;min-width:0"><div class="od-vlabel">Shipped</div><div class="od-vsub">{% if current_index >= 3 %}On the way{% else %}Waiting{% endif %}</div></div>
+            </div>
+            <div class="od-vstep {% if current_index >= 4 %}done{% endif %} {% if order.status == 'delivered' %}active{% endif %}">
+              <div class="od-vicon"><i class="bi bi-house-check-fill"></i></div>
+              <div style="flex:1;min-width:0"><div class="od-vlabel">Delivered</div><div class="od-vsub">{% if is_delivered %}Delivered{% else %}Awaiting{% endif %}</div></div>
+            </div>
+          </div>
+        {% endif %}
+      </div>
+
+      <!-- Need help box — positioned with the rail -->
+      <div class="jd-card od-help" style="margin-top:18px" data-aos="fade-up" data-aos-delay="120">
+        <div class="od-help-title"><i class="bi bi-headset"></i> Need help with your order?</div>
+        <p>Contact our support or check our FAQ for delivery, returns and refunds.</p>
+        <div class="od-help-actions">
+          <a href="/contact" class="od-btn-ghost"><i class="bi bi-headset"></i> Contact Us</a>
+          <a href="/orders" class="od-btn-orange"><i class="bi bi-chevron-left" style="font-size:10px"></i> Back to Orders</a>
+        </div>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<script src="{% static 'aos/aos.js' %}"></script>
+<script>AOS.init({duration:700,once:true});</script>
+{% endblock content %}

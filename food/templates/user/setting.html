@@ -2,6 +2,7 @@
 {% load static %}
 {% load humanize %}
 {% block title %} Settings{% endblock title %}
+{% block mobile_title %}Settings{% endblock %}
 
 {% block content %}
 
@@ -29,7 +30,7 @@
                 <input type="tel" class="form-control" value="{{ user.signup.phone|default:'+234 800 000 0000' }}" readonly>
             </div>
             <div class="col-md-6">
-                <label class="form-label">Date Joined</label>
+                <label class="form-label">Member Since</label>
                 <input type="text" class="form-control" value="{{ user.date_joined|date:'F j, Y'|default:'January 1, 2025' }}" readonly>
             </div>
         </div>

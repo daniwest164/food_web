@@ -11,44 +11,41 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
 from pathlib import Path
-# for images upload
 import os
 import os.path
+from dotenv import load_dotenv
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+# Load .env file from the project root
 BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(BASE_DIR / '.env')
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-#_)oz93=@y1sj=n2^s(jh)z514mia9v4epdbmwvger5q)v$&t5'
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'your-domain.com']
+# ──────────────────────────────────────────────
+# Core
+# ──────────────────────────────────────────────
+SECRET_KEY = os.environ['SECRET_KEY']
+DEBUG = os.environ.get('DEBUG', 'False').lower() in ('true', '1', 'yes')
+ALLOWED_HOSTS = [h.strip() for h in os.environ.get('ALLOWED_HOSTS', 'localhost').split(',')]
 
 
-# Application definition (MTV MODEL[Database], TEMPLATES[HTML/User View], VIEWS[Python-django function])
-
+# ──────────────────────────────────────────────
+# Apps
+# ──────────────────────────────────────────────
 INSTALLED_APPS = [
     'food',
-    'django.contrib.humanize', # format numbers with commas e.g [10,000]
+    'django.contrib.humanize',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'rest_framework', # for our API [Application programme interface]
-    'corsheaders', # for API 
+    'rest_framework',
+    'corsheaders',
 ]
 
 CORE_ALLOW_ALL_ORIGINS = True
 
-# Add these to your REST_FRAMEWORK settings
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.SessionAuthentication',
@@ -59,6 +56,9 @@ REST_FRAMEWORK = {
 }
 
 
+# ──────────────────────────────────────────────
+# Middleware
+# ──────────────────────────────────────────────
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -95,54 +95,44 @@ TEMPLATES = [
 WSGI_APPLICATION = 'food_web.wsgi.application'
 
 
+# ──────────────────────────────────────────────
 # Database
-# https://docs.djangoproject.com/en/4.2/ref/settings/#databases
-
+# ──────────────────────────────────────────────
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'food_web',
-        'USER': 'root',
-        'PASSWORD': '',
-        'HOST': '127.0.0.1',
-        'PORT': '3306'
+        'NAME': os.environ.get('DB_NAME', 'food_web'),
+        'USER': os.environ.get('DB_USER', 'root'),
+        'PASSWORD': os.environ.get('DB_PASSWORD', ''),
+        'HOST': os.environ.get('DB_HOST', '127.0.0.1'),
+        'PORT': os.environ.get('DB_PORT', '3306'),
     }
 }
 
 
+# ──────────────────────────────────────────────
 # Password validation
-# https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
-
+# ──────────────────────────────────────────────
 AUTH_PASSWORD_VALIDATORS = [
-    {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
-    },
-    {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
-    },
+    {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
+    {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
 
+# ──────────────────────────────────────────────
 # Internationalization
-# https://docs.djangoproject.com/en/4.2/topics/i18n/
-
+# ──────────────────────────────────────────────
 LANGUAGE_CODE = 'en-us'
-
 TIME_ZONE = 'UTC'
-
 USE_I18N = True
-
 USE_TZ = True
 
 
-# Django Messages Configuration
-# Map message levels to Bootstrap alert classes
+# ──────────────────────────────────────────────
+# Django Messages
+# ──────────────────────────────────────────────
 from django.contrib.messages import constants as messages
 MESSAGE_TAGS = {
     messages.DEBUG: 'info',
@@ -153,33 +143,43 @@ MESSAGE_TAGS = {
 }
 
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/4.2/howto/static-files/
-
+# ──────────────────────────────────────────────
+# Static / Media
+# ──────────────────────────────────────────────
 STATIC_URL = 'static/'
-
-# this is for uploading images
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 
+# ──────────────────────────────────────────────
 # Default primary key field type
-# https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
-
+# ──────────────────────────────────────────────
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-# Email settings (Google SMTP)
+
+# ──────────────────────────────────────────────
+# Email (Google SMTP)
+# ──────────────────────────────────────────────
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'danielgbenga164@gmail.com'
-EMAIL_HOST_PASSWORD = 'rpefattmgygpfosr'
-DEFAULT_FROM_EMAIL = 'danielgbenga164@gmail.com'
-CONTACT_EMAIL = 'support@primedish.com'
+EMAIL_HOST_USER = os.environ['EMAIL_HOST_USER']
+EMAIL_HOST_PASSWORD = os.environ['EMAIL_HOST_PASSWORD']
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER)
+CONTACT_EMAIL = os.environ.get('CONTACT_EMAIL', 'support@primedish.com')
 
-# Paystack payment gateway credentials
-# Public key used on the frontend for Paystack popup widget
-PAYSTACK_PUBLIC_KEY = 'pk_test_05a3b4e5752863bc64d5723e6f366fd1b146005b'
-# Secret key used on the backend to verify transactions via Paystack API
-PAYSTACK_SECRET_KEY = 'sk_test_623590fa6ce17ac0c72011529a180fb470736e78'
+
+# ──────────────────────────────────────────────
+# Paystack
+# ──────────────────────────────────────────────
+PAYSTACK_PUBLIC_KEY = os.environ['PAYSTACK_PUBLIC_KEY']
+PAYSTACK_SECRET_KEY = os.environ['PAYSTACK_SECRET_KEY']
+
+
+# ──────────────────────────────────────────────
+# Google OAuth2
+# ──────────────────────────────────────────────
+GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '')
+GOOGLE_CLIENT_SECRET = os.environ.get('GOOGLE_CLIENT_SECRET', '')
+GOOGLE_REDIRECT_URI = os.environ.get('GOOGLE_REDIRECT_URI', 'http://127.0.0.1:8000/auth/google/callback')

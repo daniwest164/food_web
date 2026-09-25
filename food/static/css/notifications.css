@@ -1,0 +1,45 @@
+/* =============================================
+   PRIME DISH - NOTIFICATIONS + NAVBAR PROFILE
+   Shared by includes/base.html and includes/user_base.html
+   ============================================= */
+
+/* ---- Bell button + count badge ---- */
+.bell-btn{width:40px;height:40px;border-radius:12px;background:var(--card-bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-muted);font-size:18px;position:relative;transition:.25s}
+.bell-btn:hover{color:var(--primary);border-color:var(--primary)}
+.bell-badge{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;border-radius:100px;background:var(--primary);color:#fff;font-size:10.5px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 5px;border:2px solid #0A0A0A}
+
+/* ---- Dropdown panel ---- */
+.notif-dropdown{width:380px;max-width:92vw;padding:0;overflow:hidden;background:#131315;border:1px solid #26262b;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.55)}
+.notif-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 12px}
+.notif-head-title{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:800;color:#fff}
+.notif-count{background:var(--primary);color:#fff;font-size:11px;font-weight:800;min-width:20px;height:20px;border-radius:100px;display:inline-flex;align-items:center;justify-content:center;padding:0 6px}
+.notif-mark{background:none;border:none;font-size:12px;font-weight:700;color:var(--primary);cursor:pointer;padding:0}
+.notif-mark:hover{text-decoration:underline}
+.notif-list{max-height:340px;overflow-y:auto;padding:4px 8px 8px}
+.notif-item{display:flex;gap:12px;align-items:flex-start;padding:12px;border-radius:12px;text-decoration:none;position:relative;transition:background .2s}
+.notif-item:hover{background:#1b1b1e}
+.notif-item.unread{background:rgba(255,102,0,.06)}
+.notif-item.unread:hover{background:rgba(255,102,0,.1)}
+
+/* ---- Type icon tiles ---- */
+.notif-ico{width:34px;height:34px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;border:1px solid}
+.notif-ico.order{background:rgba(255,102,0,.12);color:var(--primary);border-color:rgba(255,102,0,.25)}
+.notif-ico.payment{background:rgba(34,197,94,.12);color:#22c55e;border-color:rgba(34,197,94,.25)}
+.notif-ico.food{background:rgba(234,179,8,.12);color:#eab308;border-color:rgba(234,179,8,.25)}
+.notif-ico.user{background:rgba(59,130,246,.12);color:#60a5fa;border-color:rgba(59,130,246,.25)}
+.notif-ico.system{background:rgba(168,85,247,.12);color:#c084fc;border-color:rgba(168,85,247,.25)}
+
+/* ---- Item text ---- */
+.notif-body{min-width:0;flex:1}
+.notif-title{font-size:13.5px;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.notif-text{font-size:12.5px;color:#9aa0aa;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-top:2px}
+.notif-time{font-size:11px;color:#6b6f78;margin-top:4px}
+.notif-dot{width:8px;height:8px;border-radius:50%;background:var(--primary);flex-shrink:0;margin-top:8px}
+.notif-empty{text-align:center;padding:36px 20px;color:#9aa0aa;font-size:13px}
+.notif-empty i{font-size:30px;display:block;margin-bottom:10px;color:#4a4d55}
+
+/* ---- Navbar profile link (direct to dashboard) ---- */
+.user-nav-profile{display:flex;align-items:center;gap:8px;padding:4px 14px 4px 4px;background:var(--card-bg);border:1px solid var(--border);border-radius:100px;color:var(--text);text-decoration:none;transition:.25s}
+.user-nav-profile:hover{border-color:var(--primary);color:var(--text)}
+.user-nav-profile h6{margin:0;font-size:12px;font-weight:600}
+.user-nav-profile img{object-fit:cover}
