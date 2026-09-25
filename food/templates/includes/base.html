@@ -25,18 +25,79 @@
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
     <link rel="stylesheet" href="{% static 'css/responsive.css' %}">
     <link rel="stylesheet" href="{% static 'css/notifications.css' %}">
+    {% block extra_head %}{% endblock extra_head %}
 </head>
 <body>
 
 <!-- NAVBAR -->
 <nav class="navbar navbar-expand-lg fixed-top scrolled">
     <div class="container">
-        <a href="/" class="navbar-brand">Prime<span>Dish</span></a>
-
-        <!-- Mobile Toggle Button -->
-        <button class="navbar-toggler border-0 shadow-none border-0" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
+        <!-- Mobile hamburger (left, like Jumia) -->
+        <button class="navbar-toggler border-0 shadow-none d-lg-none" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
             <i class="bi bi-list fs-1 text-light"></i>
         </button>
+        <a href="/" class="navbar-brand">Prime<span>Dish</span></a>
+
+        <!-- Mobile-only icons right: user + cart (like Jumia) -->
+        <div class="navbar-mobile-right d-lg-none">
+            {% if user.is_authenticated %}
+            <a href="/profile" class="mobile-user-btn" title="Account">
+                <i class="fa-regular fa-user"></i>
+            </a>
+            {% else %}
+            <a href="/login" class="mobile-user-btn" title="Sign in">
+                <i class="fa-regular fa-user"></i>
+            </a>
+            {% endif %}
+            <a href="/cart" class="cart-btn" title="Cart">
+                <i class="fa-solid fa-bag-shopping"></i>
+                <span class="cart-count" style="display:{% if cart_count > 0 %}flex{% else %}none{% endif %}">{{ cart_count }}</span>
+            </a>
+            {% if user.is_authenticated %}
+            <div class="dropdown">
+                <div class="bell-btn dropdown-toggle" id="notifDropdownMobile" role="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
+                    <i class="fa-solid fa-bell"></i>
+                    {% if user_notifications %}<span class="bell-badge">{{ user_notifications|length }}</span>{% endif %}
+                </div>
+                <ul class="dropdown-menu dropdown-menu-end notif-dropdown" aria-labelledby="notifDropdownMobile">
+                    <li>
+                        <div class="notif-head">
+                            <span class="notif-head-title">Notifications {% if user_notifications %}<span class="notif-count">{{ user_notifications|length }}</span>{% endif %}</span>
+                            <button type="button" class="notif-mark mark-all-read">Mark all as read</button>
+                        </div>
+                    </li>
+                    <li><div class="notif-list">
+                        {% for notif in user_notifications %}
+                        <a {% if 'Order' in notif.title or 'Deliver' in notif.title %}href="/orders"{% else %}href="#" onclick="return false;"{% endif %} class="notif-item {% if not notif.is_read %}unread{% endif %}">
+                            {% if 'Order' in notif.title or 'Deliver' in notif.title %}
+                                <span class="notif-ico order"><i class="bi bi-bag-check-fill"></i></span>
+                            {% elif 'Payment' in notif.title or 'Paid' in notif.title %}
+                                <span class="notif-ico payment"><i class="bi bi-credit-card-2-front-fill"></i></span>
+                            {% elif 'Menu' in notif.title or 'Rating' in notif.title %}
+                                <span class="notif-ico food"><i class="bi bi-egg-fried"></i></span>
+                            {% elif 'User' in notif.title or 'Account' in notif.title or 'Registration' in notif.title %}
+                                <span class="notif-ico user"><i class="bi bi-person-fill"></i></span>
+                            {% else %}
+                                <span class="notif-ico system"><i class="fa-solid fa-bell"></i></span>
+                            {% endif %}
+                            <span class="notif-body">
+                                <div class="notif-title">{{ notif.title }}</div>
+                                <div class="notif-text">{{ notif.body }}</div>
+                                <div class="notif-time">{{ notif.created_at|timesince }} ago</div>
+                            </span>
+                            {% if not notif.is_read %}<span class="notif-dot"></span>{% endif %}
+                        </a>
+                        {% empty %}
+                        <div class="notif-empty">
+                            <i class="bi bi-bell-slash"></i>
+                            You're all caught up.<br>No new notifications yet.
+                        </div>
+                        {% endfor %}
+                    </div></li>
+                </ul>
+            </div>
+            {% endif %}
+        </div>
 
         <!-- Mobile Toggle Button -->
         <script>
@@ -79,7 +140,7 @@
                 {% if user.is_authenticated %}
                 <div class="dropdown">
                     <div class="bell-btn dropdown-toggle" id="notifDropdownBase" role="button" data-bs-toggle="dropdown" aria-expanded="false" data-bs-auto-close="outside">
-                        <i class="bi bi-bell"></i>
+                        <i class="fa-solid fa-bell"></i>
                         {% if user_notifications %}<span class="bell-badge">{{ user_notifications|length }}</span>{% endif %}
                     </div>
                     <ul class="dropdown-menu dropdown-menu-end notif-dropdown" aria-labelledby="notifDropdownBase">
@@ -101,7 +162,7 @@
                                 {% elif 'User' in notif.title or 'Account' in notif.title or 'Registration' in notif.title %}
                                     <span class="notif-ico user"><i class="bi bi-person-fill"></i></span>
                                 {% else %}
-                                    <span class="notif-ico system"><i class="bi bi-bell-fill"></i></span>
+                                    <span class="notif-ico system"><i class="fa-solid fa-bell"></i></span>
                                 {% endif %}
                                 <span class="notif-body">
                                     <div class="notif-title">{{ notif.title }}</div>
@@ -121,14 +182,8 @@
                 </div>
 
                 <!-- User Contact — direct to dashboard -->
-                <a href="/profile" class="user-nav-profile" title="profile">
-                    {% if user.signup.passport %}
-                    <img src="{{user.signup.passport_url}}" alt="Profile" width="30" height="30" class="rounded-circle">
-                    {% else %}
-                    <img src="{% static 'image/default.jpg' %}" alt="Profile" width="30" height="30" class="rounded-circle">
-                    {% endif %}
-                    <h6>Hi, {{user.first_name}}</h6>
-                </a>
+                <p style="color: var(--muted);">Hi, {{user.first_name|default:user.username}}</p>
+                <a href="{% if user.is_staff %}/dashboard{% else %}/profile{% endif %}" class="dashboard-pill-btn">Dashboard</a>
                 
                 {% else %}
                     <a href="/login" class="btn btn-outline btn-sm">Sign In</a>
@@ -156,12 +211,24 @@
 
                 <p>Delivering happiness to your doorstep since 2020. Fresh, delicious meals prepared with love.</p>
                 <div class="social-links">
-                    <a href="#" class="social-link"><i class="bi bi-instagram"></i></a>
-                    <a href="#" class="social-link"><i class="bi bi-twitter-x"></i></a>
-                    <a href="#" class="social-link"><i class="bi bi-facebook"></i></a>
-                    <a href="#" class="social-link"><i class="bi bi-tiktok"></i></a>
-                    <a href="#" class="social-link"><i class="bi bi-whatsapp"></i></a>
+                    <a href="https://facebook.com/" target="_blank" rel="noopener" aria-label="Facebook">
+                        <i class="fab fa-facebook"></i>
+                    </a>vf
+                    <a href="https://instagram.com/" target="_blank" rel="noopener" aria-label="Instagram">
+                        <i class="fab fa-instagram"></i>
+                    </a>
+                    <a href="https://tiktok.com/" target="_blank" rel="noopener" aria-label="TikTok">
+                        <i class="fab fa-tiktok"></i>
+                    </a>
+                    <a href="https://x.com/" target="_blank" rel="noopener" aria-label="X">
+                        <i class="fab fa-x-twitter"></i>
+                    </a>
+                    <a href="https://wa.me/" target="_blank" rel="noopener" aria-label="WhatsApp">
+                        <i class="fab fa-whatsapp"></i>
+                    </a>
+                        
                 </div>
+                
             </div>
 
             <div class="footer-col col-6 col-lg-2">
@@ -187,20 +254,6 @@
                     <li><a href="/cart">My Cart</a></li>
                 </ul>
             </div>
-
-            <!-- <div class="footer-col col-12 col-lg-4">
-                <h4>Newsletter</h4>
-
-                <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 14px;">Get the latest deals and
-                    menu updates straight to your inbox.</p>
-                <form class="newsletter-form">
-                    <input type="email" class="form-control form-control-sm mb-2" placeholder="Your email address"
-                        aria-label="Email address" />
-                    <button type="submit" class="btn btn-primary btn-full">
-                        <i class="bi bi-send-fill"></i> Subscribe
-                    </button>
-                </form>
-            </div> -->
 
             <!-- Get the App -->
             <div class="footer-col col-12 col-lg-4">
@@ -261,34 +314,7 @@
     });
 </script>
 
-<script>
-    // Notification dropdown: mark all as read (visual only)
-    document.addEventListener('DOMContentLoaded', function () {
-        var markAllRead = document.querySelector('#notifDropdownBase ~ .notif-dropdown .mark-all-read');
-        if (markAllRead) {
-            markAllRead.addEventListener('click', function (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                var dropdown = this.closest('.notif-dropdown');
-                if (dropdown) {
-                    dropdown.querySelectorAll('.notif-item.unread').forEach(function (item) { item.classList.remove('unread'); });
-                    dropdown.querySelectorAll('.notif-item .notif-dot').forEach(function (dot) { dot.remove(); });
-                }
-                var badge = document.querySelector('#notifDropdownBase .bell-badge');
-                if (badge) badge.remove();
-                var count = dropdown ? dropdown.querySelector('.notif-count') : null;
-                if (count) count.remove();
-            });
-        }
-        document.querySelectorAll('#notifDropdownBase ~ .notif-dropdown .notif-item.unread').forEach(function (item) {
-            item.addEventListener('click', function () {
-                this.classList.remove('unread');
-                var dot = this.querySelector('.notif-dot');
-                if (dot) dot.remove();
-            });
-        });
-    });
-</script>
+{% block extra_js %}{% endblock extra_js %}
 
 </body>
 </html>

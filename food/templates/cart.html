@@ -40,25 +40,54 @@
                 <!-- Cart Items Column -->
                 <div class="cart-items-col">
 
-                    <!-- Delivery Address Card -->
+                    <!-- Delivery Method + Address (joined) -->
                     <div class="cart-card" style="margin-bottom:20px;">
-                        <h3 class="cart-card-title"><i class="bi bi-geo-alt-fill text-primary"></i>Delivery Address</h3>
-                    
-                        <div id="current-address-display">
-                            <div class="d-flex align-items-center gap-3 p-3"
-                                style="background:var(--bg-3);border-radius:var(--radius);border:1px solid var(--border);">
-                                <i class="bi bi-geo-alt-fill" style="color:var(--primary);font-size:20px;"></i>
-                                <div style="flex:1;">
-                                    <div style="font-size:12px;color:var(--text-muted);">Delivering to</div>
-                                    <div style="font-size:15px;font-weight:600;" id="current-address-text">{{ delivery_address|default_if_none:'No address set' }}</div>
+                        <h3 class="cart-card-title"><i class="fa-solid fa-truck-fast text-primary"></i>Delivery Method</h3>
+                        <div class="dm-tabs" role="tablist">
+                            <button type="button" class="dm-tab active" data-dm="delivery" onclick="selectDeliveryMethod('delivery')">
+                                <i class="fa-solid fa-truck-fast"></i> Delivery
+                            </button>
+                            <button type="button" class="dm-tab" data-dm="pickup" onclick="selectDeliveryMethod('pickup')">
+                                <i class="fa-solid fa-box"></i> Pickup
+                            </button>
+                        </div>
+                        <hr class="dm-divider">
+                        <div id="dm-panel-delivery">
+                            <h3 class="cart-card-title"><i class="bi bi-geo-alt-fill text-primary"></i>Delivery Address</h3>
+
+                            <div id="current-address-display">
+                                <div class="d-flex align-items-center gap-3 p-3"
+                                    style="background:var(--bg-3);border-radius:var(--radius);border:1px solid var(--border);">
+                                    <i class="bi bi-geo-alt-fill" style="color:var(--primary);font-size:20px;"></i>
+                                    <div style="flex:1;">
+                                        <div style="font-size:12px;color:var(--text-muted);">Delivering to</div>
+                                        <div style="font-size:15px;font-weight:600;" id="current-address-text">{{ delivery_address|default:'No address set' }}</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {% if addresses %}
+                            <button type="button" class="btn btn-outline w-100 mt-3" data-bs-toggle="modal" data-bs-target="#addressPickerModal"
+                                style="border-radius:var(--radius);font-weight:600;font-size:14px;">
+                                <i class="bi bi-pencil-square me-1"></i> Change Address
+                            </button>
+                            {% else %}
+                            <button type="button" class="btn btn-outline w-100 mt-3" data-bs-toggle="modal" data-bs-target="#addressPickerModal"
+                                style="border-radius:var(--radius);font-weight:600;font-size:14px;">
+                                <i class="bi bi-plus-circle me-1"></i> Add Address
+                            </button>
+                            {% endif %}
+                        </div>
+                        <div id="dm-panel-pickup" style="display:none;">
+                            <h3 class="cart-card-title"><i class="fa-solid fa-store text-primary"></i>Pickup Location</h3>
+                            <div class="pickup-card">
+                                <i class="fa-solid fa-store"></i>
+                                <div>
+                                    <div class="pickup-name">Pickup at PrimeDish</div>
+                                    <div class="pickup-addr">14 Chophouse Way, Victoria Island, Lagos, Nigeria</div>
                                 </div>
                             </div>
                         </div>
-                    
-                        <button type="button" class="btn btn-outline w-100 mt-3" data-bs-toggle="modal" data-bs-target="#addressPickerModal"
-                            style="border-radius:var(--radius);font-weight:600;font-size:14px;">
-                            <i class="bi bi-pencil-square me-1"></i> Change Address
-                        </button>
                     </div>
 
                     <div class="cart-card">
@@ -302,14 +331,14 @@
                 <hr style="border-color:var(--border);margin:20px 0;">
 
                 <!-- Add New Address Form -->
-                <div id="add-address-toggle">
+                <div id="add-address-toggle" style="{% if not addresses %}display:none;{% endif %}">
                     <button type="button" class="btn btn-outline w-100" onclick="toggleAddAddressForm()" id="toggle-add-addr-btn" style="border-radius:var(--radius);font-weight:600;font-size:14px;">
                         <i class="bi bi-plus-circle me-1"></i> Add New Address
                     </button>
                 </div>
                 
 
-                <div id="add-address-form" style="display:none;margin-top:16px;">
+                <div id="add-address-form" style="{% if addresses %}display:none;{% else %}display:block;{% endif %}margin-top:16px;">
                     <form id="new-address-form" onsubmit="submitNewAddress(event)">
                         <div style="display:flex;gap:10px;margin-bottom:12px;">
                             <select id="addr-label" class="form-control" style="flex:1;padding:10px 14px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg-3);color:var(--text);font-size:14px;outline:none;">
@@ -388,6 +417,11 @@
 
     function submitNewAddress(e) {
         e.preventDefault();
+        var authEl = document.getElementById('user-is-authenticated');
+        if (!authEl || authEl.value !== '1') {
+            window.location.href = '/login?next=/cart';
+            return;
+        }
         var btn = document.getElementById('save-address-btn');
         btn.disabled = true;
         btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving...';
@@ -437,6 +471,33 @@
             })
         }
     })
+</script>
+
+<script>
+    // ── Delivery Method toggle (Delivery / Pickup) ──
+    window.selectedDeliveryMethod = 'delivery';
+
+    function selectDeliveryMethod(method) {
+        window.selectedDeliveryMethod = method;
+        try { localStorage.setItem('pd_delivery_method', method); } catch (e) {}
+        document.querySelectorAll('.dm-tab').forEach(function (t) {
+            t.classList.toggle('active', t.dataset.dm === method);
+        });
+        var delPanel = document.getElementById('dm-panel-delivery');
+        var pickPanel = document.getElementById('dm-panel-pickup');
+        if (delPanel) delPanel.style.display = method === 'delivery' ? '' : 'none';
+        if (pickPanel) pickPanel.style.display = method === 'pickup' ? '' : 'none';
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        var saved = null;
+        try { saved = localStorage.getItem('pd_delivery_method'); } catch (e) {}
+        if (saved === 'pickup' || saved === 'delivery') {
+            selectDeliveryMethod(saved);
+        } else {
+            window.selectedDeliveryMethod = 'delivery';
+        }
+    });
 </script>
 
 {% endblock content %}

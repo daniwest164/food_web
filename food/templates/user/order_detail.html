@@ -4,90 +4,7 @@
 {% block title %}Order {{ order.order_id }}{% endblock title %}
 {% block mobile_title %}Order Detail{% endblock %}
 
-{% block content %}
-<link rel="stylesheet" href="{% static 'aos/aos.css' %}">
-<link rel="stylesheet" href="{% static 'css/style.css' %}">
-<link rel="stylesheet" href="{% static 'css/responsive.css' %}">
-
-<style>
-/* Orders detail — Prime Dish dark theme (matched to reference) */
-.orders-breadcrumb{font-size:13px;color:var(--text-muted);display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:12px}
-.orders-breadcrumb a{color:var(--text-muted)}
-.orders-breadcrumb a:hover{color:var(--primary)}
-.orders-breadcrumb i{font-size:10px}
-.jd-header-card{background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:22px 24px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}
-.jd-header-left h1{font-size:22px;font-weight:800;margin-bottom:6px}
-.jd-header-left h1 span{color:var(--primary)}
-.jd-meta{font-size:13px;color:var(--text-muted);display:flex;gap:14px;flex-wrap:wrap;align-items:center}
-.jd-meta b{color:var(--text)}
-.jd-badge{padding:6px 12px;border-radius:100px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:6px;border:1px solid}
-.jd-badge.pending{background:rgba(234,179,8,.12);color:#eab308;border-color:rgba(234,179,8,.3)}
-.jd-badge.confirmed{background:rgba(59,130,246,.12);color:#60a5fa;border-color:rgba(59,130,246,.3)}
-.jd-badge.preparing{background:rgba(249,115,22,.12);color:#fb923c;border-color:rgba(249,115,22,.3)}
-.jd-badge.delivery{background:rgba(168,85,247,.12);color:#c084fc;border-color:rgba(168,85,247,.3)}
-.jd-badge.delivered{background:rgba(34,197,94,.12);color:#22c55e;border-color:rgba(34,197,94,.3)}
-.jd-badge.cancelled{background:rgba(239,68,68,.12);color:#ef4444;border-color:rgba(239,68,68,.3)}
-/* --- reference layout: main + right rail, delivery/payment side by side --- */
-.od-grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}
-@media(max-width:992px){.od-grid{grid-template-columns:1fr}}
-.od-main{display:flex;flex-direction:column;gap:18px;min-width:0}
-.od-duo{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:start}
-@media(max-width:768px){.od-duo{grid-template-columns:1fr}}
-.od-rail{min-width:0}
-.od-rail-card{position:sticky;top:90px}
-.od-vsteps{display:flex;flex-direction:column}
-.od-vstep{display:flex;gap:12px;position:relative;padding-bottom:20px}
-.od-vstep:last-child{padding-bottom:0}
-.od-vstep::before{content:'';position:absolute;left:15px;top:34px;bottom:0;width:2px;background:#2a2d33}
-.od-vstep:last-child::before{display:none}
-.od-vstep.done::before{background:var(--primary)}
-.od-vicon{width:32px;height:32px;border-radius:50%;background:#1c1e22;border:2px solid #2a2d33;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;color:#7a7d85}
-.od-vstep.done .od-vicon{background:var(--primary);border-color:var(--primary);color:#fff}
-.od-vstep.active .od-vicon{box-shadow:0 0 0 5px rgba(255,102,0,.18)}
-.od-vlabel{font-weight:800;font-size:13px;color:#fff}
-.od-vstep:not(.done) .od-vlabel{color:#7a7d85}
-.od-vsub{font-size:11.5px;color:#7a7d85;margin-top:2px}
-.jd-card{background:#111214;border:1px solid #232428;border-radius:12px;padding:24px}
-.jd-card h3{font-size:14px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:#fff;margin-bottom:20px;display:flex;align-items:center;gap:8px}
-.jd-card h3 i{color:var(--primary);font-size:16px}
-/* --- reference-matched info blocks --- */
-.od-label{font-size:11px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#7a7d85;margin:0 0 12px}
-.od-block{margin-bottom:24px}
-.od-block:last-of-type{margin-bottom:0}
-.od-method{display:flex;align-items:center;gap:12px}
-.od-method>i{font-size:26px;color:var(--primary);flex-shrink:0}
-.od-method-name{font-weight:800;font-size:14px;color:#fff}
-.od-method-sub{font-size:12.5px;color:#9aa0aa;margin-top:2px}
-.od-ship-name{font-weight:800;font-size:14px;color:#fff;margin-bottom:6px}
-.od-ship-line{font-size:13px;color:#9aa0aa;line-height:1.65}
-.od-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 0;font-size:13.5px}
-.od-row .k{color:#9aa0aa}
-.od-row .v{color:#fff;font-weight:700;text-align:right}
-.od-row .v.mono{font-size:12.5px;letter-spacing:.3px}
-.od-paid{background:rgba(34,197,94,.15);color:#22c55e;padding:3px 12px;border-radius:100px;font-weight:800;font-size:12px}
-.od-total-row{display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding-top:4px}
-.od-total-row .k{font-weight:800;font-size:15px;color:#fff}
-.od-total-row .v{font-weight:800;font-size:17px;color:var(--primary)}
-.od-track-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:22px;background:var(--primary);color:#fff;font-weight:800;font-size:15px;border:none;border-radius:100px;padding:15px 20px;cursor:pointer;text-decoration:none;transition:.25s}
-.od-track-btn:hover{background:var(--primary-dark);color:#fff;transform:translateY(-1px)}
-.od-help-title{font-size:12px;font-weight:800;letter-spacing:1px;text-transform:uppercase;color:#fff;display:flex;align-items:center;gap:8px;margin-bottom:12px}
-.od-help-title i{color:var(--primary)}
-.od-help p{font-size:13px;color:#9aa0aa;margin-bottom:16px;line-height:1.6}
-.od-help-actions{display:flex;gap:10px;flex-wrap:wrap}
-.od-btn-ghost{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;font-size:12.5px;font-weight:700;border-radius:100px;border:1px solid #33353b;background:#17181c;color:#fff;text-decoration:none;transition:.25s}
-.od-btn-ghost:hover{border-color:var(--primary);color:#fff}
-.od-btn-orange{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;font-size:12.5px;font-weight:700;border-radius:100px;border:1px solid rgba(255,102,0,.4);background:rgba(255,102,0,.08);color:var(--primary);text-decoration:none;transition:.25s}
-.od-btn-orange:hover{background:rgba(255,102,0,.16)}
-.od-rail .od-help-actions a{flex:1;justify-content:center}
-.jd-item-row{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border)}
-.jd-item-row:last-child{border-bottom:none}
-.jd-item-img{width:72px;height:72px;border-radius:10px;object-fit:cover;background:var(--bg-3);flex-shrink:0;border:1px solid var(--border)}
-.jd-item-img.ph{display:flex;align-items:center;justify-content:center;font-size:28px}
-.jd-item-name{font-weight:700;font-size:14px}
-.jd-item-qty{font-size:12px;color:var(--text-muted)}
-.jd-price{font-weight:800;color:var(--primary)}
-</style>
-
+{% block user_content %}
 <main class="user-main">
   <!-- Breadcrumb -->
   <div class="orders-breadcrumb">
@@ -253,4 +170,4 @@
 
 <script src="{% static 'aos/aos.js' %}"></script>
 <script>AOS.init({duration:700,once:true});</script>
-{% endblock content %}
+{% endblock user_content %}

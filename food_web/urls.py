@@ -68,11 +68,13 @@ urlpatterns = [
 
     path('track_order', views.track_order, name="track_order"),
     path('track_order/<str:order_id>/', views.track_order, name="track_order_with_id"),
+
     path('setting', views.setting, name="setting"),
     path('add_address', views.add_address, name="add_address"),
     path('edit_address/<int:address_id>', views.edit_address, name="edit_address"),
     path('delete_address/<int:address_id>', views.delete_address, name="delete_address"),
     path('set_default_address/<int:address_id>', views.set_default_address, name="set_default_address"),
+    
     path('logout', views.logout_page),
     path('delete_account', views.delete_account_page, name="delete_account"),
 
@@ -80,8 +82,8 @@ urlpatterns = [
     path('dashboard', views.dashboard_page, name="dashboard"),
     path('add_admin', views.add_admin_page, name="add_admin"), 
     path('admin_profile', views.admin_profile_page, name="admin_profile"), 
-    path('menu_management', views.menu_management_page, name="menu_management"), 
 
+    path('menu_management', views.menu_management_page, name="menu_management"), 
     path('add_menu_item', views.add_menu_item, name="add_menu_item"),
     path('edit_menu_item/<int:item_id>', views.edit_menu_item, name="edit_menu_item"),
     path('delete_menu_item/<int:item_id>', views.delete_menu_item, name="delete_menu_item"),
@@ -93,9 +95,9 @@ urlpatterns = [
     path('order_management', views.order_management_page, name="order_management"),
     path('update_order_status/', views.update_order_status, name="update_order_status"),
     path('delete_order/', views.delete_order, name="delete_order"),
+
     path('customers', views.customers_page, name="customers"),
     path('export_customers_csv/', views.export_customers_csv, name="export_customers_csv"),
-
     path('block/<int:id>', views.blockpage, name="block"),
     path('unblock/<int:id>', views.unblockpage, name="unblock"),
     path('delete/<int:id>', views.deletepage, name="delete"),

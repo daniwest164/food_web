@@ -79,7 +79,7 @@
   /* Steps */
   .steps-grid { grid-template-columns: 1fr 1fr; }
   
-  /* Menu */
+  /* Menu — 2 cards per row on mobile */
   .menu-grid { grid-template-columns: repeat(2, 1fr); }
   
   /* Features */
@@ -96,8 +96,11 @@
   /* Footer */
   .footer-grid { grid-template-columns: 1fr 1fr; gap: 24px; }
   
-  /* Page hero */
-  .page-hero { padding: 120px 0 50px; }
+  /* Page hero (all inner pages: about, menu, cart, contact) — hidden on mobile */
+  .page-hero { display: none; }
+  /* Keep content clear of the fixed navbar now the hero is gone */
+  .page-hero + .section,
+  .page-hero + .section-sm { padding-top: 96px; }
   
   /* Section header */
   .section-header { margin-bottom: 36px; }
@@ -131,7 +134,7 @@
   .steps-grid { grid-template-columns: 1fr; }
   
   /* Menu */
-  .menu-grid { grid-template-columns: 1fr; }
+  .menu-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
   
   /* Features */
   .features-grid { grid-template-columns: 1fr; }
@@ -246,4 +249,73 @@
 
 @media (max-width: 480px) {
   .stats-grid { grid-template-columns: 1fr; }
+}
+
+/* =============================================
+   MOBILE NAVBAR ICONS (cart + bell next to toggler)
+   Mobile only — hidden on desktop
+============================================= */
+.navbar-mobile-right { display: none; }
+
+@media (max-width: 991.98px) {
+  .navbar-mobile-right {
+    display: flex !important;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+  }
+  .navbar-mobile-right .cart-btn {
+    position: relative;
+    width: auto; height: auto;
+    border-radius: 0;
+    background: none;
+    color: var(--text);
+    font-size: 22px;
+    border: none;
+    display: inline-flex; align-items: center; justify-content: center;
+    text-decoration: none;
+    padding: 4px;
+  }
+  .navbar-mobile-right .mobile-user-btn {
+    font-size: 22px;
+  }
+  /* Hamburger sits left of brand (Jumia style) */
+  .navbar .container > .navbar-toggler.d-lg-none {
+    margin-right: 2px;
+    padding-left: 0;
+  }
+  .navbar-mobile-right .bell-btn {
+    width: 32px !important; height: 32px !important;
+    border-radius: 50% !important;
+    background: transparent !important;
+    border: 1.5px solid var(--primary) !important;
+    color: var(--primary) !important;
+    font-size: 14px !important;
+    padding: 0 !important;
+    display: inline-flex !important; align-items: center; justify-content: center;
+  }
+  .navbar-mobile-right .bell-badge {
+    top: -5px !important; right: -5px !important;
+    min-width: 16px !important; height: 16px !important;
+    font-size: 9px !important;
+  }
+  .navbar-mobile-right .navbar-toggler {
+    padding: 4px 6px;
+  }
+  .navbar-mobile-right .dropdown {
+    position: relative;
+  }
+  /* Clear the bell / cart / greeting / Dashboard row out of the mobile
+     menu (they now live on the mobile bar itself; guest buttons stay) */
+  #mainNavbar .navbar-actions .cart-btn,
+  #mainNavbar .navbar-actions .dropdown,
+  #mainNavbar .navbar-actions > p,
+  #mainNavbar .navbar-actions .navbar-greeting,
+  #mainNavbar .navbar-actions .dashboard-pill-btn {
+    display: none !important;
+  }
+}
+
+@media (min-width: 992px) {
+  .navbar-mobile-right { display: none !important; }
 }

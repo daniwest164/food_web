@@ -3,10 +3,10 @@
    Shared by includes/base.html and includes/user_base.html
    ============================================= */
 
-/* ---- Bell button + count badge ---- */
-.bell-btn{width:40px;height:40px;border-radius:12px;background:var(--card-bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-muted);font-size:18px;position:relative;transition:.25s}
-.bell-btn:hover{color:var(--primary);border-color:var(--primary)}
-.bell-badge{position:absolute;top:-6px;right:-6px;min-width:20px;height:20px;border-radius:100px;background:var(--primary);color:#fff;font-size:10.5px;font-weight:800;display:flex;align-items:center;justify-content:center;padding:0 5px;border:2px solid #0A0A0A}
+/* ---- Bell button + count badge — Choply exact: plain icon, no box ---- */
+.bell-btn{display:inline-flex;align-items:center;justify-content:center;background:none;border:none;color:var(--text);font-size:20px;padding:4px;position:relative;cursor:pointer;transition:color .15s ease}
+.bell-btn:hover{background:none;border:none;color:var(--primary)}
+.bell-badge{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:9999px;background:var(--primary);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid #0A0A0A}
 
 /* ---- Dropdown panel ---- */
 .notif-dropdown{width:380px;max-width:92vw;padding:0;overflow:hidden;background:#131315;border:1px solid #26262b;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.55)}
@@ -38,8 +38,19 @@
 .notif-empty{text-align:center;padding:36px 20px;color:#9aa0aa;font-size:13px}
 .notif-empty i{font-size:30px;display:block;margin-bottom:10px;color:#4a4d55}
 
-/* ---- Navbar profile link (direct to dashboard) ---- */
-.user-nav-profile{display:flex;align-items:center;gap:8px;padding:4px 14px 4px 4px;background:var(--card-bg);border:1px solid var(--border);border-radius:100px;color:var(--text);text-decoration:none;transition:.25s}
-.user-nav-profile:hover{border-color:var(--primary);color:var(--text)}
-.user-nav-profile h6{margin:0;font-size:12px;font-weight:600}
-.user-nav-profile img{object-fit:cover}
+/* ---- Small devices: dropdown takes (almost) the whole screen width ---- */
+@media (max-width: 576px) {
+  .notif-dropdown{
+    position: fixed !important;
+    top: 68px !important;
+    left: 12px !important;
+    right: 12px !important;
+    width: auto !important;
+    max-width: none !important;
+    transform: none !important;
+    margin-top: 0 !important;
+  }
+  .notif-list{max-height:60vh}
+}
+
+

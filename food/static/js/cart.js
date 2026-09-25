@@ -418,7 +418,7 @@ function handleCheckout() {
           'X-CSRFToken': getCSRFToken(),
           'Content-Type': 'application/x-www-form-urlencoded',
         },
-        body: 'payment_method=cash'
+        body: 'payment_method=cash&delivery_method=' + encodeURIComponent(window.selectedDeliveryMethod || 'delivery')
       });
     })
     .then(function (r) { return r ? r.json() : null; })

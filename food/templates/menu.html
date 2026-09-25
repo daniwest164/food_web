@@ -32,7 +32,7 @@
         <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:32px;">
             <div class="input-group" style="flex:1;min-width:240px;">
                 <i class="bi bi-search input-icon"></i>
-                <input type="text" class="form-control" id="menu-search" placeholder="Search meals..." />
+                <input type="text" class="form-control" id="menu-search" placeholder="Search meals..." autocomplete="off" />
             </div>
             <select class="form-control" style="width:180px;" onchange="location.href='?{% if current_category %}category={{ current_category }}&{% endif %}sort='+this.value">
                 <option value="">Sort By</option>
@@ -40,17 +40,6 @@
                 <option value="price-desc" {% if current_sort == 'price-desc' %}selected{% endif %}>Price: High to Low</option>
                 <option value="popular" {% if current_sort == 'popular' %}selected{% endif %}>Most Popular</option>
                 <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>Newest</option>
-            </select>
-            <select class="form-control" style="width:160px;" onchange="location.href='?category='+this.value+'{% if current_sort %}&sort={{ current_sort }}{% endif %}'">
-                <option value="" {% if not current_category %}selected{% endif %}>All Categories</option>
-                <option value="rice" {% if current_category == 'rice' %}selected{% endif %}>Rice</option>
-                <option value="swallow" {% if current_category == 'swallow' %}selected{% endif %}>Swallow</option>
-                <option value="soups" {% if current_category == 'soups' %}selected{% endif %}>Soups</option>
-                <option value="small_chops" {% if current_category == 'small_chops' %}selected{% endif %}>Small Chops</option>
-                <option value="grills" {% if current_category == 'grills' %}selected{% endif %}>Grills</option>
-                <option value="drinks" {% if current_category == 'drinks' %}selected{% endif %}>Drinks</option>
-                <option value="dessert" {% if current_category == 'dessert' %}selected{% endif %}>Dessert</option>
-                <option value="others" {% if current_category == 'others' %}selected{% endif %}>Others</option>
             </select>
         </div>
 
@@ -247,12 +236,7 @@
             {% endfor %}
         </div>
 
-        <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 48px;">
-            <button class="btn btn-outline btn-sm" disabled><i class="bi bi-chevron-left"></i></button>
-            <button class="btn btn-primary btn-sm">1</button>
-            <button class="btn btn-outline btn-sm">2</button>
-            <button class="btn btn-outline btn-sm">3</button>
-            <button class="btn btn-outline btn-sm"><i class="bi bi-chevron-right"></i></button>
+        <div id="menu-pagination" style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 48px;">
         </div>
     </div>
 </section>
@@ -294,6 +278,143 @@ window.quickView = function(itemId) {
         setTimeout(function(){ t.remove(); }, 4000);
     });
 };
+
+// ── Menu pagination: 12 cards per page on mobile, 16 on desktop ──
+(function () {
+    var grid = document.getElementById('menu-grid');
+    var pag = document.getElementById('menu-pagination');
+    if (!grid || !pag) return;
+    var current = 1;
+    var resizeTimer = null;
+
+    function perPage() {
+        return window.innerWidth <= 768 ? 12 : 16;
+    }
+
+    function allCards() {
+        return Array.prototype.slice.call(grid.querySelectorAll('.menu-card'));
+    }
+
+    function scrollToGrid() {
+        if (grid.scrollIntoView) grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function makeBtn(html, active, onClick, disabled) {
+        var b = document.createElement('button');
+        b.type = 'button';
+        b.className = 'btn btn-sm ' + (active ? 'btn-primary' : 'btn-outline');
+        b.innerHTML = html;
+        if (disabled) {
+            b.disabled = true;
+        } else {
+            b.addEventListener('click', onClick);
+        }
+        pag.appendChild(b);
+    }
+
+    function render() {
+        var list = allCards();
+        var pp = perPage();
+        var pages = Math.max(1, Math.ceil(list.length / pp));
+        if (current > pages) current = pages;
+        if (current < 1) current = 1;
+        list.forEach(function (card, i) {
+            card.style.display = (i >= (current - 1) * pp && i < current * pp) ? '' : 'none';
+        });
+        pag.innerHTML = '';
+        if (pages <= 1) {
+            pag.style.display = 'none';
+            return;
+        }
+        pag.style.display = 'flex';
+        makeBtn('<i class="bi bi-chevron-left"></i>', false, function () {
+            if (current > 1) { current--; render(); scrollToGrid(); }
+        }, current === 1);
+        for (var p = 1; p <= pages; p++) {
+            (function (page) {
+                makeBtn(String(page), page === current, function () {
+                    current = page; render(); scrollToGrid();
+                }, false);
+            })(p);
+        }
+        makeBtn('<i class="bi bi-chevron-right"></i>', false, function () {
+            if (current < pages) { current++; render(); scrollToGrid(); }
+        }, current === pages);
+    }
+
+    window.refreshMenuPagination = render;
+    window.menuGotoPage1 = function () { current = 1; };
+
+    window.addEventListener('resize', function () {
+        if (resizeTimer) clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(render, 200);
+    });
+
+    render();
+})();
+
+<!-- jQuery -->
+<script src="{% static 'cdn/jquery-3.1.1.min.js' %}" type='text/javascript'></script>
+<script src="{% static 'cdn/jquery-ui.min.js' %}" type='text/javascript'></script>
+<script>
+  // ── Menu live search: finds matches and sorts them to the top (menu only) ──
+  window.menuOriginalOrder = null;
+  function menuMovePair(grid, card) {
+      var modal = card.nextElementSibling;
+      var isModal = modal && modal.classList && modal.classList.contains('modal');
+      grid.appendChild(card);
+      if (isModal) grid.appendChild(modal);
+  }
+  window.applyMenuSearch = function () {
+      var input = document.getElementById('menu-search');
+      var grid = document.getElementById('menu-grid');
+      if (!input || !grid) return;
+      var q = input.value.trim().toLowerCase();
+      var cards = Array.prototype.slice.call(grid.querySelectorAll('.menu-card'));
+      if (!window.menuOriginalOrder) {
+          window.menuOriginalOrder = cards.slice();
+      }
+      var seq;
+      if (!q) {
+          seq = window.menuOriginalOrder.filter(function (c) { return grid.contains(c); });
+      } else {
+          var starts = [], contains = [], rest = [];
+          cards.forEach(function (c) {
+              var h = c.querySelector('h4');
+              var name = h ? h.textContent.toLowerCase() : '';
+              if (name.indexOf(q) === 0) starts.push(c);
+              else if (name.indexOf(q) !== -1) contains.push(c);
+              else rest.push(c);
+          });
+          seq = starts.concat(contains).concat(rest);
+      }
+      seq.forEach(function (c) { menuMovePair(grid, c); });
+      if (q && typeof window.menuGotoPage1 === 'function') window.menuGotoPage1();
+      if (typeof window.refreshMenuPagination === 'function') window.refreshMenuPagination();
+  };
+  document.addEventListener('DOMContentLoaded', function () {
+      var input = document.getElementById('menu-search');
+      if (input) input.addEventListener('input', window.applyMenuSearch);
+  });
+
+  $(function (){
+  // This is the function for AWS (Auto Word Suggestion)
+    var dish_names = [
+      {% for item in menu_items %}
+        "{{ item.name|escapejs }}",
+      {% endfor %}
+    ];
+    $("#menu-search").autocomplete({ // filter names upon typing
+      source: dish_names,
+      delay: 150,
+      select: function (event, ui) {
+        setTimeout(window.applyMenuSearch, 0);
+      },
+      close: function () {
+        window.applyMenuSearch();
+      }
+    });
+  });
 </script>
 
 {% endblock content %}

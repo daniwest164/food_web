@@ -589,29 +589,102 @@ textarea.form-control {
 .navbar-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
-.navbar-actions .cart-btn {
+/* Choply exact: plain cart icon, no box — icon + absolute badge */
+.navbar-actions .cart-btn,
+.navbar-mobile-right .cart-btn {
   position: relative;
-  width: 40px; height: 40px; border-radius: var(--radius-sm);
-  background: var(--card-bg); color: var(--text); font-size: 18px;
-  border: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 20px;
+  width: auto;
+  height: auto;
+  padding: 4px;
   cursor: pointer;
-  transition: var(--transition);
+  transition: color .15s ease;
+  text-decoration: none;
 }
-.navbar-actions .cart-btn:hover {
-  border-color: var(--primary);
+.navbar-actions .cart-btn:hover,
+.navbar-mobile-right .cart-btn:hover {
   color: var(--primary);
+  background: none;
+  border: none;
 }
+/* Jumia mobile: plain user outline icon on the right */
+.mobile-user-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--text);
+  font-size: 20px;
+  padding: 4px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color .15s ease;
+}
+.mobile-user-btn:hover { color: var(--primary); }
 .cart-count {
   position: absolute;
-  top: -6px; right: -6px;
+  top: -4px; right: -4px;
+  min-width: 18px; height: 18px;
   background: var(--primary); color: #fff;
-  font-size: 11px; font-weight: 700;
-  width: 18px; height: 18px; border-radius: 50%;
+  font-size: 10px; font-weight: 700;
+  border-radius: 9999px;
   display: flex; justify-content: center; align-items: center;
+  padding: 0 4px;
+  border: 2px solid #0A0A0A;
 }
+
+/* ---- Navbar greeting + Dashboard pill — Choply exact (fc-btn-outline sm) ---- */
+.navbar-greeting {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  margin: 0;
+}
+.navbar-greeting:hover { color: var(--primary); }
+.dashboard-pill-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: 8px;
+  padding: 8px 18px;
+  border: 2px solid var(--primary);
+  border-radius: 9999px;
+  background: transparent;
+  color: var(--primary);
+  font-size: 12px; font-weight: 600;
+  letter-spacing: .01em;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: all .25s ease;
+}
+.dashboard-pill-btn:hover {
+  background: var(--primary);
+  color: #fff;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-orange);
+}
+
+/* ---- Navbar profile link (direct to dashboard) ---- */
+.user-nav-profile {
+  display: flex; align-items: center; gap: 8px;
+  /* padding: px 14px 4px 4px; */
+  background: var(--card-bg); color: var(--text);
+  border: 1px solid var(--border); border-radius: 10px;
+  text-decoration: none;
+  transition: .25s
+}
+.user-nav-profile:hover{border-color:var(--primary);color:var(--text)}
+.user-nav-profile h6{margin:0;font-size:12px;font-weight:600}
+.user-nav-profile img{object-fit:cover}
 
 /* =============================================
    NOTIFICATION BELL DROPDOWN
@@ -817,6 +890,20 @@ textarea.form-control {
   transition: var(--transition);
 }
 .social-link:hover { background: #ff66001f; border-color: var(--primary); color: var(--primary); }
+.social-media { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+.social-media h5 { font-size: 14px; font-weight: 700; color: var(--text); margin: 0 4px 0 0; }
+.social-media a {
+  width: 38px; height: 38px;
+  border-radius: var(--radius-sm);
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted);
+  font-size: 16px;
+  text-decoration: none;
+  transition: var(--transition);
+}
+.social-media a:hover { background: #ff66001f; border-color: var(--primary); color: var(--primary); }
 
 .footer-col h4 { font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 20px; }
 .footer-col ul li { margin-bottom: 10px; }
@@ -1844,6 +1931,36 @@ textarea.form-control {
   gap: 24px;
 }
 
+/* ── jQuery UI autocomplete (menu search) — Prime Dish dark theme ── */
+.ui-autocomplete {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 4px;
+  max-height: 260px;
+  overflow-y: auto;
+  z-index: 1050 !important;
+}
+.ui-autocomplete .ui-menu-item {
+  list-style: none;
+  margin: 0;
+}
+.ui-autocomplete .ui-menu-item-wrapper {
+  padding: 10px 14px;
+  font-size: 14px;
+  color: var(--text);
+  border-radius: 8px;
+  cursor: pointer;
+  display: block;
+}
+.ui-autocomplete .ui-menu-item-wrapper.ui-state-active {
+  background: rgba(255, 102, 0, 0.12);
+  border-color: transparent;
+  color: var(--primary);
+  margin: 0;
+}
+
 .menu-card {
   background: var(--card-bg);
   border: 1px solid var(--border);
@@ -2530,6 +2647,69 @@ textarea.form-control {
 .cart-card-title i.text-primary,
 .cart-card-title .bi.text-primary {
   color: var(--primary) !important;
+}
+
+/* ── Delivery Method toggle (Delivery / Pickup) ── */
+.dm-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.dm-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 14px 10px;
+  border-radius: 12px;
+  background: transparent;
+  border: 1.5px solid transparent;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all .2s ease;
+  width: 100%;
+}
+.dm-tab i { font-size: 20px; }
+.dm-tab.active {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: rgba(255, 102, 0, 0.06);
+}
+.dm-tab:not(.active):hover { color: var(--text); }
+.dm-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 16px 0 20px;
+}
+
+/* ── Pickup location card ── */
+.pickup-card {
+  border: 1.5px solid var(--primary);
+  background: rgba(255, 102, 0, 0.05);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.pickup-card > i {
+  color: var(--primary);
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.pickup-name {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text);
+}
+.pickup-addr {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.55;
+  margin-top: 4px;
 }
 
 /* ── Item Rows (inside cart items card) ── */

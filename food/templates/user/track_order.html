@@ -4,30 +4,7 @@
 {% block title %}Track {{ order.order_id }}{% endblock title %}
 {% block mobile_title %}Track Order{% endblock %}
 
-{% block content %}
-<link rel="stylesheet" href="{% static 'aos/aos.css' %}">
-<link rel="stylesheet" href="{% static 'css/style.css' %}">
-<link rel="stylesheet" href="{% static 'css/responsive.css' %}">
-<style>
-.orders-breadcrumb{font-size:13px;color:var(--text-muted);display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-bottom:12px}
-.orders-breadcrumb a{color:var(--text-muted)} .orders-breadcrumb a:hover{color:var(--primary)} .orders-breadcrumb i{font-size:10px}
-.tr-eta{background:linear-gradient(135deg,rgba(255,102,0,.14),rgba(255,102,0,.04));border:1px solid rgba(255,102,0,.3);border-radius:16px;padding:20px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px}
-.tr-timeline{background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:24px}
-.tr-step{display:flex;gap:14px;position:relative;padding-bottom:22px}
-.tr-step:last-child{padding-bottom:0}
-.tr-step::before{content:'';position:absolute;left:17px;top:34px;bottom:-2px;width:2px;background:var(--border)}
-.tr-step:last-child::before{display:none}
-.tr-step.done::before{background:var(--primary)}
-.tr-icon{width:36px;height:36px;border-radius:50%;background:var(--bg-3);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--text-muted);font-size:16px}
-.tr-step.done .tr-icon{background:var(--primary);border-color:var(--primary);color:#fff}
-.tr-step.active .tr-icon{background:var(--primary);border-color:var(--primary);color:#fff;box-shadow:0 0 0 6px rgba(255,102,0,.18)}
-.tr-step.cancelled .tr-icon{background:var(--danger);border-color:var(--danger);color:#fff}
-.tr-label{font-weight:700;font-size:14px}
-.tr-desc{font-size:12px;color:var(--text-muted)}
-.tr-time{font-size:12px;color:var(--text-muted);white-space:nowrap}
-@media(max-width:576px){.tr-time{display:block;margin-top:4px}}
-</style>
-
+{% block user_content %}
 <main class="user-main">
   <!-- Breadcrumb -->
   <div class="orders-breadcrumb">
@@ -178,4 +155,4 @@
 
 <script src="{% static 'aos/aos.js' %}"></script>
 <script>AOS.init({duration:700,once:true});</script>
-{% endblock content %}
+{% endblock user_content %}
