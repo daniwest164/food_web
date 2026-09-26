@@ -3,13 +3,13 @@
    Shared by includes/base.html and includes/user_base.html
    ============================================= */
 
-/* ---- Bell button + count badge — Choply exact: plain icon, no box ---- */
-.bell-btn{display:inline-flex;align-items:center;justify-content:center;background:none;border:none;color:var(--text);font-size:20px;padding:4px;position:relative;cursor:pointer;transition:color .15s ease}
-.bell-btn:hover{background:none;border:none;color:var(--primary)}
-.bell-badge{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:9999px;background:var(--primary);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;border:2px solid #0A0A0A}
+/* ---- Bell button + count badge — reference style: round button, red badge ---- */
+.bell-btn{width:44px;height:44px;flex:none;border-radius:50%;background:var(--bg-3);border:1px solid var(--border);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text);font-size:16px;position:relative;transition:all .15s ease}
+.bell-btn:hover{background:rgba(255,102,0,.08);border-color:var(--border);color:var(--primary)}
+.bell-badge{position:absolute;top:-4px;right:-6px;min-width:17px;height:17px;border-radius:999px;background:var(--danger);color:#fff;font-size:10px;font-weight:700;line-height:17px;display:flex;align-items:center;justify-content:center;text-align:center;padding:0 4px;border:2px solid #0A0A0A}
 
 /* ---- Dropdown panel ---- */
-.notif-dropdown{width:380px;max-width:92vw;padding:0;overflow:hidden;background:#131315;border:1px solid #26262b;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.55)}
+.notif-dropdown{width:340px;max-width:92vw;padding:0;overflow:hidden;background:#131315;border:1px solid #26262b;border-radius:14px;box-shadow:0 20px 50px rgba(0,0,0,.55)}
 .notif-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 12px}
 .notif-head-title{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:800;color:#fff}
 .notif-count{background:var(--primary);color:#fff;font-size:11px;font-weight:800;min-width:20px;height:20px;border-radius:100px;display:inline-flex;align-items:center;justify-content:center;padding:0 6px}

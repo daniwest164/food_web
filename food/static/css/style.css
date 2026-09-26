@@ -615,21 +615,6 @@ textarea.form-control {
   background: none;
   border: none;
 }
-/* Jumia mobile: plain user outline icon on the right */
-.mobile-user-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  color: var(--text);
-  font-size: 20px;
-  padding: 4px;
-  cursor: pointer;
-  text-decoration: none;
-  transition: color .15s ease;
-}
-.mobile-user-btn:hover { color: var(--primary); }
 .cart-count {
   position: absolute;
   top: -4px; right: -4px;
@@ -890,20 +875,6 @@ textarea.form-control {
   transition: var(--transition);
 }
 .social-link:hover { background: #ff66001f; border-color: var(--primary); color: var(--primary); }
-.social-media { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
-.social-media h5 { font-size: 14px; font-weight: 700; color: var(--text); margin: 0 4px 0 0; }
-.social-media a {
-  width: 38px; height: 38px;
-  border-radius: var(--radius-sm);
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: center;
-  color: var(--text-muted);
-  font-size: 16px;
-  text-decoration: none;
-  transition: var(--transition);
-}
-.social-media a:hover { background: #ff66001f; border-color: var(--primary); color: var(--primary); }
 
 .footer-col h4 { font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 20px; }
 .footer-col ul li { margin-bottom: 10px; }
@@ -3089,6 +3060,38 @@ textarea.form-control {
   color: var(--text-muted);
 }
 
+/* ── Flash messages (Django messages framework) ──
+   A page that sets a message MUST render it, otherwise the message
+   survives in the session and pops up on the next unrelated page. */
+.flash-messages { margin-bottom: 16px; }
+.flash-messages .alert {
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+.flash-messages .alert:last-child { margin-bottom: 0; }
+.flash-messages .alert-success {
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  color: #86efac;
+}
+.flash-messages .alert-danger {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  color: #fca5a5;
+}
+.flash-messages .alert-warning {
+  background: rgba(234, 179, 8, 0.12);
+  border: 1px solid rgba(234, 179, 8, 0.35);
+  color: #fde047;
+}
+.flash-messages .alert-info {
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  color: #93c5fd;
+}
+.flash-messages .btn-close { filter: invert(1); opacity: 0.7; }
+
 /* ── Address Option Card (in modal) ── */
 .address-option-card {
   border: 2px solid var(--border);
@@ -3110,6 +3113,124 @@ textarea.form-control {
 .address-option-card.active {
   border-color: var(--primary);
   background: rgba(255, 102, 0, 0.06);
+}
+
+.address-option-card .form-check-input {
+  accent-color: var(--primary);
+  margin-top: 3px;
+  flex: none;
+}
+
+.addr-card-label {
+  font-weight: 700;
+  font-size: 14px;
+  text-transform: capitalize;
+}
+
+.addr-card-text {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.addr-default-pill {
+  font-size: 11px;
+  background: var(--primary);
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+
+/* ── Address Modal (shared by Cart + Settings "Add Address") ── */
+.addr-picker-dialog {
+  max-width: 520px;
+}
+
+.addr-picker-title {
+  font-size: 1.05rem;
+}
+
+.addr-modal .modal-body {
+  padding: 20px 24px;
+}
+
+/* Two-up row for State + LGA */
+.addr-modal-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 420px) {
+  .addr-modal-row { grid-template-columns: 1fr; }
+}
+
+.addr-modal .form-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.addr-modal .form-control {
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: var(--radius);
+  padding: 10px 14px;
+  font-size: 14px;
+}
+
+.addr-modal .form-control:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.12);
+}
+
+.addr-modal .form-control:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Pill buttons — Cancel / Add Address */
+.addr-btn-cancel,
+.addr-btn-submit {
+  border-radius: 50px;
+  min-width: 90px;
+  font-size: 0.87rem;
+  font-weight: 600;
+}
+
+.addr-btn-cancel {
+  background: var(--bg-3);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.addr-btn-cancel:hover {
+  background: var(--bg-2);
+  color: var(--text);
+  border-color: var(--text-muted);
+}
+
+/* "Add New Address" trigger inside the address picker */
+.addr-add-trigger {
+  border-radius: var(--radius);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.addr-empty-state {
+  color: var(--text-muted);
+  font-size: 14px;
+  text-align: center;
+  padding: 24px 0;
+}
+
+.addr-empty-state i {
+  font-size: 28px;
+  display: block;
+  margin-bottom: 8px;
 }
 
 /* ── Confetti Particles ── */

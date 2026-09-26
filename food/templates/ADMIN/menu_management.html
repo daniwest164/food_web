@@ -245,9 +245,9 @@
             <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addMenuModal">
                 <i class="bi bi-plus-circle-fill"></i> Add New Item
             </button>
-            <div class="topbar-icon-btn bell"><i class="bi bi-bell-fill"></i>
-                <div class="notif-dot"></div>
-            </div>
+            <a href="/notifications" class="topbar-icon-btn bell" title="Notifications"><i class="bi bi-bell-fill"></i>
+                {% if user_notifications %}<span class="admin-notif-badge">{{ user_notifications|length }}</span>{% endif %}
+            </a>
             <div class="topbar-icon-btn" style="font-size:13px;font-weight:700;width:auto;padding:0 12px;"
                 id="admin-clock">
                 --:--</div>

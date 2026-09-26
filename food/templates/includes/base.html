@@ -38,17 +38,8 @@
         </button>
         <a href="/" class="navbar-brand">Prime<span>Dish</span></a>
 
-        <!-- Mobile-only icons right: user + cart (like Jumia) -->
+        <!-- Mobile-only icons right: cart + notifications -->
         <div class="navbar-mobile-right d-lg-none">
-            {% if user.is_authenticated %}
-            <a href="/profile" class="mobile-user-btn" title="Account">
-                <i class="fa-regular fa-user"></i>
-            </a>
-            {% else %}
-            <a href="/login" class="mobile-user-btn" title="Sign in">
-                <i class="fa-regular fa-user"></i>
-            </a>
-            {% endif %}
             <a href="/cart" class="cart-btn" title="Cart">
                 <i class="fa-solid fa-bag-shopping"></i>
                 <span class="cart-count" style="display:{% if cart_count > 0 %}flex{% else %}none{% endif %}">{{ cart_count }}</span>
@@ -128,6 +119,19 @@
                     <a href="/contact" class="nav-link">Contact</a>
                 </li>
             </ul>
+
+            <!-- Mobile-only account pills (after the links) -->
+            {% if user.is_authenticated %}
+            <div class="mobile-menu-pills d-lg-none">
+                <a href="{% if user.is_staff %}/dashboard{% else %}/profile{% endif %}" class="mobile-pill mobile-pill-outline">Dashboard</a>
+                <a href="/logout" class="mobile-pill mobile-pill-danger">Sign Out</a>
+            </div>
+            {% else %}
+            <div class="mobile-menu-pills d-lg-none">
+                <a href="/login" class="mobile-pill mobile-pill-outline">Sign In</a>
+                <a href="/sign_up" class="mobile-pill mobile-pill-primary">Sign Up</a>
+            </div>
+            {% endif %}
 
             <div class="navbar-actions">
                 <!-- Cart (visible to everyone) -->
@@ -211,22 +215,11 @@
 
                 <p>Delivering happiness to your doorstep since 2020. Fresh, delicious meals prepared with love.</p>
                 <div class="social-links">
-                    <a href="https://facebook.com/" target="_blank" rel="noopener" aria-label="Facebook">
-                        <i class="fab fa-facebook"></i>
-                    </a>vf
-                    <a href="https://instagram.com/" target="_blank" rel="noopener" aria-label="Instagram">
-                        <i class="fab fa-instagram"></i>
-                    </a>
-                    <a href="https://tiktok.com/" target="_blank" rel="noopener" aria-label="TikTok">
-                        <i class="fab fa-tiktok"></i>
-                    </a>
-                    <a href="https://x.com/" target="_blank" rel="noopener" aria-label="X">
-                        <i class="fab fa-x-twitter"></i>
-                    </a>
-                    <a href="https://wa.me/" target="_blank" rel="noopener" aria-label="WhatsApp">
-                        <i class="fab fa-whatsapp"></i>
-                    </a>
-                        
+                    <a href="https://instagram.com/" target="_blank" rel="noopener" class="social-link"><i class="bi bi-instagram"></i></a>
+                    <a href="https://x.com/" target="_blank" rel="noopener" class="social-link"><i class="bi bi-twitter-x"></i></a>
+                    <a href="https://facebook.com/" target="_blank" rel="noopener" class="social-link"><i class="bi bi-facebook"></i></a>
+                    <a href="https://tiktok.com/" target="_blank" rel="noopener" class="social-link"><i class="bi bi-tiktok"></i></a>
+                    <a href="https://wa.me/" target="_blank" rel="noopener" class="social-link"><i class="bi bi-whatsapp"></i></a>
                 </div>
                 
             </div>

@@ -7,16 +7,39 @@ var NigeriaLocation = (function () {
   var API_URL = 'https://raw.githubusercontent.com/Vickylove5223/Nigeria-Dataset/main/data/nigeria-data.json';
   var _cache = null;
 
+  function requestDataset(attempt) {
+    return fetch(API_URL, { headers: { 'Accept': 'application/json' } })
+      .then(function (r) {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .catch(function (err) {
+        // One automatic retry: raw.githubusercontent is occasionally flaky
+        // and a dropped request used to leave the dropdown stuck disabled.
+        if (attempt < 2) return requestDataset(attempt + 1);
+        throw err;
+      });
+  }
+
   function fetchStates() {
     if (_cache) return Promise.resolve(_cache);
-    return fetch(API_URL)
-      .then(function (r) { return r.json(); })
-      .then(function (data) {
-        _cache = data.states.map(function (s) {
-          return { name: s.name, lgas: s.lgas.map(function (l) { return l.name; }) };
-        });
-        return _cache;
+    return requestDataset(1).then(function (data) {
+      if (!data || !Array.isArray(data.states)) throw new Error('Unexpected dataset shape');
+      _cache = data.states.map(function (s) {
+        var lgas = Array.isArray(s.lgas) ? s.lgas : [];
+        return {
+          name: s.name,
+          lgas: lgas.map(function (l) { return typeof l === 'string' ? l : l.name; })
+                  .filter(Boolean)
+        };
       });
+      return _cache;
+    });
+  }
+
+  function setFailure(selectEl, message) {
+    selectEl.innerHTML = '<option value="">' + message + '</option>';
+    selectEl.disabled = true;
   }
 
   function populateStateDropdown(selectEl, placeholder) {
@@ -30,6 +53,10 @@ var NigeriaLocation = (function () {
         selectEl.appendChild(opt);
       });
       selectEl.disabled = false;
+    }).catch(function (err) {
+      // Never leave the dropdown silently disabled — say what went wrong.
+      if (window.console) console.error('NigeriaLocation: state list failed —', err);
+      setFailure(selectEl, 'Could not load states. Check your connection.');
     });
   }
 
@@ -47,6 +74,9 @@ var NigeriaLocation = (function () {
         lgaSelectEl.appendChild(opt);
       });
       lgaSelectEl.disabled = false;
+    }).catch(function (err) {
+      if (window.console) console.error('NigeriaLocation: LGA list failed —', err);
+      setFailure(lgaSelectEl, 'Could not load LGAs. Check your connection.');
     });
   }
 

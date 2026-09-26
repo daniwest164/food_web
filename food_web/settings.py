@@ -173,8 +173,11 @@ CONTACT_EMAIL = os.environ.get('CONTACT_EMAIL', 'support@primedish.com')
 # ──────────────────────────────────────────────
 # Paystack
 # ──────────────────────────────────────────────
-PAYSTACK_PUBLIC_KEY = os.environ['PAYSTACK_PUBLIC_KEY']
-PAYSTACK_SECRET_KEY = os.environ['PAYSTACK_SECRET_KEY']
+# NOTE: .get() + strip() on purpose. os.environ['KEY'] raises KeyError and
+# takes down the whole site if the key is missing, and a pasted key can carry
+# stray whitespace/quotes that Paystack rejects with a confusing 401.
+PAYSTACK_PUBLIC_KEY = os.environ.get('PAYSTACK_PUBLIC_KEY', '').strip().strip('"').strip("'")
+PAYSTACK_SECRET_KEY = os.environ.get('PAYSTACK_SECRET_KEY', '').strip().strip('"').strip("'")
 
 
 # ──────────────────────────────────────────────

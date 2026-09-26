@@ -173,7 +173,11 @@ def _exchange_google_code(code):
         'https://oauth2.googleapis.com/token',
         data=data,
         method='POST',
-        headers={'Content-Type': 'application/x-www-form-urlencoded'},
+        headers={
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'Accept': 'application/json',
+            'User-Agent': 'PrimeDish/1.0',
+        },
     )
     response = urllib.request.urlopen(req, timeout=30)
     return json.loads(response.read())
@@ -183,7 +187,11 @@ def _fetch_google_userinfo(access_token):
     """Fetch the signed-in Google user's profile."""
     req = urllib.request.Request(
         'https://www.googleapis.com/oauth2/v3/userinfo',
-        headers={'Authorization': f'Bearer {access_token}'},
+        headers={
+            'Authorization': f'Bearer {access_token}',
+            'Accept': 'application/json',
+            'User-Agent': 'PrimeDish/1.0',
+        },
     )
     response = urllib.request.urlopen(req, timeout=30)
     return json.loads(response.read())
@@ -1292,8 +1300,15 @@ def verify_paystack_payment(request):
     # The secret key is sent in the Authorization header.
     # Paystack returns the transaction details including amount and status.
     url = f'https://api.paystack.co/transaction/verify/{reference}'
+    # NOTE: Paystack sits behind Cloudflare, which blocks the default
+    # Python-urllib User-Agent with "HTTP 403 / error code: 1010".
+    # Always send an explicit User-Agent + Accept, otherwise every
+    # verification fails before the secret key is even checked.
     req = urllib.request.Request(url, headers={
         'Authorization': f'Bearer {settings.PAYSTACK_SECRET_KEY}',
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'User-Agent': 'PrimeDish/1.0',
     })
     # Try to verify with Paystack. In DEBUG / local with placeholder keys,
     # network blocked or 401 should NOT prevent order creation (frontend already charged via PaystackPop).

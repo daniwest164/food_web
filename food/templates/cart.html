@@ -289,40 +289,40 @@
 
 <!-- ADDRESS PICKER MODAL -->
 <div class="modal fade" id="addressPickerModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" style="max-width:520px;">
-        <div class="modal-content" style="border-radius:16px;border:none;box-shadow:0 10px 40px #00000033;">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable addr-picker-dialog">
+        <div class="modal-content">
 
-            <div class="modal-header" style="border-bottom:1px solid var(--border);padding:18px 24px;">
-                <h5 class="modal-title fw-bold" style="font-size:1.05rem;">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold addr-picker-title">
                     <i class="bi bi-geo-alt-fill text-primary me-2"></i>Select Delivery Address
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
 
-            <div class="modal-body" style="padding:20px 24px;">
+            <div class="modal-body">
 
                 <!-- Saved Addresses -->
                 <div id="saved-addresses-list">
                     {% for addr in addresses %}
                     <div class="address-option-card {% if addr.is_default %}active{% endif %}" data-address-id="{{ addr.id }}" onclick="selectAddress({{ addr.id }})">
                         <div class="form-check">
-                            <input class="form-check-input" type="radio" name="selectedAddress" value="{{ addr.id }}" {% if addr.is_default %}checked{% endif %} style="accent-color:var(--primary);">
+                            <input class="form-check-input" type="radio" name="selectedAddress" value="{{ addr.id }}" {% if addr.is_default %}checked{% endif %}>
                         </div>
                         <div style="flex:1;">
                             <div class="d-flex align-items-center gap-2 mb-1">
-                                <span style="font-weight:700;font-size:14px;text-transform:capitalize;">{{ addr.label }}</span>
+                                <span class="addr-card-label">{{ addr.label }}</span>
                                 {% if addr.is_default %}
-                                <span style="font-size:11px;background:var(--primary);color:#fff;padding:2px 8px;border-radius:20px;font-weight:600;">Default</span>
+                                <span class="addr-default-pill">Default</span>
                                 {% endif %}
                             </div>
-                            <div style="font-size:13px;color:var(--text-muted);line-height:1.5;">
+                            <div class="addr-card-text">
                                 {{ addr.street }}{% if addr.lga %}, {{ addr.lga }}{% endif %}, {{ addr.city }}, {{ addr.state }}
                             </div>
                         </div>
                     </div>
                     {% empty %}
-                    <div class="text-center py-4" style="color:var(--text-muted);font-size:14px;">
-                        <i class="bi bi-geo-alt" style="font-size:28px;display:block;margin-bottom:8px;"></i>
+                    <div class="addr-empty-state">
+                        <i class="bi bi-geo-alt"></i>
                         No saved addresses yet. Add one below.
                     </div>
                     {% endfor %}
@@ -330,41 +330,65 @@
 
                 <hr style="border-color:var(--border);margin:20px 0;">
 
-                <!-- Add New Address Form -->
-                <div id="add-address-toggle" style="{% if not addresses %}display:none;{% endif %}">
-                    <button type="button" class="btn btn-outline w-100" onclick="toggleAddAddressForm()" id="toggle-add-addr-btn" style="border-radius:var(--radius);font-weight:600;font-size:14px;">
+                <!-- Opens the Settings-style "Add New Address" modal -->
+                <div id="add-address-toggle">
+                    <button type="button" class="btn btn-outline w-100 addr-add-trigger" onclick="openAddAddressModal()" id="toggle-add-addr-btn">
                         <i class="bi bi-plus-circle me-1"></i> Add New Address
                     </button>
                 </div>
-                
-
-                <div id="add-address-form" style="{% if addresses %}display:none;{% else %}display:block;{% endif %}margin-top:16px;">
-                    <form id="new-address-form" onsubmit="submitNewAddress(event)">
-                        <div style="display:flex;gap:10px;margin-bottom:12px;">
-                            <select id="addr-label" class="form-control" style="flex:1;padding:10px 14px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg-3);color:var(--text);font-size:14px;outline:none;">
-                                <option value="home">Home</option>
-                                <option value="work">Work</option>
-                                <option value="other">Other</option>
-                            </select>
-                        </div>
-                        <input type="text" id="addr-street" placeholder="Street address" required style="width:100%;padding:10px 14px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg-3);color:var(--text);font-size:14px;outline:none;margin-bottom:12px;">
-                        <div style="display:flex;gap:10px;margin-bottom:12px;">
-                            <input type="text" id="addr-city" placeholder="City" required style="flex:1;padding:10px 14px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg-3);color:var(--text);font-size:14px;outline:none;">
-                            <input type="text" id="addr-state" placeholder="State" required style="flex:1;padding:10px 14px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg-3);color:var(--text);font-size:14px;outline:none;">
-                        </div>
-                        <input type="text" id="addr-lga" placeholder="LGA (optional)" style="width:100%;padding:10px 14px;border-radius:var(--radius);border:1px solid var(--border);background:var(--bg-3);color:var(--text);font-size:14px;outline:none;margin-bottom:16px;">
-                        <div class="d-flex gap-2">
-                            <button type="submit" class="btn btn-primary flex-grow-1" id="save-address-btn" style="border-radius:var(--radius);font-weight:600;">
-                                <i class="bi bi-check-lg me-1"></i> Save Address
-                            </button>
-                            <button type="button" class="btn btn-outline" onclick="toggleAddAddressForm()" style="border-radius:var(--radius);font-weight:600;">
-                                Cancel
-                            </button>
-                        </div>
-                    </form>
-                </div>
 
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- ADD NEW ADDRESS MODAL — same design as the Settings address modal -->
+<div class="modal fade addr-modal" id="addAddressModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold">Add New Address</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="new-address-form" onsubmit="submitNewAddress(event)">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label" for="addr-label">Label</label>
+                        <select name="label" id="addr-label" class="form-control">
+                            <option value="home">Home</option>
+                            <option value="work">Work</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="addr-street">Street Address</label>
+                        <input type="text" name="street" id="addr-street" class="form-control" placeholder="Enter street address" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="addr-city">City / Area</label>
+                        <input type="text" name="city" id="addr-city" class="form-control" placeholder="Enter city or area" required>
+                    </div>
+                    <div class="addr-modal-row">
+                        <div class="mb-3">
+                            <label class="form-label" for="cart-add-state">State</label>
+                            <select name="state" id="cart-add-state" class="form-control" required>
+                                <option value="">-- Select State --</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label" for="cart-add-lga">LGA</label>
+                            <select name="lga" id="cart-add-lga" class="form-control" required>
+                                <option value="">-- Select LGA --</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn addr-btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary addr-btn-submit" id="save-address-btn">Add Address</button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -403,15 +427,21 @@
         });
     }
 
-    function toggleAddAddressForm() {
-        var form = document.getElementById('add-address-form');
-        var toggle = document.getElementById('add-address-toggle');
-        if (form.style.display === 'none') {
-            form.style.display = 'block';
-            toggle.style.display = 'none';
+    // Opens the Settings-style "Add New Address" modal.
+    // The picker is hidden first, otherwise Bootstrap stacks the second
+    // modal behind the first one and it looks like nothing happened.
+    function openAddAddressModal() {
+        var pickerEl = document.getElementById('addressPickerModal');
+        var addEl = document.getElementById('addAddressModal');
+        if (!addEl) return;
+
+        var showAdd = function () { bootstrap.Modal.getOrCreateInstance(addEl).show(); };
+
+        if (pickerEl && pickerEl.classList.contains('show')) {
+            pickerEl.addEventListener('hidden.bs.modal', showAdd, { once: true });
+            bootstrap.Modal.getOrCreateInstance(pickerEl).hide();
         } else {
-            form.style.display = 'none';
-            toggle.style.display = 'block';
+            showAdd();
         }
     }
 
@@ -422,6 +452,14 @@
             window.location.href = '/login?next=/cart';
             return;
         }
+
+        var stateEl = document.getElementById('cart-add-state');
+        var lgaEl = document.getElementById('cart-add-lga');
+        if (!stateEl.value || !lgaEl.value) {
+            showToast('Select your state and LGA', 'danger');
+            return;
+        }
+
         var btn = document.getElementById('save-address-btn');
         btn.disabled = true;
         btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Saving...';
@@ -431,8 +469,8 @@
         formData.append('label', document.getElementById('addr-label').value);
         formData.append('street', document.getElementById('addr-street').value.trim());
         formData.append('city', document.getElementById('addr-city').value.trim());
-        formData.append('state', document.getElementById('addr-state').value.trim());
-        formData.append('lga', document.getElementById('addr-lga').value.trim());
+        formData.append('state', stateEl.value);
+        formData.append('lga', lgaEl.value);
 
         fetch('/add_address', {
             method: 'POST',
@@ -442,18 +480,31 @@
             },
             body: formData
         })
-        .then(function(r) { return r; })
+        .then(function(r) {
+            if (!r.ok) {
+                return r.json().catch(function() { return {}; }).then(function(d) {
+                    throw new Error(d.error || 'Could not save address');
+                });
+            }
+            return r.json();
+        })
         .then(function() {
-            // Close modal and reload to show new address
-            var modal = bootstrap.Modal.getInstance(document.getElementById('addressPickerModal'));
-            if (modal) modal.hide();
+            // Reload so the new address appears in the picker + header
             window.location.reload();
         })
-        .catch(function() {
+        .catch(function(err) {
+            showToast(err.message || 'Could not save address', 'danger');
             btn.disabled = false;
-            btn.innerHTML = '<i class="bi bi-check-lg me-1"></i> Save Address';
+            btn.innerHTML = 'Add Address';
         });
     }
+
+    // State → LGA cascading for the Add Address modal
+    document.addEventListener('DOMContentLoaded', function () {
+        if (typeof NigeriaLocation !== 'undefined') {
+            NigeriaLocation.bindStateLGA('cart-add-state', 'cart-add-lga');
+        }
+    });
 </script>
 
 <script>
@@ -501,3 +552,14 @@
 </script>
 
 {% endblock content %}
+
+{% block extra_js %}
+<!-- State/LGA cascading for the Add Address modal -->
+<script src="{% static 'js/nigeria-location.js' %}"></script>
+<!-- Paystack Inline JS (defines window.PaystackPop) — MUST load before
+     checkout is clicked, otherwise the payment popup never opens.
+     NOTE: the file is v1/inline.js. v1/paystack.js is a different bundle
+     (card-form helpers) that crashes on pages without jQuery and does
+     NOT define PaystackPop. -->
+<script src="https://js.paystack.co/v1/inline.js"></script>
+{% endblock extra_js %}

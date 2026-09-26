@@ -440,6 +440,15 @@ function handleCheckout() {
   }
 
   // Pay with Card — Paystack (simple, same Jumia flow)
+  // NOTE: guests are sent to login FIRST. /verify-paystack-payment/ rejects
+  // anonymous users, so without this gate a guest could pay and get no order.
+  var authEl = document.getElementById('user-is-authenticated');
+  if (!authEl || authEl.value !== '1') {
+    showToast('Please log in to pay with card', 'danger');
+    setTimeout(function () { window.location.href = '/login?next=/cart'; }, 900);
+    return;
+  }
+
   btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Processing...';
   btn.disabled = true;
 
@@ -455,37 +464,98 @@ function handleCheckout() {
       return;
     }
 
-    if (typeof PaystackPop === 'undefined') {
-      showToast('Payment system failed to load. Check your connection to js.paystack.co and refresh.', 'danger');
+    var emailEl = document.getElementById('user-email');
+    var keyEl = document.getElementById('paystack-public-key');
+    var email = emailEl ? emailEl.value.trim() : '';
+    var publicKey = keyEl ? keyEl.value.trim() : '';
+    var amountKobo = Math.round(Number(data.total) * 100);
+
+    // Validate every input the popup needs BEFORE touching the SDK,
+    // so failures show a specific message instead of silent nothing.
+    if (!publicKey) {
+      showToast('Card payment is not configured (missing public key).', 'danger');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-bag-check-fill"></i> Place Order — <span id="btn-total-label">₦0</span>';
+      return;
+    }
+    if (!email || email.indexOf('@') < 0) {
+      showToast('Add a valid email in your Profile before paying with card.', 'danger');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-bag-check-fill"></i> Place Order — <span id="btn-total-label">₦0</span>';
+      return;
+    }
+    if (!(amountKobo > 0)) {
+      showToast('Invalid order amount. Refresh and try again.', 'danger');
       btn.disabled = false;
       btn.innerHTML = '<i class="bi bi-bag-check-fill"></i> Place Order — <span id="btn-total-label">₦0</span>';
       return;
     }
 
-    var email = document.getElementById('user-email').value;
-    var publicKey = document.getElementById('paystack-public-key').value;
-    var amountKobo = Math.round(data.total * 100);
-
-    var handler = PaystackPop.setup({
-      key: publicKey,
-      email: email,
-      amount: amountKobo,
-      currency: 'NGN',
-      ref: 'PD-' + Math.random().toString(36).substr(2, 12).toUpperCase(),
-      callback: function (response) {
-        verifyPaystackPayment(response.reference, btn);
-      },
-      onClose: function () {
+    // The CDN script tag can be blocked (ad-blocker, flaky network).
+    // Retry by injecting it dynamically once before giving up.
+    loadPaystackSdk().then(function () {
+      var handler;
+      try {
+        handler = PaystackPop.setup({
+          key: publicKey,
+          email: email,
+          amount: amountKobo,
+          currency: 'NGN',
+          ref: 'PD-' + Math.random().toString(36).substr(2, 12).toUpperCase(),
+          callback: function (response) {
+            verifyPaystackPayment(response.reference, btn);
+          },
+          onClose: function () {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-bag-check-fill"></i> Place Order — <span id="btn-total-label">₦0</span>';
+          }
+        });
+      } catch (err) {
+        if (window.console) console.error('Paystack setup failed:', err);
+        showToast('Could not open the payment window. Disable any ad-blocker for js.paystack.co and try again.', 'danger');
         btn.disabled = false;
         btn.innerHTML = '<i class="bi bi-bag-check-fill"></i> Place Order — <span id="btn-total-label">₦0</span>';
+        return;
       }
+      handler.openIframe();
+    }).catch(function () {
+      if (window.console) console.error('Paystack SDK could not be loaded from js.paystack.co');
+      showToast('Payment system failed to load. Check your connection to js.paystack.co and refresh.', 'danger');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-bag-check-fill"></i> Place Order — <span id="btn-total-label">₦0</span>';
     });
-    handler.openIframe();
   })
   .catch(function () {
     showToast('Error fetching cart data', 'danger');
     btn.disabled = false;
     btn.innerHTML = '<i class="bi bi-bag-check-fill"></i> Place Order — <span id="btn-total-label">₦0</span>';
+  });
+}
+
+// Loads https://js.paystack.co/v1/inline.js on demand (defines PaystackPop).
+// Resolves immediately if the cart page's script tag already loaded it.
+// NOTE: do NOT use v1/paystack.js — wrong bundle, crashes without jQuery.
+function loadPaystackSdk() {
+  return new Promise(function (resolve, reject) {
+    if (typeof PaystackPop !== 'undefined') {
+      resolve();
+      return;
+    }
+    var done = false;
+    var finish = function (ok) {
+      if (done) return;
+      done = true;
+      if (ok && typeof PaystackPop !== 'undefined') resolve();
+      else reject(new Error('paystack-sdk-load-failed'));
+    };
+    var s = document.createElement('script');
+    s.src = 'https://js.paystack.co/v1/inline.js';
+    s.async = true;
+    s.onload = function () { finish(true); };
+    s.onerror = function () { finish(false); };
+    document.head.appendChild(s);
+    // Hard timeout in case onload never fires (captive portal, etc.)
+    setTimeout(function () { finish(typeof PaystackPop !== 'undefined'); }, 12000);
   });
 }
 
