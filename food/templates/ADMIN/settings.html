@@ -151,44 +151,29 @@
 
         <div class="topbar-actions">
             <a href="{% url 'export_customers_csv' %}" class="btn btn-ghost btn-sm" id="export-btn"><i class="bi bi-download"></i> Export</a>
-            <div class="topbar-icon-btn bell" id="notifBell"><i class="bi bi-bell-fill"></i>{% if user_notifications %}<span class="admin-notif-badge">{{ user_notifications|length }}</span>{% endif %}</div>
-            <!-- Notification Dropdown -->
+            <div data-notif-feed data-latest-id="{% for n in admin_notifications %}{% if forloop.first %}{{ n.id }}{% endif %}{% endfor %}" style="position:relative">
+            <div class="topbar-icon-btn bell" id="notifBell"><i class="bi bi-bell-fill"></i><span class="admin-notif-badge" data-notif-badge {% if not admin_unread_count %}style="display:none"{% endif %}>{% if admin_unread_count %}{{ admin_unread_count }}{% endif %}</span></div>
+            <!-- Notification Dropdown — LIVE, admin-private + public only (never customer privates) -->
             <div class="notif-dropdown" id="notifDropdown">
                 <div class="notif-dropdown-header">
                     <span class="fw-bold">Notifications</span>
-                    <span class="unread-count">6</span>
+                    <span class="unread-count" data-notif-count>{{ admin_unread_count|default:0 }}</span>
                 </div>
-                <div class="notif-dropdown-body">
-                    <a href="/notifications" class="notif-dd-item unread">
-                        <div class="notif-dd-icon" style="background:rgba(255,75,43,.1);color:var(--primary)"><i class="fa-solid fa-user-plus"></i></div>
+                <div class="notif-dropdown-body" data-notif-list>
+                    {% for notif in admin_notifications|slice:":6" %}
+                    <a href="/notifications" data-notif-id="{{ notif.id }}" class="notif-dd-item {% if not notif.is_read %}unread{% endif %}">
+                        <div class="notif-dd-icon" style="background:rgba(255,75,43,.1);color:var(--primary)"><i class="fa-solid fa-bell"></i></div>
                         <div class="notif-dd-text">
-                            <div class="notif-dd-title">New User Registration</div>
-                            <div class="notif-dd-time">2 min ago</div>
+                            <div class="notif-dd-title">{{ notif.title }} {% if notif.visibility == 'admin' %}<i class="bi bi-lock-fill" title="Admin only" style="font-size:10px;opacity:.6"></i>{% endif %}</div>
+                            <div class="notif-dd-time">{{ notif.created_at|timesince }} ago</div>
                         </div>
                     </a>
-                    <a href="/notifications" class="notif-dd-item unread">
-                        <div class="notif-dd-icon" style="background:rgba(255,179,71,.2);color:#c87800"><i class="fa-solid fa-store"></i></div>
-                        <div class="notif-dd-text">
-                            <div class="notif-dd-title">New Restaurant Application</div>
-                            <div class="notif-dd-time">18 min ago</div>
-                        </div>
-                    </a>
-                    <a href="/notifications" class="notif-dd-item">
-                        <div class="notif-dd-icon" style="background:rgba(40,167,69,.1);color:#28a745"><i class="fa-solid fa-circle-check"></i></div>
-                        <div class="notif-dd-text">
-                            <div class="notif-dd-title">Order Delivered</div>
-                            <div class="notif-dd-time">2 hours ago</div>
-                        </div>
-                    </a>
-                    <a href="/notifications" class="notif-dd-item">
-                        <div class="notif-dd-icon" style="background:rgba(111,66,193,.1);color:#6f42c1"><i class="fa-solid fa-motorcycle"></i></div>
-                        <div class="notif-dd-text">
-                            <div class="notif-dd-title">Rider Flagged</div>
-                            <div class="notif-dd-time">3 hours ago</div>
-                        </div>
-                    </a>
+                    {% empty %}
+                    <div class="notif-empty" style="padding:18px;text-align:center;color:var(--text-muted)">You're all caught up.</div>
+                    {% endfor %}
                 </div>
                 <a href="/notifications" class="notif-dropdown-footer">View all notifications</a>
+            </div>
             </div>
             <div class="topbar-icon-btn fw-bold px-3" style="width:auto;" id="admin-clock">--:--</div>
         </div>

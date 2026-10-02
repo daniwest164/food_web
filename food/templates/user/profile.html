@@ -6,158 +6,374 @@
 
 {% block user_content %}
 
-<!-- Main Content -->
 <main class="user-main">
   {% if messages %}
-  <div style="margin-bottom:16px;">
+  <div class="profile-flash">
     {% for message in messages %}
     <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
       {{ message }}
-      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
     {% endfor %}
   </div>
   {% endif %}
 
-  <h1 class="user-page-title">My Profile</h1>
-  <p class="user-page-subtitle">Manage your account information and preferences</p>
-
-  <!-- Stats Row -->
-  <div class="d-grid gap-3" style="grid-template-columns:repeat(4,1fr);margin-bottom:28px;">
-    <div class="text-center" style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;">
-      <div style="font-family:var(--font-display);font-size:28px;color:var(--primary);">{{ total_orders }}</div>
-      <div class="mt-1" style="font-size:12px;color:var(--text-muted);">Total Orders</div>
-    </div>
-    <div class="text-center" style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;">
-      <div style="font-family:var(--font-display);font-size:28px;color:var(--success);">₦{{ total_spent|intcomma }}</div>
-      <div class="mt-1" style="font-size:12px;color:var(--text-muted);">Total Spent</div>
-    </div>
-    <div class="text-center" style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;">
-      <div style="font-family:var(--font-display);font-size:28px;color:var(--warning);">{{ reward_points }}</div>
-      <div class="mt-1" style="font-size:12px;color:var(--text-muted);">Reward Points</div>
-    </div>
-    <div class="text-center" style="background:var(--card-bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;">
-      <div style="font-family:var(--font-display);font-size:28px;color:var(--info);">{{ avg_rating_given }}<i class="bi bi-star-fill" style="font-size:16px;"></i></div>
-      <div class="mt-1" style="font-size:12px;color:var(--text-muted);">Avg Rating Given</div>
-    </div>
+  <div class="profile-head">
+    <h1 class="user-page-title">My Profile</h1>
+    <p class="user-page-subtitle">Manage your account information and preferences</p>
   </div>
 
-  <div class="profile-grid">
-    <div class="card">
-      <h3 style="font-size: 18px; font-weight: 500; margin-bottom: 20px; color: var(--text);">Personal Information</h3>
-        <form method="post" enctype="multipart/form-data">
-          {% csrf_token %}
-          <!-- for profile part -->
-          <center>
-            <div class="profile-box mb-4">
-              {% if user.signup.passport %}
-                <img src="{{ user.signup.passport_url }}" alt="Profile Picture" id="my_image">
-              {% else %}
-                <img src="{% static 'image/default.jpg' %}" alt="No Profile Picture" id="my_image">
-              {% endif %}
-    
-                <label for="upload_file" class="camera-icon">
-                  <i class="bi bi-camera"></i>
-                </label>
-                  <input type="file" name="fileToUpload" id="upload_file" accept="image/*" onchange="select_image()">
-            </div>
-          </center>
+  <!-- Stats Row -->
+  <section class="profile-stats" aria-label="Account statistics">
+    <div class="profile-stat">
+      <div class="profile-stat-num is-primary">{{ total_orders }}</div>
+      <div class="profile-stat-label">Total Orders</div>
+    </div>
+    <div class="profile-stat">
+      <div class="profile-stat-num is-success">₦{{ total_spent|intcomma }}</div>
+      <div class="profile-stat-label">Total Spent</div>
+    </div>
+    <div class="profile-stat">
+      <div class="profile-stat-num is-warning">{{ reward_points }}</div>
+      <div class="profile-stat-label">Reward Points</div>
+    </div>
+    <div class="profile-stat">
+      <div class="profile-stat-num is-info">{{ avg_rating_given }}<i class="bi bi-star-fill star-ico"></i></div>
+      <div class="profile-stat-label">Avg Rating Given</div>
+    </div>
+  </section>
 
-          <div class="d-grid gap-3" style="grid-template-columns: 1fr 1fr;">
-            <div class="form-group">
-              <label class="form-label">First Name</label>
-              <input type="text" name="fname" class="form-control" value="{{user.first_name}} " />
-            </div>
-            <div class="form-group">
-              <label class="form-label">Last Name</label>
-              <input type="text" name="lname"  class="form-control" value="{{user.last_name}} " />
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Email Address</label>
-            <div class="input-group">
-              <i class="bi bi-envelope input-icon"></i>
-              <input type="email" name="email"  class="form-control" readonly value="{{user.signup.email}}" />
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Username</label>
-            <div class="input-group">
-              <i class="bi bi-person input-icon"></i>
-              <input type="text" name="username"  class="form-control" value="{{user.signup.username}}" />
-            </div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Phone Number</label>
-            <div class="input-group">
-              <i class="bi bi-telephone input-icon"></i>
-              <input type="tel" name="phone"  class="form-control" value="{{user.signup.phone}}" />
-            </div> 
-          </div>
-          
-          <div class="form-group">
-            <label class="form-label">Gender</label>
-            <select name="gender"  class="form-control">
-              <option value="{{user.signup.gender}}" hidden>{{user.signup.gender}}</option>
-              <option value="Male"> Male</option>
-              <option value="Female">Female</option>
-            </select>
-          </div>
+  <!-- Personal Information -->
+  <section class="card profile-card" aria-label="Personal information">
+    <h3 class="profile-card-title"><i class="bi bi-person-fill title-ico"></i>Personal Information</h3>
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="avatar-wrap">
+        <div class="profile-box avatar-upload">
+          {% if user.signup.passport %}
+          <img src="{{ user.signup.passport_url }}" alt="Profile Picture" id="my_image">
+          {% else %}
+          <img src="{% static 'image/default.jpg' %}" alt="No Profile Picture" id="my_image">
+          {% endif %}
+          <label for="upload_file" class="camera-btn" title="Change photo">
+            <i class="bi bi-camera"></i>
+          </label>
+          <input type="file" name="fileToUpload" id="upload_file" accept="image/*" onchange="select_image()">
+        </div>
+      </div>
 
-          <div class="form-group">
-            <div class="d-flex justify-content-between">
-              <label class="form-label">Date of Birth</label>
-              <small class="text-light">{{user.signup.dob | date:'jS M Y'}}</small>
-            </div>
-            <input type="date" name="dob"  class="form-control" value="{{user.signup.dob | date:'Y-m-d'}}" />
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="form-label" for="id_fname">First Name</label>
+          <input type="text" name="fname" id="id_fname" class="form-control" value="{{ user.first_name }}">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="id_lname">Last Name</label>
+          <input type="text" name="lname" id="id_lname" class="form-control" value="{{ user.last_name }}">
+        </div>
+      </div>
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="form-label" for="id_username">Username</label>
+          <div class="input-group">
+            <i class="bi bi-person input-icon"></i>
+            <input type="text" name="username" id="id_username" class="form-control" value="{{ user.signup.username }}">
           </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="id_email">Email Address</label>
+          <div class="input-group">
+            <i class="bi bi-envelope input-icon"></i>
+            <input type="email" name="email" id="id_email" class="form-control" readonly
+              value="{{ user.signup.email }}">
+          </div>
+        </div>
+      </div>
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="form-label" for="id_phone">Phone Number</label>
+          <div class="input-group">
+            <i class="bi bi-telephone input-icon"></i>
+            <input type="tel" name="phone" id="id_phone" class="form-control" value="{{ user.signup.phone }}">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="id_gender">Gender</label>
+          <select name="gender" id="id_gender" class="form-control">
+            {% if user.signup.gender %}
+            <option value="{{ user.signup.gender }}" hidden>{{ user.signup.gender }}</option>
+            {% else %}
+            <option value="" hidden>Select gender</option>
+            {% endif %}
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-grid-2">
+        <div class="form-group">
+          <div class="dob-top">
+            <label class="form-label" for="id_dob">Date of Birth</label>
+            <small class="dob-current">{{ user.signup.dob|date:'jS M Y' }}</small>
+          </div>
+          <input type="date" name="dob" id="id_dob" class="form-control" value="{{ user.signup.dob|date:'Y-m-d' }}">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="id_member">Member Since</label>
+          <input type="text" id="id_member" class="form-control"
+            value="{{ user.date_joined|date:'F j, Y'|default:'January 1, 2025' }}" readonly>
+        </div>
+      </div>
 
-          <div class="d-flex justify-content-center gap-2 mt-2" style="gap: 12px;">
-            <button type="submit" class="btn btn-primary"><i class="bi bi-floppy"></i> Save Changes</button>
-          </div>
-        </form> 
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-floppy"></i> Save Changes</button>
+      </div>
+    </form>
+  </section>
+
+  <!-- Delivery Addresses -->
+  <section class="card profile-card" aria-label="Delivery addresses">
+    <div class="card-head-split">
+      <h3 class="profile-card-title"><i class="bi bi-geo-alt-fill title-ico"></i>Delivery Addresses</h3>
+      <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#addAddressModal"><i
+          class="bi bi-plus-lg me-1"></i> Add New</button>
     </div>
 
-    <!-- Notification Preferences -->
-    <div class="card">
-      <h3 style="font-size: 18px; font-weight: 500; margin-bottom: 20px; color: var(--text);">Notification Preferences</h3>
-      <div class="settings-row">
-        <div class="settings-row-info"><h5>Order Updates</h5><p>Get notified when your order status changes</p></div>
-        <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+    {% if addresses %}
+    <div class="address-list">
+      {% for addr in addresses %}
+      <div class="address-item {% if addr.is_default %}is-default{% endif %}">
+        <i
+          class="bi {% if addr.label|lower == 'home' %}bi-house-door-fill{% elif addr.label|lower == 'work' %}bi-building{% else %}bi-geo-alt-fill{% endif %} address-ico"></i>
+        <div class="address-info">
+          <div class="address-name">
+            <span>{{ addr.get_label_display }}</span>
+            {% if addr.is_default %}
+            <span class="badge-default">Default</span>
+            {% endif %}
+          </div>
+          <div class="address-text">{{ addr.street }}{% if addr.lga %}, {{ addr.lga }}{% endif %}, {{ addr.city }}, {{ addr.state }}</div>
+        </div>
+        <div class="address-actions">
+          {% if not addr.is_default %}
+          <form method="post" action="{% url 'set_default_address' addr.id %}" class="inline-form">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-ghost btn-sm" title="Set as default"><i
+                class="bi bi-check-circle"></i></button>
+          </form>
+          {% endif %}
+          <button class="btn btn-ghost btn-sm" title="Edit" data-bs-toggle="modal"
+            data-bs-target="#editAddressModal-{{ addr.id }}"><i class="bi bi-pencil-fill"></i></button>
+          <button class="btn btn-ghost btn-sm text-danger" title="Delete" data-bs-toggle="modal"
+            data-bs-target="#deleteAddressModal-{{ addr.id }}"><i class="bi bi-trash"></i></button>
+        </div>
       </div>
-      <div class="settings-row">
-        <div class="settings-row-info"><h5>Promotions & Deals</h5><p>Receive special offers and discount codes</p></div>
-        <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+
+      <!-- Edit Address Modal -->
+      <div class="modal fade" id="editAddressModal-{{ addr.id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content modal-card">
+            <div class="modal-header modal-card-head">
+              <h5 class="modal-title fw-bold">Edit Address</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="post" action="{% url 'edit_address' addr.id %}">
+              {% csrf_token %}
+              <div class="modal-body modal-card-body">
+                <div class="mb-3">
+                  <label class="form-label" for="edit-label-{{ addr.id }}">Label</label>
+                  <select name="label" id="edit-label-{{ addr.id }}" class="form-control">
+                    <option value="home" {% if addr.label|lower == 'home' %}selected{% endif %}>Home</option>
+                    <option value="work" {% if addr.label|lower == 'work' %}selected{% endif %}>Work</option>
+                    <option value="other" {% if addr.label|lower == 'other' %}selected{% endif %}>Other</option>
+                  </select>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label" for="edit-street-{{ addr.id }}">Street Address</label>
+                  <input type="text" name="street" id="edit-street-{{ addr.id }}" class="form-control"
+                    value="{{ addr.street }}" required>
+                </div>
+                <div class="form-grid-2">
+                  <div class="mb-3">
+                    <label class="form-label" for="edit-city-{{ addr.id }}">City</label>
+                    <input type="text" name="city" id="edit-city-{{ addr.id }}" class="form-control"
+                      value="{{ addr.city }}" required>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label" for="edit-state-{{ addr.id }}">State</label>
+                    <select name="state" class="form-control" id="edit-state-{{ addr.id }}" required>
+                      <option value="">-- Select State --</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="mb-3">
+                  <label class="form-label" for="edit-lga-{{ addr.id }}">LGA</label>
+                  <select name="lga" class="form-control" id="edit-lga-{{ addr.id }}" required>
+                    <option value="">-- Select LGA --</option>
+                  </select>
+                </div>
+              </div>
+              <div class="modal-footer modal-card-foot">
+                <button type="button" class="btn btn-light btn-pill btn-pill-light"
+                  data-bs-dismiss="modal">Cancel</button>
+                <button type="submit" class="btn btn-primary btn-pill">Save</button>
+              </div>
+            </form>
+          </div>
+        </div>
       </div>
-      <div class="settings-row">
-        <div class="settings-row-info"><h5>Email Newsletter</h5><p>Weekly digest of new menu items and features</p></div>
-        <div class="toggle" onclick="this.classList.toggle('on')"></div>
+
+      <!-- Delete Address Modal -->
+      <div class="modal fade" id="deleteAddressModal-{{ addr.id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-sm modal-dialog-centered">
+          <div class="modal-content modal-card text-center p-4">
+            <div class="modal-confirm-emoji">🗑️</div>
+            <h5 class="modal-title modal-confirm-title">Delete Address?</h5>
+            <p class="modal-confirm-text">This {{ addr.get_label_display|lower }} address will be permanently removed.
+            </p>
+            <div class="modal-confirm-actions">
+              <button type="button" class="btn btn-light btn-pill btn-pill-light"
+                data-bs-dismiss="modal">Cancel</button>
+              <form method="post" action="{% url 'delete_address' addr.id %}" class="inline-form">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger btn-pill">Delete</button>
+              </form>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="settings-row">
-        <div class="settings-row-info"><h5>SMS Notifications</h5><p>Text messages for delivery updates</p></div>
-        <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <i class="bi bi-geo-alt empty-ico"></i>
+      <p>No addresses saved yet. Add a delivery address to get started.</p>
+    </div>
+    {% endif %}
+  </section>
+
+  <!-- Notification Preferences -->
+  <section class="card profile-card" aria-label="Notification preferences">
+    <h3 class="profile-card-title"><i class="bi bi-bell-fill title-ico"></i>Notification Preferences</h3>
+    <div class="pref-row">
+      <div>
+        <div class="pref-name">Order Updates</div>
+        <div class="pref-desc">Get notified when your order status changes</div>
+      </div>
+      <div class="form-check form-switch mb-0">
+        <input class="form-check-input pref-switch" type="checkbox" role="switch" id="notif-orders" checked>
       </div>
     </div>
+    <div class="pref-row">
+      <div>
+        <div class="pref-name">Promotions &amp; Deals</div>
+        <div class="pref-desc">Receive special offers and discounts</div>
+      </div>
+      <div class="form-check form-switch mb-0">
+        <input class="form-check-input pref-switch" type="checkbox" role="switch" id="notif-promo">
+      </div>
+    </div>
+    <div class="pref-row">
+      <div>
+        <div class="pref-name">SMS Alerts</div>
+        <div class="pref-desc">Get text message updates on your orders</div>
+      </div>
+      <div class="form-check form-switch mb-0">
+        <input class="form-check-input pref-switch" type="checkbox" role="switch" id="notif-sms" checked>
+      </div>
+    </div>
+  </section>
 
-  </div> 
+  <!-- Account Actions -->
+  <section class="card profile-card is-danger" aria-label="Account actions">
+    <h3 class="profile-card-title"><i class="bi bi-exclamation-triangle-fill me-2"></i>Account Actions</h3>
+    <p class="danger-text">Once you delete your account, there is no going back. Please be certain.</p>
+    <div class="danger-actions">
+      <button class="btn btn-outline btn-sm btn-danger-outline" data-bs-toggle="modal"
+        data-bs-target="#deleteAccountModal"><i class="bi bi-trash-fill"></i> Delete Account</button>
+    </div>
+  </section>
 </main>
 
+<!-- Add New Address Modal -->
+<div class="modal fade" id="addAddressModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content modal-card">
+      <div class="modal-header modal-card-head">
+        <h5 class="modal-title fw-bold">Add New Address</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <form method="post" action="{% url 'add_address' %}">
+        {% csrf_token %}
+        <div class="modal-body modal-card-body">
+          <div class="mb-3">
+            <label class="form-label" for="add-label">Label</label>
+            <select name="label" id="add-label" class="form-control">
+              <option value="home">Home</option>
+              <option value="work">Work</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="add-street">Street Address</label>
+            <input type="text" name="street" id="add-street" class="form-control" placeholder="Enter street address"
+              required>
+          </div>
+          <div class="form-grid-2">
+            <div class="mb-3">
+              <label class="form-label" for="add-city">City / Area</label>
+              <input type="text" name="city" id="add-city" class="form-control" placeholder="Enter city or area"
+                required>
+            </div>
+            <div class="mb-3">
+              <label class="form-label" for="add-state">State</label>
+              <select name="state" class="form-control" id="add-state" required>
+                <option value="">-- Select State --</option>
+              </select>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label" for="add-lga">LGA</label>
+            <select name="lga" class="form-control" id="add-lga" required>
+              <option value="">-- Select LGA --</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer modal-card-foot">
+          <button type="button" class="btn btn-light btn-pill btn-pill-light" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary btn-pill">Add Address</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 
-<script src="../js/main.js"></script>
-<script src="../js/user.js"></script>
+<!-- Delete Account Modal -->
+<form action="{% url 'delete_account' %}" method="post">
+  {% csrf_token %}
+  <div class="modal fade" id="deleteAccountModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+      <div class="modal-content modal-card text-center p-4">
+        <div class="modal-confirm-emoji">⚠️</div>
+        <h5 class="modal-title modal-confirm-title">Delete Account?</h5>
+        <p class="modal-confirm-text">This action cannot be undone. You will lose access permanently.</p>
+        <div class="modal-confirm-actions">
+          <button type="button" class="btn btn-light btn-pill btn-pill-light" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-danger btn-pill btn-delete-shadow">Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
 
-
-
-<!-- Bootstrap JS is loaded by includes/user_base.html -->
-
+<script src="{% static 'js/nigeria-location.js' %}"></script>
 <script>
-  function select_image(){
-      var file = document.getElementById('upload_file');
-      var my_image = document.getElementById('my_image');
-      if(file.files && file.files[0]){
-          my_image.src = URL.createObjectURL(file.files[0]);
-      }
-  }
+  document.addEventListener('DOMContentLoaded', function () {
+    NigeriaLocation.bindStateLGA('add-state', 'add-lga');
+    {% for addr in addresses %}
+    NigeriaLocation.bindStateLGA('edit-state-{{ addr.id }}', 'edit-lga-{{ addr.id }}', '{{ addr.state|escapejs }}', '{{ addr.lga|escapejs }}');
+    {% endfor %}
+  });
 </script>
 
 <script src="{% static 'aos/aos.js' %}"></script>

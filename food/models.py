@@ -250,13 +250,30 @@ class Notification(models.Model):
         ('vendors', 'Vendors Only'),
         ('riders', 'Riders Only'),
     ]
+    # Who is allowed to SEE this row?
+    #  admin   = private to staff/superusers only. NEVER sent to customers.
+    #  public  = broadcast to matching target_audience (user-facing).
+    #  private = one specific customer (user FK must be set).
+    VISIBILITY_CHOICES = [
+        ('admin', 'Admin only (private)'),
+        ('public', 'Public broadcast'),
+        ('private', 'Private (one user)'),
+    ]
     title = models.CharField(max_length=255)
     body = models.TextField()
     target_audience = models.CharField(max_length=20, choices=AUDIENCE_CHOICES, default='all')
+    visibility = models.CharField(max_length=10, choices=VISIBILITY_CHOICES, default='admin')
+    # Only set when visibility == 'private'
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True,
+                             related_name='private_notifications')
+    # Optional click-through, e.g. /orders or /order/<id>/
+    link_url = models.CharField(max_length=500, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True)
+    # Global flag kept for admin inbox (admins share one inbox).
+    # Customer read-state is per-user via NotificationRead — never touch is_read for them.
     is_read = models.BooleanField(default=False)
-    notification_type = models.CharField(max_length=20, default='manual')  # 'manual' or 'system'
+    notification_type = models.CharField(max_length=20, default='manual')  # 'manual' | 'system' | 'order' | ...
 
     class Meta:
         db_table = 'notification'
@@ -264,3 +281,89 @@ class Notification(models.Model):
 
     def __str__(self):
         return self.title
+
+    # ---------- visibility helpers ----------
+    def is_visible_to(self, user):
+        """Single source of truth for privacy. Admin rows are never visible to customers."""
+        if not self.is_active:
+            return False
+        if user is None or not getattr(user, 'is_authenticated', False):
+            return False
+        if getattr(user, 'is_superuser', False) or getattr(user, 'is_staff', False):
+            # Admins see admin-private + public broadcasts. They never see
+            # another customer's private row (unless they open the order directly).
+            if self.visibility == 'private':
+                return False
+            return True
+        # --- regular customer ---
+        if self.visibility == 'admin':
+            return False
+        if self.visibility == 'private':
+            return self.user_id is not None and self.user_id == user.id
+        # public broadcast — respect audience
+        if self.target_audience in ('all', 'customers'):
+            return True
+        return False
+
+    @classmethod
+    def for_admin(cls):
+        """Admin inbox: private admin alerts + public broadcasts. No customer privates."""
+        from django.db.models import Q
+        return cls.objects.filter(
+            is_active=True
+        ).filter(Q(visibility='admin') | Q(visibility='public'))
+
+    @classmethod
+    def for_user(cls, user):
+        """Customer inbox: public broadcasts for their audience + their own privates."""
+        from django.db.models import Q
+        if user is None or not getattr(user, 'is_authenticated', False):
+            return cls.objects.none()
+        if getattr(user, 'is_superuser', False) or getattr(user, 'is_staff', False):
+            return cls.for_admin()
+        return cls.objects.filter(is_active=True).filter(
+            Q(visibility='public', target_audience__in=['all', 'customers']) |
+            Q(visibility='private', user=user)
+        )
+
+    @classmethod
+    def notify_admin(cls, title, body, link_url=''):
+        """Shortcut for admin-private system alerts (never shown to customers)."""
+        return cls.objects.create(
+            title=title, body=body,
+            visibility='admin', notification_type='system',
+            target_audience='all', link_url=link_url or '',
+        )
+
+    @classmethod
+    def notify_user(cls, user, title, body, link_url=''):
+        """Shortcut for a private alert to ONE customer (order updates etc)."""
+        return cls.objects.create(
+            title=title, body=body,
+            visibility='private', user=user,
+            notification_type='order', target_audience='customers',
+            link_url=link_url or '',
+        )
+
+    @classmethod
+    def broadcast(cls, title, body, audience='all', link_url=''):
+        """Shortcut for a public user-facing broadcast from admin."""
+        return cls.objects.create(
+            title=title, body=body,
+            visibility='public', notification_type='manual',
+            target_audience=audience, link_url=link_url or '',
+        )
+
+
+class NotificationRead(models.Model):
+    """Per-customer read receipt. Admin inbox still uses Notification.is_read."""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notification_reads')
+    notification = models.ForeignKey(Notification, on_delete=models.CASCADE, related_name='reads')
+    read_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'notification_read'
+        unique_together = ('user', 'notification')
+
+    def __str__(self):
+        return f'{self.user_id} read {self.notification_id}'

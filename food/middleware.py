@@ -42,8 +42,8 @@ class BlockedUserMiddleware:
 
 
 # Admin URLs — exact paths and prefixed (id-bearing) paths.
-# NOTE: kept separate so e.g. /delete/<id> never matches /delete_account,
-# and /settings (admin) never matches /setting (user page).
+# NOTE: kept separate so e.g. /delete/<id> never matches /delete_account.
+# User /setting page was merged into /profile (template + view + URL removed).
 ADMIN_EXACT_PATHS = {
     '/dashboard', '/add_admin', '/admin_profile', '/menu_management',
     '/add_menu_item', '/export_menu_csv', '/order_management',
@@ -53,7 +53,9 @@ ADMIN_EXACT_PATHS = {
 ADMIN_PREFIX_PATHS = (
     '/edit_menu_item/', '/delete_menu_item/', '/toggle_menu_item/',
     '/block/', '/unblock/', '/delete/', '/view_single_user/',
-    '/mark_notification_read/',
+    # NOTE: /mark_notification_read/ is intentionally NOT admin-gated:
+    # customers use the same endpoint for their own per-user receipts
+    # (enforced inside the view by visibility checks).
 )
 
 

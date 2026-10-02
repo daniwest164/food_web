@@ -69,7 +69,6 @@ urlpatterns = [
     path('track_order', views.track_order, name="track_order"),
     path('track_order/<str:order_id>/', views.track_order, name="track_order_with_id"),
 
-    path('setting', views.setting, name="setting"),
     path('add_address', views.add_address, name="add_address"),
     path('edit_address/<int:address_id>', views.edit_address, name="edit_address"),
     path('delete_address/<int:address_id>', views.delete_address, name="delete_address"),
@@ -107,7 +106,10 @@ urlpatterns = [
 
     path('settings', views.settings_page, name="settings"), 
     path('notifications', views.notifications_page, name="notifications"),
-    path('mark_notification_read/', views.mark_notification_read, name="mark_notification_read"), 
+    path('mark_notification_read/', views.mark_notification_read, name="mark_notification_read"),
+    # Real-time polling feed (role-aware, privacy-safe) + customer inbox page
+    path('api/notifications/feed/', views.notification_feed, name="notification_feed"),
+    path('my-notifications', views.my_notifications, name="my_notifications"),
 
     path('admin/', admin.site.urls),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

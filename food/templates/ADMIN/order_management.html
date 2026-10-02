@@ -124,7 +124,7 @@
             <button class="btn btn-ghost btn-sm" id="export-btn"><i class="bi bi-download"></i> Export</button>
 
             <a href="/notifications" class="topbar-icon-btn bell" title="Notifications"><i class="bi bi-bell-fill"></i>
-                {% if user_notifications %}<span class="admin-notif-badge">{{ user_notifications|length }}</span>{% endif %}
+                <span class="admin-notif-badge" data-notif-badge {% if not admin_unread_count %}style="display:none"{% endif %}>{% if admin_unread_count %}{{ admin_unread_count }}{% endif %}</span>
             </a>
             <div class="topbar-icon-btn" style="font-size:13px;font-weight:700;width:auto;padding:0 12px;"
                 id="admin-clock">

@@ -68,7 +68,8 @@ def submit_rating(request, item_id):
                 defaults={'score': score}
             )
             if score <= 2:
-                Notification.objects.create(title=f"Low Rating Alert: {item.name}", body=f"{item.name} received a {score}-star review from {request.user.username}. Their avg dropped to {item.rating} ⭐.", notification_type='system')
+                # ADMIN-ONLY: never shown to customers (privacy).
+                _notify_admin(title=f"Low Rating Alert: {item.name}", body=f"{item.name} received a {score}-star review from {request.user.username}. Their avg dropped to {item.rating} ⭐.")
         else:
             return JsonResponse({'error': 'Login required'}, status=401)
         avg = item.ratings.aggregate(Avg('score'))['score__avg'] or 0
@@ -142,7 +143,7 @@ def logout_page(request):
         except SignUp.DoesNotExist:
             pass
     logout(request) # terminate user info in the browser (request.user)
-    return redirect('/login')
+    return redirect('/')
 
 # End General Views Section
 
@@ -293,10 +294,10 @@ def google_auth_callback(request):
             is_verified=True,
         )
 
-        Notification.objects.create(
+        # ADMIN-ONLY: new-user alert must never leak to other customers.
+        _notify_admin(
             title=f"New User Registration: {signup_row.name}",
             body=f"{signup_row.name} ({google_email}) just created a new account via Google sign-in.",
-            notification_type='system',
         )
         messages.success(request, f"Welcome {username}! Your account was created via Google.")
     else:
@@ -331,6 +332,11 @@ def google_auth_callback(request):
         messages.success(request, f"Welcome back, {user.username}!")
 
     login(request, user)
+
+    # Move any guest (session) cart items into the user's DB cart
+    # (same as password login — otherwise guest items go invisible)
+    _merge_session_cart_into_user(request, user)
+
     if user.is_superuser:
         return redirect('/dashboard')
     return redirect('/menu')
@@ -450,7 +456,8 @@ def sign_up_page(request):
         mssg = f"Hi {get_username},\n\nClick the link below to verify your email:\n\n{verify_link}\n\nThis link expires in 10 minutes.\n\n– PrimeDish Team"
         send_mail(subject, mssg, settings.DEFAULT_FROM_EMAIL, [get_email], html_message=html_message)
 
-        Notification.objects.create(title=f"New User Registration: {fullname}", body=f"{fullname} ({get_email}) just created a new customer account. Account pending email verification.", notification_type='system')
+        # ADMIN-ONLY: pending-verification user list is private.
+        _notify_admin(title=f"New User Registration: {fullname}", body=f"{fullname} ({get_email}) just created a new customer account. Account pending email verification.")
         request.session['verification_uid'] = uid
         messages.success(request, f"Welcome {get_username}! A verification link has been sent to {get_email}. Please check your email.")
         return redirect('/verify_email')
@@ -739,7 +746,7 @@ def reset_password_page(request, id):
     return redirect('/login')
 
  # ==============================================  Start User Views Section ============================================== 
-# User Profile pages
+ # User Profile pages
 @login_required(login_url='login')
 def profile(request):
     user_orders = Order.objects.filter(user=request.user)
@@ -749,14 +756,14 @@ def profile(request):
     reward_points = int(total_spent // 100)
 
     if(request.method == "POST"):
-        fname = request.POST.get('fname')
-        lname = request.POST.get('lname')
-        username = request.POST.get('username')
-        email = request.POST.get('email')
-        phone = request.POST.get('phone')
-        gender = request.POST.get('gender')
-        dob1 = request.POST.get('dob')
-        dob = parse_date(dob1.strip()) if dob1 else None
+        fname = (request.POST.get('fname') or '').strip()
+        lname = (request.POST.get('lname') or '').strip()
+        username = (request.POST.get('username') or '').strip()
+        email = (request.POST.get('email') or '').strip()
+        phone = (request.POST.get('phone') or '').strip()
+        gender = (request.POST.get('gender') or '').strip()
+        dob1 = (request.POST.get('dob') or '').strip()
+        dob = parse_date(dob1) if dob1 else None
 
         sign_up = SignUp.objects.get(user=request.user)
 
@@ -780,11 +787,13 @@ def profile(request):
         messages.success(request, "Profile updated successfully")
         return redirect('profile')
 
+    addresses = Address.objects.filter(user=request.user)
     return render(request, './user/profile.html', {
         'total_orders': total_orders,
         'total_spent': int(total_spent),
         'avg_rating_given': round(avg_rating_given, 1),
         'reward_points': reward_points,
+        'addresses': addresses,
     })
 
 @csrf_exempt
@@ -867,6 +876,19 @@ def place_order(request):
 
     # Clear the cart
     cart.items.all().delete()
+
+    # Dual notification: admin copy (private) + customer copy (private to owner only).
+    _notify_admin(
+        title=f"New Order Placed: #{order.order_id}",
+        body=f"Order #{order.order_id} for ₦{total} was placed by {request.user.username}.",
+        link_url=f"/order_management",
+    )
+    _notify_user_order(
+        request.user,
+        title=f"Order Placed: #{order.order_id}",
+        body=f"We received your order #{order.order_id} for ₦{total}. We'll notify you as it moves.",
+        link_url=f"/order/{order.order_id}/",
+    )
 
     messages.success(request, 'Your order has been placed successfully!')
 
@@ -999,6 +1021,8 @@ def cancel_order(request, order_id):
     if order.status == 'confirmed':
         order.status = 'cancelled'
         order.save()
+        _notify_admin(title=f"Order Cancelled: #{order_id}", body=f"Order #{order_id} was cancelled by {request.user.username}.", link_url="/order_management")
+        _notify_user_order(request.user, title=f"Order Cancelled: #{order_id}", body=f"Your order #{order_id} has been cancelled.", link_url=f"/order/{order_id}/")
         messages.success(request, f"Order {order_id} cancelled.")
     else:
         messages.error(request, "Only confirmed orders can be cancelled.")
@@ -1075,7 +1099,9 @@ def _cart_items(request):
 
 def _cart_count(request):
     if not request.user.is_authenticated:
-        return 0
+        # Guests: count session items (view contexts override the
+        # context processor, so this must NOT return 0 here)
+        return sum(_session_cart(request).values())
     cart, _ = Cart.objects.get_or_create(user=request.user)
     total = 0
     for item in cart.items.all():
@@ -1435,7 +1461,18 @@ def verify_paystack_payment(request):
     # Clear the user's cart now that the order has been created
     cart.items.all().delete()
 
-    Notification.objects.create(title=f"New Order Placed: #{order.order_id}", body=f"Order #{order.order_id} for ₦{total} was placed by {request.user.username}.", notification_type='system')
+    # Dual notification: admin copy (private) + customer copy (private to owner only).
+    _notify_admin(
+        title=f"New Order Placed: #{order.order_id}",
+        body=f"Order #{order.order_id} for ₦{total} was placed by {request.user.username}.",
+        link_url="/order_management",
+    )
+    _notify_user_order(
+        request.user,
+        title=f"Payment Confirmed: #{order.order_id}",
+        body=f"Your payment of ₦{total} for order #{order.order_id} was confirmed. We're preparing it.",
+        link_url=f"/order/{order.order_id}/",
+    )
     messages.success(request, 'Your order has been placed successfully!')
 
     return JsonResponse({
@@ -1446,15 +1483,13 @@ def verify_paystack_payment(request):
     
 
 @login_required(login_url='login')
-def setting(request):
-    addresses = Address.objects.filter(user=request.user)
-    return render(request, './user/setting.html', {'addresses': addresses})
-
-
-@login_required(login_url='login')
 def add_address(request):
     if request.method == 'POST':
-        label = request.POST.get('label', 'home')
+        raw_label = request.POST.get('label', 'home')
+        label = raw_label.strip().lower() if raw_label else 'home'
+        valid_labels = {c[0] for c in Address._meta.get_field('label').choices}
+        if label not in valid_labels:
+            label = 'home'
         street = request.POST.get('street', '').strip()
         city = request.POST.get('city', '').strip()
         state = request.POST.get('state', '').strip()
@@ -1464,7 +1499,7 @@ def add_address(request):
             if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                 return JsonResponse({'status': 'error', 'error': 'All address fields are required.'}, status=400)
             messages.error(request, "All address fields are required.")
-            return redirect('/setting')
+            return redirect('profile')
 
         is_default = Address.objects.filter(user=request.user).count() == 0
         addr = Address.objects.create(
@@ -1478,22 +1513,25 @@ def add_address(request):
         )
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return JsonResponse({'status': 'success', 'address_id': addr.id})
-        messages.success(request, f"{label.capitalize()} address added successfully.")
-    return redirect('/setting')
+        messages.success(request, f"{addr.get_label_display()} address added successfully.")
+    return redirect('profile')
 
 
 @login_required(login_url='login')
 def edit_address(request, address_id):
     if request.method == 'POST':
         addr = get_object_or_404(Address, id=address_id, user=request.user)
-        addr.label = request.POST.get('label', addr.label)
-        addr.street = request.POST.get('street', addr.street).strip()
-        addr.city = request.POST.get('city', addr.city).strip()
-        addr.state = request.POST.get('state', addr.state).strip()
-        addr.lga = request.POST.get('lga', addr.lga).strip()
+        raw_label = request.POST.get('label', addr.label)
+        new_label = raw_label.strip().lower() if raw_label else addr.label
+        valid_labels = {c[0] for c in Address._meta.get_field('label').choices}
+        addr.label = new_label if new_label in valid_labels else addr.label
+        addr.street = request.POST.get('street', '').strip() or addr.street
+        addr.city = request.POST.get('city', '').strip() or addr.city
+        addr.state = request.POST.get('state', '').strip() or addr.state
+        addr.lga = request.POST.get('lga', '').strip() or addr.lga
         addr.save()
         messages.success(request, "Address updated successfully.")
-    return redirect('/setting')
+    return redirect('profile')
 
 
 @login_required(login_url='login')
@@ -1508,7 +1546,7 @@ def delete_address(request, address_id):
                 first.is_default = True
                 first.save()
         messages.success(request, "Address deleted successfully.")
-    return redirect('/setting')
+    return redirect('profile')
 
 
 @login_required(login_url='login')
@@ -1521,13 +1559,13 @@ def set_default_address(request, address_id):
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return JsonResponse({'status': 'success'})
         messages.success(request, "Default address updated.")
-    return redirect('/setting')
+    return redirect('profile')
 
 def delete_account_page(request):
     if request.method == 'POST':
         try:
             signup_row = SignUp.objects.get(user=request.user)
-            Notification.objects.create(title="Account Self-Deleted", body=f"{signup_row.name} ({signup_row.email}) has deleted their own account.", notification_type='system')
+            _notify_admin(title="Account Self-Deleted", body=f"{signup_row.name} ({signup_row.email}) has deleted their own account.")
             signup_row.status = 'deleted'
             signup_row.is_verified = False
             signup_row.save()
@@ -1536,7 +1574,7 @@ def delete_account_page(request):
         logout(request)
         messages.success(request, "Your account has been deleted. You can no longer access this account.")
         return redirect('/')
-    return redirect('/setting')
+    return redirect('profile')
 
 # ==============================================  End User Views Section ============================================== 
 
@@ -1618,7 +1656,8 @@ def add_menu_item(request):
             is_featured=is_featured,
             image=image,
         )
-        Notification.objects.create(title=f"New Menu Item: {name}", body=f"A new menu item '{name}' was added to the {category} category at ₦{price}.", notification_type='system')
+        # ADMIN-ONLY memo. Use Send Push on /notifications to announce it to customers.
+        _notify_admin(title=f"New Menu Item: {name}", body=f"A new menu item '{name}' was added to the {category} category at ₦{price}.")
         messages.success(request, 'Menu item added successfully.')
     return redirect('menu_management')
 
@@ -1638,7 +1677,7 @@ def edit_menu_item(request, item_id):
         if request.FILES.get('image'):
             item.image = request.FILES['image']
         item.save()
-        Notification.objects.create(title=f"Menu Item Updated: {item.name}", body=f"Menu item '{item.name}' was updated.", notification_type='system')
+        _notify_admin(title=f"Menu Item Updated: {item.name}", body=f"Menu item '{item.name}' was updated.")
         messages.success(request, 'Menu item updated successfully.')
     return redirect('menu_management')
 
@@ -1647,7 +1686,7 @@ def delete_menu_item(request, item_id):
     item = get_object_or_404(MenuItem, id=item_id)
     name = item.name
     item.delete()
-    Notification.objects.create(title=f"Menu Item Deleted: {name}", body=f"Menu item '{name}' was deleted from the platform.", notification_type='system')
+    _notify_admin(title=f"Menu Item Deleted: {name}", body=f"Menu item '{name}' was deleted from the platform.")
     messages.success(request, 'Menu item deleted successfully.')
     return redirect('menu_management')
 
@@ -1758,8 +1797,20 @@ def update_order_status(request):
         order = Order.objects.get(order_id=order_id)
         order.status = status
         order.save()
+        # Customer always gets a PRIVATE update about THEIR order (real-time feed picks it up).
+        _STATUS_COPY = {
+            'confirmed': (f"Order Confirmed: #{order_id}", f"Your order #{order_id} has been confirmed and will be prepared shortly."),
+            'preparing': (f"Order Preparing: #{order_id}", f"Your order #{order_id} is being prepared."),
+            'out_for_delivery': (f"Order On The Way: #{order_id}", f"Your order #{order_id} is out for delivery. Rider is on the way."),
+            'delivered': (f"Order Delivered: #{order_id}", f"Your order #{order_id} was delivered. Enjoy your meal!"),
+            'cancelled': (f"Order Cancelled: #{order_id}", f"Your order #{order_id} was cancelled. Contact support if you need help."),
+        }
+        if status in _STATUS_COPY:
+            title, body = _STATUS_COPY[status]
+            _notify_user_order(order.user, title=title, body=body, link_url=f"/order/{order_id}/")
         if status == 'delivered':
-            Notification.objects.create(title=f"Order Delivered: #{order_id}", body=f"Order #{order_id} was delivered successfully to {order.user.username}.", notification_type='system')
+            # Admin-private ledger copy (no customer data leaks to other users).
+            _notify_admin(title=f"Order Delivered: #{order_id}", body=f"Order #{order_id} was delivered successfully to {order.user.username}.", link_url=f"/order/{order_id}/")
         return JsonResponse({'status': 'success'})
     except Order.DoesNotExist:
         return JsonResponse({'error': 'Order not found'}, status=404)
@@ -1923,7 +1974,8 @@ def blockpage(request, id):
     get_row_id.status = "blocked"
     get_name = get_row_id.name
     get_row_id.save()
-    Notification.objects.create(title=f"User Banned: {get_name}", body=f"{get_name} was banned following admin action. All active sessions revoked.", notification_type='system')
+    # ADMIN-ONLY: banned-user names are private, never broadcast to customers.
+    _notify_admin(title=f"User Banned: {get_name}", body=f"{get_name} was banned following admin action. All active sessions revoked.")
     messages.info(request, f"You have successfully blocked {get_name}")
     return redirect('customers')
 
@@ -1933,7 +1985,7 @@ def unblockpage(request, id):
     get_row_id.status = "active"
     get_name = get_row_id.name
     get_row_id.save()
-    Notification.objects.create(title=f"User Unblocked: {get_name}", body=f"{get_name} was unblocked and can now access the platform.", notification_type='system')
+    _notify_admin(title=f"User Unblocked: {get_name}", body=f"{get_name} was unblocked and can now access the platform.")
     messages.info(request, f"You have successfully unblocked {get_name}")
     return redirect('customers')
 
@@ -1944,7 +1996,7 @@ def deletepage(request, id):
     get_auth_row = get_row_id.user
     get_row_id.delete()
     get_auth_row.delete()
-    Notification.objects.create(title=f"User Deleted: {get_name}", body=f"{get_name} was permanently deleted from the platform.", notification_type='system')
+    _notify_admin(title=f"User Deleted: {get_name}", body=f"{get_name} was permanently deleted from the platform.")
     messages.info(request, f"You have successfully deleted {get_name}")
     return redirect('customers')
 # ============================================== customers_page ============================================== 
@@ -1978,24 +2030,182 @@ def settings_page(request):
 
 from django.views.decorators.http import require_POST
 
+
+def _notify_user_order(user, title, body, link_url=''):
+    """Private, per-customer notification (never visible to other users/admins as user data)."""
+    try:
+        return Notification.notify_user(user=user, title=title, body=body, link_url=link_url or '')
+    except Exception:
+        return None
+
+
+def _notify_admin(title, body, link_url=''):
+    """Admin-private system alert (never shown to customers)."""
+    try:
+        return Notification.notify_admin(title=title, body=body, link_url=link_url or '')
+    except Exception:
+        return None
+
+
+def notification_feed(request):
+    """Real-time polling endpoint — role-aware, privacy-safe.
+
+    GET /api/notifications/feed/?since_id=123
+    - Admin/staff  -> admin-private + public broadcasts (no customer privates).
+    - Customer     -> public broadcasts + OWN private rows only.
+    - Anonymous    -> empty.
+    Returns {unread_count, notifications:[{id,title,body,created_at,is_read,link_url,visibility}], latest_id}
+    Poll this every ~15s from JS for live bell + toasts without reload.
+    """
+    from django.utils.timesince import timesince
+    user = request.user
+    if not user.is_authenticated:
+        return JsonResponse({'unread_count': 0, 'notifications': [], 'latest_id': 0})
+
+    since_id = request.GET.get('since_id')
+    try:
+        since_id = int(since_id) if since_id else 0
+    except (ValueError, TypeError):
+        since_id = 0
+
+    is_admin = user.is_superuser or user.is_staff
+    if is_admin:
+        qs = Notification.for_admin().order_by('-created_at')[:20]
+        items = list(qs)
+        unread_count = Notification.objects.filter(
+            is_active=True, is_read=False, visibility__in=['admin', 'public']
+        ).count()
+        payload = [{
+            'id': n.id,
+            'title': n.title,
+            'body': n.body,
+            'link_url': n.link_url or '',
+            'visibility': n.visibility,
+            'notification_type': n.notification_type,
+            'target_audience': n.target_audience,
+            'is_read': bool(n.is_read),
+            'created_at': n.created_at.isoformat() if n.created_at else '',
+            'ago': f'{timesince(n.created_at)} ago' if n.created_at else '',
+        } for n in items]
+    else:
+        qs = Notification.for_user(user).order_by('-created_at')[:20]
+        items = list(qs)
+        read_ids = set(
+            NotificationRead.objects.filter(
+                user=user, notification_id__in=[n.id for n in items]
+            ).values_list('notification_id', flat=True)
+        ) if items else set()
+        payload = []
+        for n in items:
+            is_read = n.id in read_ids
+            payload.append({
+                'id': n.id,
+                'title': n.title,
+                'body': n.body,
+                'link_url': n.link_url or '',
+                'visibility': n.visibility,
+                'notification_type': n.notification_type,
+                'target_audience': n.target_audience,
+                'is_read': is_read,
+                'created_at': n.created_at.isoformat() if n.created_at else '',
+                'ago': f'{timesince(n.created_at)} ago' if n.created_at else '',
+            })
+        unread_count = len([p for p in payload if not p['is_read']])
+        if len(items) == 20:
+            # accurate count when inbox overflows the 20-item window
+            all_ids = list(Notification.for_user(user).values_list('id', flat=True))
+            read_all = set(NotificationRead.objects.filter(user=user).values_list('notification_id', flat=True))
+            unread_count = len([i for i in all_ids if i not in read_all])
+
+    # `has_new` lets the frontend toast only rows newer than what it already showed
+    new_items = [p for p in payload if p['id'] > since_id] if since_id else []
+    latest_id = max([p['id'] for p in payload], default=since_id or 0)
+    return JsonResponse({
+        'unread_count': unread_count,
+        'notifications': payload,
+        'new': new_items,
+        'latest_id': latest_id,
+    })
+
+
+@login_required(login_url='login')
+def my_notifications(request):
+    """Customer-facing notifications page — ONLY their own visible rows."""
+    if request.user.is_superuser or request.user.is_staff:
+        return redirect('notifications')
+    qs = Notification.for_user(request.user).order_by('-created_at')[:100]
+    items = list(qs)
+    read_ids = set(
+        NotificationRead.objects.filter(
+            user=request.user, notification_id__in=[n.id for n in items]
+        ).values_list('notification_id', flat=True)
+    ) if items else set()
+    for n in items:
+        n.is_read_for_user = n.id in read_ids
+    return render(request, './user/my_notifications.html', {'notifications': items})
+
+
 @require_POST
 def mark_notification_read(request):
+    """Role-aware mark-read. Customers NEVER touch the global is_read flag.
+
+    POST {id?} — with id marks one, without id marks all visible as read.
+    Enforces visibility: a customer can only mark rows visible to them;
+    an admin can only mark admin-visible rows (admin+public).
+    """
     try:
-        data = json.loads(request.body)
+        data = json.loads(request.body) if request.body else {}
         nid = data.get('id')
     except Exception:
+        nid = None
+    if not nid:
         nid = request.POST.get('id')
-    if nid:
-        Notification.objects.filter(id=nid).update(is_read=True)
+
+    user = request.user
+    if not user.is_authenticated:
+        return JsonResponse({'ok': False, 'error': 'Login required'}, status=401)
+
+    is_admin = user.is_superuser or user.is_staff
+    if is_admin:
+        if nid:
+            # Admin may only mark admin-visible rows — never a customer's private row.
+            n = Notification.objects.filter(id=nid).first()
+            if not n:
+                return JsonResponse({'ok': False, 'error': 'Not found'}, status=404)
+            if n.visibility == 'private':
+                return JsonResponse({'ok': False, 'error': 'Not allowed'}, status=403)
+            Notification.objects.filter(id=nid).update(is_read=True)
+        else:
+            Notification.objects.filter(
+                is_read=False, visibility__in=['admin', 'public']
+            ).update(is_read=True)
         return JsonResponse({'ok': True})
-    # Mark all as read
-    Notification.objects.filter(is_read=False).update(is_read=True)
+
+    # --- customer: per-user receipts only ---
+    visible_ids = set(Notification.for_user(user).values_list('id', flat=True))
+    if nid:
+        try:
+            nid = int(nid)
+        except (ValueError, TypeError):
+            return JsonResponse({'ok': False, 'error': 'Invalid id'}, status=400)
+        if nid not in visible_ids:
+            return JsonResponse({'ok': False, 'error': 'Not allowed'}, status=403)
+        NotificationRead.objects.get_or_create(user=user, notification_id=nid)
+        return JsonResponse({'ok': True})
+    # mark all visible as read
+    existing = set(
+        NotificationRead.objects.filter(user=user).values_list('notification_id', flat=True)
+    )
+    to_create = [NotificationRead(user=user, notification_id=i) for i in visible_ids if i not in existing]
+    if to_create:
+        NotificationRead.objects.bulk_create(to_create, ignore_conflicts=True)
     return JsonResponse({'ok': True})
 
 
 # @admin_required
 def notifications_page(request):
-    all_notifications = Notification.objects.all()
+    # Admin inbox: admin-private + public broadcasts. NEVER customer privates.
+    all_notifications = Notification.for_admin().order_by('-created_at')[:200]
     # For autocomplete in search
     get_all_users = SignUp.objects.filter(is_superuser=0)
 
@@ -2003,9 +2213,17 @@ def notifications_page(request):
         title = request.POST.get('notif_title', '').strip()
         body = request.POST.get('notif_body', '').strip()
         audience = request.POST.get('notif_audience', 'all')
+        scope = request.POST.get('notif_scope', 'public')
         if title and body:
-            Notification.objects.create(title=title, body=body, target_audience=audience)
-            messages.success(request, f"Notification sent to {audience}")
+            if scope == 'admin':
+                # Private admin memo — never shown to customers.
+                Notification.notify_admin(title=title, body=body)
+                messages.success(request, "Admin-only note saved (customers can't see it).")
+            else:
+                if audience not in ('all', 'customers', 'vendors', 'riders'):
+                    audience = 'all'
+                Notification.broadcast(title=title, body=body, audience=audience)
+                messages.success(request, f"Notification sent to {audience}")
         else:
             messages.error(request, "Title and body are required.")
         return redirect('notifications')

@@ -183,16 +183,16 @@ document.addEventListener('DOMContentLoaded', function () {
       e.stopPropagation();
       const dropdown = this.closest('.notif-dropdown');
       if (dropdown) {
-        dropdown.querySelectorAll('.notif-item.unread').forEach(item => item.classList.remove('unread'));
+        dropdown.querySelectorAll('.notif-item.unread, .notif-dd-item.unread').forEach(item => item.classList.remove('unread'));
         dropdown.querySelectorAll('.notif-dot, .unread-dot').forEach(dot => dot.remove());
-        dropdown.querySelectorAll('.notif-count').forEach(count => count.remove());
+        dropdown.querySelectorAll('.notif-count, .unread-count').forEach(count => count.remove());
       }
       document.querySelectorAll('.bell-btn .bell-badge').forEach(badge => badge.remove());
     });
   });
 
   // ---- Notification dropdown: single item click marks as read ----
-  document.querySelectorAll('.notif-dropdown .notif-item.unread').forEach(item => {
+  document.querySelectorAll('.notif-dropdown .notif-item.unread, .notif-dropdown .notif-dd-item.unread').forEach(item => {
     item.addEventListener('click', function () {
       this.classList.remove('unread');
       const dot = this.querySelector('.notif-dot, .unread-dot');

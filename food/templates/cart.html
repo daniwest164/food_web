@@ -61,7 +61,7 @@
                                     <i class="bi bi-geo-alt-fill" style="color:var(--primary);font-size:20px;"></i>
                                     <div style="flex:1;">
                                         <div style="font-size:12px;color:var(--text-muted);">Delivering to</div>
-                                        <div style="font-size:15px;font-weight:600;" id="current-address-text">{{ delivery_address|default:'No address set' }}</div>
+                                        <div style="font-size:15px;font-weight:600; color: var(--primary);" id="current-address-text">{{ delivery_address|default:'No address set' }}</div>
                                     </div>
                                 </div>
                             </div>
@@ -342,17 +342,17 @@
     </div>
 </div>
 
-<!-- ADD NEW ADDRESS MODAL — same design as the Settings address modal -->
+<!-- ADD NEW ADDRESS MODAL — same design as the profile address modals -->
 <div class="modal fade addr-modal" id="addAddressModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
+        <div class="modal-content modal-card">
+            <div class="modal-header modal-card-head">
                 <h5 class="modal-title fw-bold">Add New Address</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="new-address-form" onsubmit="submitNewAddress(event)">
                 {% csrf_token %}
-                <div class="modal-body">
+                <div class="modal-body modal-card-body">
                     <div class="mb-3">
                         <label class="form-label" for="addr-label">Label</label>
                         <select name="label" id="addr-label" class="form-control">
@@ -365,28 +365,28 @@
                         <label class="form-label" for="addr-street">Street Address</label>
                         <input type="text" name="street" id="addr-street" class="form-control" placeholder="Enter street address" required>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label" for="addr-city">City / Area</label>
-                        <input type="text" name="city" id="addr-city" class="form-control" placeholder="Enter city or area" required>
-                    </div>
-                    <div class="addr-modal-row">
+                    <div class="form-grid-2">
+                        <div class="mb-3">
+                            <label class="form-label" for="addr-city">City / Area</label>
+                            <input type="text" name="city" id="addr-city" class="form-control" placeholder="Enter city or area" required>
+                        </div>
                         <div class="mb-3">
                             <label class="form-label" for="cart-add-state">State</label>
                             <select name="state" id="cart-add-state" class="form-control" required>
                                 <option value="">-- Select State --</option>
                             </select>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label" for="cart-add-lga">LGA</label>
-                            <select name="lga" id="cart-add-lga" class="form-control" required>
-                                <option value="">-- Select LGA --</option>
-                            </select>
-                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label" for="cart-add-lga">LGA</label>
+                        <select name="lga" id="cart-add-lga" class="form-control" required>
+                            <option value="">-- Select LGA --</option>
+                        </select>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn addr-btn-cancel" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary addr-btn-submit" id="save-address-btn">Add Address</button>
+                <div class="modal-footer modal-card-foot">
+                    <button type="button" class="btn btn-light btn-pill btn-pill-light" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-pill" id="save-address-btn">Add Address</button>
                 </div>
             </form>
         </div>

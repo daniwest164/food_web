@@ -246,7 +246,7 @@
                 <i class="bi bi-plus-circle-fill"></i> Add New Item
             </button>
             <a href="/notifications" class="topbar-icon-btn bell" title="Notifications"><i class="bi bi-bell-fill"></i>
-                {% if user_notifications %}<span class="admin-notif-badge">{{ user_notifications|length }}</span>{% endif %}
+                <span class="admin-notif-badge" data-notif-badge {% if not admin_unread_count %}style="display:none"{% endif %}>{% if admin_unread_count %}{{ admin_unread_count }}{% endif %}</span>
             </a>
             <div class="topbar-icon-btn" style="font-size:13px;font-weight:700;width:auto;padding:0 12px;"
                 id="admin-clock">

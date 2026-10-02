@@ -179,44 +179,27 @@
               });
         </script>
 
-        <div class="topbar-actions">
+        <div class="topbar-actions" data-notif-feed data-latest-id="{% for n in notifications %}{% if forloop.first %}{{ n.id }}{% endif %}{% endfor %}">
             <a href="{% url 'export_customers_csv' %}" class="btn btn-ghost btn-sm" id="export-btn"><i class="bi bi-download"></i> Export</a>
-            <div class="topbar-icon-btn bell" id="notifBell"><i class="bi bi-bell-fill"></i>{% if user_notifications %}<span class="admin-notif-badge">{{ user_notifications|length }}</span>{% endif %}</div>
-            <!-- Notification Dropdown -->
+            <div class="topbar-icon-btn bell" id="notifBell"><i class="bi bi-bell-fill"></i><span class="admin-notif-badge" data-notif-badge {% if not admin_unread_count %}style="display:none"{% endif %}>{% if admin_unread_count %}{{ admin_unread_count }}{% endif %}</span></div>
+            <!-- Notification Dropdown — LIVE admin inbox (private admin + public). Customer privates never appear. -->
             <div class="notif-dropdown" id="notifDropdown">
                 <div class="notif-dropdown-header">
                     <span class="fw-bold">Notifications</span>
-                    <span class="unread-count">6</span>
+                    <span class="unread-count" data-notif-count>{{ admin_unread_count|default:0 }}</span>
                 </div>
-                <div class="notif-dropdown-body">
-                    <a href="/notifications" class="notif-dd-item unread">
-                        <div class="notif-dd-icon" style="background:rgba(255,75,43,.1);color:var(--primary)"><i class="fa-solid fa-user-plus"></i></div>
+                <div class="notif-dropdown-body" data-notif-list>
+                    {% for notif in notifications|slice:":6" %}
+                    <a href="/notifications" data-notif-id="{{ notif.id }}" class="notif-dd-item {% if not notif.is_read %}unread{% endif %}">
+                        <div class="notif-dd-icon" style="background:rgba(255,75,43,.1);color:var(--primary)"><i class="fa-solid fa-bell"></i></div>
                         <div class="notif-dd-text">
-                            <div class="notif-dd-title">New User Registration</div>
-                            <div class="notif-dd-time">2 min ago</div>
+                            <div class="notif-dd-title">{{ notif.title }} {% if notif.visibility == 'admin' %}<i class="bi bi-lock-fill" title="Admin only" style="font-size:10px;opacity:.6"></i>{% endif %}</div>
+                            <div class="notif-dd-time">{{ notif.created_at|timesince }} ago</div>
                         </div>
                     </a>
-                    <a href="/notifications" class="notif-dd-item unread">
-                        <div class="notif-dd-icon" style="background:rgba(255,179,71,.2);color:#c87800"><i class="fa-solid fa-store"></i></div>
-                        <div class="notif-dd-text">
-                            <div class="notif-dd-title">New Restaurant Application</div>
-                            <div class="notif-dd-time">18 min ago</div>
-                        </div>
-                    </a>
-                    <a href="/notifications" class="notif-dd-item">
-                        <div class="notif-dd-icon" style="background:rgba(40,167,69,.1);color:#28a745"><i class="fa-solid fa-circle-check"></i></div>
-                        <div class="notif-dd-text">
-                            <div class="notif-dd-title">Order Delivered</div>
-                            <div class="notif-dd-time">2 hours ago</div>
-                        </div>
-                    </a>
-                    <a href="/notifications" class="notif-dd-item">
-                        <div class="notif-dd-icon" style="background:rgba(111,66,193,.1);color:#6f42c1"><i class="fa-solid fa-motorcycle"></i></div>
-                        <div class="notif-dd-text">
-                            <div class="notif-dd-title">Rider Flagged</div>
-                            <div class="notif-dd-time">3 hours ago</div>
-                        </div>
-                    </a>
+                    {% empty %}
+                    <div style="padding:16px;text-align:center;color:var(--text-muted)">No notifications yet.</div>
+                    {% endfor %}
                 </div>
                 <a href="/notifications" class="notif-dropdown-footer">View all notifications</a>
             </div>
@@ -231,34 +214,38 @@
                 <div class="card-box">
                     <div class="filter-bar">
                         <div class="d-flex align-items-center gap-2">
-                            <span class="fw-bold" style="font-family:'Syne',sans-serif;font-size:.95rem">All Notifications</span>
-                            <span class="unread-count" id="notifCount">{{ notifications|length }}</span>
+                            <span class="fw-bold" style="font-family:'Syne',sans-serif;font-size:.95rem">Admin Inbox</span>
+                            <span class="unread-count" id="notifCount" data-notif-count>{{ admin_unread_count|default:notifications|length }}</span>
                         </div>
                         <div class="d-flex gap-2 align-items-center flex-wrap">
                             <div class="filter-tabs">
                                 <button class="ftab active" onclick="filterNotif(this,'all')">All</button>
                                 <button class="ftab" onclick="filterNotif(this,'unread')">Unread</button>
-                                <button class="ftab" onclick="filterNotif(this,'system')">System</button>
+                                <button class="ftab" onclick="filterNotif(this,'admin')">Admin-only <i class="bi bi-lock-fill" style="font-size:10px"></i></button>
+                                <button class="ftab" onclick="filterNotif(this,'public')">Public</button>
                             </div>
-                            <button class="mark-all" onclick="markAllRead()"><i class="fa-solid fa-check-double"></i> Mark all read</button>
+                            <button class="mark-all mark-all-read" onclick="markAllRead()"><i class="fa-solid fa-check-double"></i> Mark all read</button>
                         </div>
                     </div>
+                    <p style="font-size:.72rem;color:var(--text-muted);padding:10px 24px 0;margin:0"><i class="bi bi-shield-lock"></i> Admin-only rows (lock icon) are private to staff — customers never see them. Public rows are the broadcasts customers see. Individual customer order updates are private per-user and never listed here.</p>
 
                     <!-- Notifications -->
                     {% for notif in notifications %}
-                    <div class="notif-item {% if not notif.is_read %}unread{% endif %}" data-type="{{ notif.notification_type }}" data-id="{{ notif.id }}">
-                        <div class="notif-icon" style="background:{% if notif.notification_type == 'system' %}rgba(255,75,43,.1);color:var(--primary){% else %}rgba(255, 102, 0,0.12);color:var(--primary){% endif %}">
-                            {% if notif.notification_type == 'system' %}<i class="fa-solid fa-gear"></i>{% else %}<i class="fa-solid fa-bullhorn"></i>{% endif %}
+                    <div class="notif-item {% if not notif.is_read %}unread{% endif %}" data-visibility="{{ notif.visibility }}" data-type="{{ notif.notification_type }}" data-id="{{ notif.id }}">
+                        <div class="notif-icon" style="background:{% if notif.visibility == 'admin' %}rgba(255,75,43,.1);color:var(--primary){% else %}rgba(255, 102, 0,0.12);color:var(--primary){% endif %}">
+                            {% if notif.visibility == 'admin' %}<i class="fa-solid fa-lock"></i>{% else %}<i class="fa-solid fa-bullhorn"></i>{% endif %}
                         </div>
                         <div class="flex-grow-1">
-                            <div class="notif-title">{{ notif.title }}</div>
+                            <div class="notif-title">{{ notif.title }} {% if notif.visibility == 'admin' %}<span style="font-size:.65rem;background:rgba(255,75,43,.12);color:var(--primary);padding:2px 8px;border-radius:20px;font-weight:700">ADMIN ONLY</span>{% else %}<span style="font-size:.65rem;background:rgba(40,167,69,.12);color:#28a745;padding:2px 8px;border-radius:20px;font-weight:700">PUBLIC · {{ notif.get_target_audience_display|upper }}</span>{% endif %}</div>
                             <div class="notif-body">{{ notif.body }}</div>
-                            <div class="notif-time"><i class="fa-regular fa-clock"></i> {{ notif.created_at|timesince }} ago {% if notif.notification_type == 'system' %}&middot; <span style="color:var(--primary)">System</span>{% else %}&middot; {{ notif.get_target_audience_display }}{% endif %}</div>
+                            <div class="notif-time"><i class="fa-regular fa-clock"></i> {{ notif.created_at|timesince }} ago &middot; {{ notif.get_visibility_display }}</div>
                         </div>
                         <div class="notif-actions">
                             {% if not notif.is_read %}<button class="notif-btn" onclick="markReadDb({{ notif.id }}, this)" title="Mark read"><i class="fa-solid fa-check"></i></button>{% endif %}
                         </div>
                     </div>
+                    {% empty %}
+                    <div style="padding:30px;text-align:center;color:var(--text-muted)">No notifications yet.</div>
                     {% endfor %}
 
                 </div>
@@ -272,9 +259,16 @@
                     <div class="card-box">
                         <div class="card-header">
                             <h5>Send Push Notification</h5>
-                            <p>Broadcast to users, vendors, or riders</p>
+                            <p>Broadcast to users — or keep a private admin memo</p>
                         </div>
                         <div class="card-body">
+                            <div class="mb-3">
+                                <label class="form-label">Who can see this?</label>
+                                <select name="notif_scope" class="form-control">
+                                    <option value="public">Public — customers see it live (recommended for promos)</option>
+                                    <option value="admin">Admin-only — private memo, customers never see it</option>
+                                </select>
+                            </div>
                             <div class="mb-3">
                                 <label class="form-label">Target Audience</label>
                                 <select name="notif_audience" class="form-control">
@@ -350,9 +344,11 @@
             if (filter === 'all') {
                 item.style.display = '';
             } else if (filter === 'unread') {
-                item.style.display = (item.getAttribute('data-type') === 'system' && item.classList.contains('unread')) ? '' : 'none';
-            } else if (filter === 'system') {
-                item.style.display = item.getAttribute('data-type') === 'manual' ? '' : 'none';
+                item.style.display = item.classList.contains('unread') ? '' : 'none';
+            } else if (filter === 'admin') {
+                item.style.display = item.getAttribute('data-visibility') === 'admin' ? '' : 'none';
+            } else if (filter === 'public') {
+                item.style.display = item.getAttribute('data-visibility') === 'public' ? '' : 'none';
             }
         });
     }
@@ -412,6 +408,7 @@
 
 
 <script src="{% static 'js/main.js' %}"></script>
+<script src="{% static 'js/notifications.js' %}"></script>
 <script src="{% static 'js/admin.js' %}"></script>
 
 <script src="{% static 'aos/aos.js' %}"></script>

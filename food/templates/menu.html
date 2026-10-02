@@ -246,6 +246,60 @@
 <script>
 window.quickView = function(itemId) {
     var csrf = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+    var TOAST_LIFE = 3200;
+    var reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function dishName(id) {
+        var card = document.querySelector('.menu-card[data-id="' + id + '"] h4');
+        return card ? card.textContent.trim() : 'Item';
+    }
+    function bumpBadge(count) {
+        document.querySelectorAll('.cart-count').forEach(function(el) {
+            el.textContent = count;
+            el.style.display = count > 0 ? 'flex' : 'none';
+            el.classList.remove('pd-bump');
+            if (!reduceMotion && count > 0) {
+                void el.offsetWidth;
+                el.classList.add('pd-bump');
+                setTimeout(function(){ el.classList.remove('pd-bump'); }, 500);
+            }
+        });
+    }
+    // Staged fade: in (CSS .show) → hold → out (.leaving) → remove
+    function pdToast(opts) {
+        document.querySelectorAll('.pd-cart-toast').forEach(function(n){ n.remove(); });
+        var t = document.createElement('div');
+        t.className = 'pd-cart-toast' + (opts.type === 'error' ? ' pd-error' : '');
+        t.setAttribute('role', 'status');
+        t.setAttribute('aria-live', 'polite');
+        var icon = opts.type === 'error' ? 'bi-exclamation-circle-fill' : 'bi-bag-check-fill';
+        var head = opts.type === 'error' ? 'Couldn\u2019t add to bag' : (opts.title || 'In your chop bag');
+        var sub = opts.sub || '';
+        t.innerHTML =
+            '<span class="pd-cart-ico"><i class="bi ' + icon + '"></i></span>' +
+            '<span class="pd-cart-txt"><strong></strong><span></span></span>' +
+            (opts.type === 'error'
+                ? ''
+                : '<a class="pd-cart-view" href="/cart">View cart <i class="bi bi-arrow-right-short"></i></a>') +
+            '<button type="button" class="pd-cart-x" aria-label="Dismiss notification"><i class="bi bi-x-lg" style="font-size:11px;"></i></button>' +
+            '<span class="pd-cart-bar" aria-hidden="true"><i></i></span>';
+        t.querySelector('.pd-cart-txt strong').textContent = head;
+        t.querySelector('.pd-cart-txt span').innerHTML = sub;
+        document.body.appendChild(t);
+        // force entrance frame so the rise+fade plays
+        requestAnimationFrame(function(){ requestAnimationFrame(function(){ t.classList.add('show'); }); });
+        var dead = false;
+        function dismiss() {
+            if (dead) return;
+            dead = true;
+            t.classList.add('leaving');
+            setTimeout(function(){ t.remove(); }, reduceMotion ? 160 : 420);
+        }
+        t.querySelector('.pd-cart-x').addEventListener('click', dismiss);
+        setTimeout(dismiss, TOAST_LIFE + 150);
+        return dismiss;
+    }
+
     fetch('/add_to_cart/' + itemId, {
         method: 'POST',
         headers: {
@@ -257,25 +311,17 @@ window.quickView = function(itemId) {
     .then(function(r) { return r.json(); })
     .then(function(data) {
         if (data.status === 'success') {
-            document.querySelectorAll('.cart-count').forEach(function(el) {
-                el.textContent = data.cart_count;
-                el.style.display = data.cart_count > 0 ? 'flex' : 'none';
+            bumpBadge(data.cart_count);
+            pdToast({
+                title: dishName(itemId),
+                sub: 'Added to bag \u2014 now <b>' + data.cart_count + '</b> item' + (data.cart_count === 1 ? '' : 's')
             });
-            var t = document.createElement('div');
-            t.className = 'alert alert-success alert-dismissible fade show';
-            t.style.cssText = 'position:fixed;top:20px;right:20px;z-index:99999;min-width:300px;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,0.15);';
-            t.innerHTML = 'Item added to cart!<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
-            document.body.appendChild(t);
-            setTimeout(function(){ t.remove(); }, 4000);
+        } else {
+            pdToast({ type: 'error', title: 'Couldn\u2019t add to bag', sub: 'Please try again' });
         }
     })
     .catch(function() {
-        var t = document.createElement('div');
-        t.className = 'alert alert-danger alert-dismissible fade show';
-        t.style.cssText = 'position:fixed;top:20px;right:20px;z-index:99999;min-width:300px;border-radius:10px;box-shadow:0 4px 20px rgba(0,0,0,0.15);';
-        t.innerHTML = 'Error adding to cart<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
-        document.body.appendChild(t);
-        setTimeout(function(){ t.remove(); }, 4000);
+        pdToast({ type: 'error', title: 'Couldn\u2019t add to bag', sub: 'Check connection, try again' });
     });
 };
 

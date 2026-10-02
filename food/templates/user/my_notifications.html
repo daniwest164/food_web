@@ -1,0 +1,63 @@
+{% extends "includes/base.html" %}
+{% load static %}
+{% load humanize %}
+{% block title %} My Notifications {% endblock title %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+<style>
+.notif-page-wrap{max-width:760px;margin:110px auto 60px;padding:0 16px}
+.notif-page-card{background:var(--card-bg,#fff);border-radius:16px;box-shadow:0 1px 6px rgba(0,0,0,.08);overflow:hidden}
+.notif-page-head{padding:20px 24px;border-bottom:1px solid var(--border,#eee);display:flex;align-items:center;justify-content:space-between}
+.notif-page-head h2{font-size:1.1rem;margin:0}
+.notif-row{display:flex;gap:14px;padding:16px 22px;border-bottom:1px solid var(--border,#f0f0f0);text-decoration:none;color:inherit}
+.notif-row:last-child{border-bottom:none}
+.notif-row.unread{background:#fff7f2}
+.notif-row .notif-ico{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.notif-ico.order{background:rgba(40,167,69,.12);color:#28a745}
+.notif-ico.payment{background:rgba(0,123,255,.12);color:#007bff}
+.notif-ico.food{background:rgba(255,102,0,.12);color:var(--primary,#ff4b2b)}
+.notif-ico.system{background:rgba(0,0,0,.06);color:#555}
+.notif-row h5{font-size:.92rem;margin:0 0 4px}
+.notif-row p{font-size:.82rem;margin:0;color:#666}
+.notif-row small{font-size:.72rem;color:#999}
+.mark-all{border:1px solid #ddd;background:#fff;border-radius:8px;padding:7px 14px;font-size:.78rem;cursor:pointer}
+.mark-all:hover{border-color:#28a745;color:#28a745}
+</style>
+
+<div class="notif-page-wrap" data-notif-feed data-latest-id="{% for n in notifications %}{% if forloop.first %}{{ n.id }}{% endif %}{% endfor %}">
+  <div class="notif-page-card">
+    <div class="notif-page-head">
+      <h2>My Notifications <span class="notif-count" data-notif-count>{{ notifications|length }}</span></h2>
+      <button class="mark-all mark-all-read">Mark all as read</button>
+    </div>
+    <div data-notif-list>
+      {% for notif in notifications %}
+      <a href="{% if notif.link_url %}{{ notif.link_url }}{% elif 'Order' in notif.title %}/orders{% else %}#{% endif %}" data-notif-id="{{ notif.id }}" class="notif-row {% if not notif.is_read_for_user %}unread{% endif %}">
+        <span class="notif-ico {% if 'Order' in notif.title or 'Deliver' in notif.title %}order{% elif 'Payment' in notif.title or 'Paid' in notif.title %}payment{% elif 'Menu' in notif.title %}food{% else %}system{% endif %}">
+          {% if 'Order' in notif.title or 'Deliver' in notif.title %}<i class="bi bi-bag-check-fill"></i>
+          {% elif 'Payment' in notif.title %}<i class="bi bi-credit-card-2-front-fill"></i>
+          {% elif 'Menu' in notif.title %}<i class="bi bi-egg-fried"></i>
+          {% else %}<i class="fa-solid fa-bell"></i>{% endif %}
+        </span>
+        <span>
+          <h5>{{ notif.title }}</h5>
+          <p>{{ notif.body }}</p>
+          <small>{{ notif.created_at|timesince }} ago</small>
+        </span>
+      </a>
+      {% empty %}
+      <div style="padding:40px;text-align:center;color:#888">
+        <i class="bi bi-bell-slash" style="font-size:2rem"></i>
+        <p>You're all caught up.<br>No notifications yet.</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  <p style="font-size:.75rem;color:#888;margin-top:12px">
+    <i class="bi bi-shield-lock"></i> You only see order updates for your own orders plus public announcements.
+    Other customers' activity and admin notes are never shown here.
+  </p>
+</div>
+{% endblock content %}
